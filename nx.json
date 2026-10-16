@@ -40,6 +40,11 @@
     },
     "test": {
       "cache": true
+    },
+    "build": {
+      "dependsOn": [
+        "^build"
+      ]
     }
   },
   "generators": {
