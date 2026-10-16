@@ -1,0 +1,10 @@
+// Slice I1 · tablas: area, usuario, evaluacion, resultado_indicador,
+// audit_log, parametro_sistema (+ vista base_datos_pretest)
+
+/// ERD02: parametros del sistema (p. ej. umbral_cafeina_mg, RN02)
+model ParametroSistema {
+  clave String @id
+  valor String
+
+  @@map("parametro_sistema")
+}
