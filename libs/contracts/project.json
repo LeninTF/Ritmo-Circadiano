@@ -1,0 +1,30 @@
+{
+  "name": "contracts",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/contracts/src",
+  "projectType": "library",
+  "tags": [
+    "scope:contracts"
+  ],
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "default",
+        "^default",
+        {
+          "externalDependencies": [
+            "typescript"
+          ]
+        }
+      ],
+      "options": {
+        "commands": [
+          "tsc --noEmit -p libs/contracts/tsconfig.lib.json"
+        ],
+        "parallel": false
+      }
+    }
+  }
+}
