@@ -16,9 +16,11 @@ coverage/
 .claude/
 
 # prisma
-/generated/
+apps/api/src/generated/
 
 # sistema
 .DS_Store
 Thumbs.db
 *.log
+
+.angular

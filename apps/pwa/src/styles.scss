@@ -1,0 +1,30 @@
+:root {
+  color-scheme: light dark;
+  --color-fondo: #ffffff;
+  --color-texto: #1b1f24;
+  --color-borde: #d0d7de;
+  --color-acento-fondo: #e6f0ff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-fondo: #12161b;
+    --color-texto: #e6edf3;
+    --color-borde: #30363d;
+    --color-acento-fondo: #1c2a40;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-width: 360px;
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+}
