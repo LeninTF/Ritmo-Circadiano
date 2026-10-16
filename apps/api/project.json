@@ -66,13 +66,13 @@
       "outputs": [
         "{workspaceRoot}/coverage/{projectRoot}"
       ],
+      "dependsOn": [
+        "prisma-generate"
+      ],
       "options": {
         "jestConfig": "apps/api/jest.config.cts",
         "passWithNoTests": true
-      },
-      "dependsOn": [
-        "prisma-generate"
-      ]
+      }
     },
     "typecheck": {
       "executor": "nx:run-commands",
@@ -86,16 +86,16 @@
           ]
         }
       ],
+      "dependsOn": [
+        "prisma-generate"
+      ],
       "options": {
         "commands": [
           "tsc --noEmit -p apps/api/tsconfig.app.json",
           "tsc --noEmit -p apps/api/tsconfig.spec.json"
         ],
         "parallel": false
-      },
-      "dependsOn": [
-        "prisma-generate"
-      ]
+      }
     },
     "prisma-generate": {
       "executor": "nx:run-commands",
