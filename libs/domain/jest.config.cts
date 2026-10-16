@@ -7,6 +7,7 @@ module.exports = {
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: '../../coverage/libs/domain',
+  coverageReporters: ['text', 'lcov'],
   collectCoverageFrom: ['src/**/*.ts', '!src/**/*.spec.ts', '!src/index.ts'],
   coverageThreshold: {
     global: { statements: 70, branches: 70, functions: 70, lines: 70 },
