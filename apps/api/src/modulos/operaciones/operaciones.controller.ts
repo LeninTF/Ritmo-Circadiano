@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Query,
+  Headers,
   UploadedFile,
   UseInterceptors,
   BadRequestException,
@@ -39,6 +40,26 @@ export class OperacionesController {
     @Query('fecha') fecha?: string,
   ) {
     return this.operacionesService.listarTurnos({ idUsuario, fecha });
+  }
+
+  @Get('turnos/me')
+  @ApiOperation({ summary: 'Obtener los turnos laborales del usuario autenticado actual con rango de fechas opcional (desde, hasta)' })
+  @ApiQuery({ name: 'desde', required: false, description: 'Fecha de inicio del rango (YYYY-MM-DD)' })
+  @ApiQuery({ name: 'hasta', required: false, description: 'Fecha de fin del rango (YYYY-MM-DD)' })
+  @ApiQuery({ name: 'idUsuario', required: false, description: 'ID de usuario (fallback para pruebas o desarrollo)' })
+  @ApiResponse({ status: 200, description: 'Lista de turnos propios obtenida exitosamente.' })
+  @ApiResponse({ status: 400, description: 'Usuario no identificado o parámetros inválidos.' })
+  async obtenerTurnosMe(
+    @Query('desde') desde?: string,
+    @Query('hasta') hasta?: string,
+    @Query('idUsuario') idUsuarioQuery?: string,
+    @Headers('x-usuario-id') headerIdUsuario?: string,
+  ) {
+    const idUsuario = idUsuarioQuery || headerIdUsuario;
+    if (!idUsuario) {
+      throw new BadRequestException('Se requiere identificar al usuario (parámetro idUsuario o cabecera x-usuario-id).');
+    }
+    return this.operacionesService.listarTurnosMe(idUsuario, desde, hasta);
   }
 
   @Get('turnos/:id')
