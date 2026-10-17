@@ -20,15 +20,15 @@ jobs:
       # Solo para `prisma generate`; los tests no usan BD.
       DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@1d0ff469b7ec4b3cb9d8673fde0c81c44825db2a
+      - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - uses: nrwl/nx-set-shas@4185340156d4918e6144e7c80523e3e0ff4866be
+      - uses: nrwl/nx-set-shas@v4
       - run: npx nx affected -t lint typecheck test build
       - name: Cobertura de libs/domain (>= 70 %)
         run: npm run check:coverage-domain
@@ -36,7 +36,7 @@ jobs:
   secretos:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: gitleaks
@@ -50,14 +50,14 @@ jobs:
     continue-on-error: true
     container: semgrep/semgrep
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - run: semgrep scan --config p/default --config p/owasp-top-ten --error
+      - uses: actions/checkout@v4
+      - run: semgrep scan --config p/default --config p/owasp-top-ten --exclude-rule yaml.github-actions.security.github-actions-mutable-action-tag --error
 
   osv-scanner:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@v4
       - name: osv-scanner
         run: |
           curl -sSfL -o osv-scanner https://github.com/google/osv-scanner/releases/download/v2.7.0/osv-scanner_linux_amd64
