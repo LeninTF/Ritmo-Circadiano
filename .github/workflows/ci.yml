@@ -23,12 +23,12 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4.2.0
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed753fdee5af
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - uses: nrwl/nx-set-shas@v4
+      - uses: nrwl/nx-set-shas@ea605bfa4a72d73347b31175b9f71c356d2cb79a
       - run: npx nx affected -t lint typecheck test build
       - name: Cobertura de libs/domain (>= 70 %)
         run: npm run check:coverage-domain
