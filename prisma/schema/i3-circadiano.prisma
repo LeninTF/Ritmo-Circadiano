@@ -1,1 +1,92 @@
 // Slice I3 · tablas: ubicacion, evento_solar, perfil_cronotipo, plan_diario
+
+/// ERD-I3-01: punto geografico donde se calculan los eventos solares (RF06).
+/// Un usuario puede tener varias ubicaciones; la ultima activa se usa para el plan.
+model Ubicacion {
+  id           String   @id @default(cuid())
+  /// Latitud en grados decimales. Rango valido: -90..90
+  lat          Decimal  @db.Decimal(9, 6)
+  /// Longitud en grados decimales. Rango valido: -180..180
+  lng          Decimal  @db.Decimal(9, 6)
+  /// Nombre legible del lugar (ciudad/ruta). Ej: "Ica", "Nasca".
+  origen       String
+  /// IANA timezone. Siempre "America/Lima" para este proyecto.
+  zonaHoraria  String   @map("zona_horaria")
+  /// FK logica al usuario I1 (sin relacion Prisma cross-slice).
+  idUsuario    String   @map("id_usuario")
+  creadoEn     DateTime @default(now()) @map("creado_en")
+
+  eventos EventoSolar[]
+
+  @@map("ubicacion")
+}
+
+/// ERD-I3-02: cache de salida/mediodia/puesta para una ubicacion y fecha (RF06).
+/// TTL logico de 7 dias; se reutiliza si ya existe la fila.
+model EventoSolar {
+  id          String   @id @default(cuid())
+  idUbicacion String   @map("id_ubicacion")
+  /// Fecha del calculo (solo YYYY-MM-DD, sin hora).
+  fecha       DateTime @db.Date
+  /// Hora UTC del amanecer astronomico.
+  amanecer    DateTime @map("amanecer")
+  /// Hora UTC del mediodia solar (transito).
+  mediodia    DateTime @map("mediodia")
+  /// Hora UTC del atardecer astronomico.
+  atardecer   DateTime @map("atardecer")
+  creadoEn    DateTime @default(now()) @map("creado_en")
+
+  ubicacion Ubicacion @relation(fields: [idUbicacion], references: [id], onDelete: Cascade)
+
+  @@unique([idUbicacion, fecha])
+  @@map("evento_solar")
+}
+
+/// ERD-I3-03: resultado del cuestionario rMEQ de 5 items (RN07).
+/// Una fila por usuario; se actualiza con upsert si responde de nuevo.
+model PerfilCronotipo {
+  id             String   @id @default(cuid())
+  /// FK logica al usuario I1 (sin relacion Prisma cross-slice).
+  idUsuario      String   @unique @map("id_usuario")
+  /// Respuestas individuales a los 5 items del rMEQ. Schema: { p1: number, p2: number, p3: number, p4: number, p5: number }
+  respuestasRmeq Json     @map("respuestas_rmeq") @db.JsonB
+  /// Suma de respuestas. Rango: 4-25.
+  puntaje        Int
+  /// Clasificacion derivada del puntaje (RN07).
+  categoria      String
+  actualizadoEn  DateTime @updatedAt @map("actualizado_en")
+  creadoEn       DateTime @default(now()) @map("creado_en")
+
+  @@map("perfil_cronotipo")
+}
+
+/// ERD-I3-04: plan circadiano diario generado por el motor (RF07).
+/// UNIQUE(id_usuario, fecha): un plan por trabajador por dia; se regenera con upsert.
+model PlanDiario {
+  id                String    @id @default(cuid())
+  /// FK logica al usuario I1.
+  idUsuario         String    @map("id_usuario")
+  /// Fecha del turno al que corresponde este plan (YYYY-MM-DD).
+  fecha             DateTime  @db.Date
+  /// Inicio del bloque de sueno principal (UTC).
+  inicioSueno       DateTime  @map("inicio_sueno")
+  /// Fin del bloque de sueno principal (UTC).
+  finSueno          DateTime  @map("fin_sueno")
+  /// Inicio de la siesta de 90 min si se requiere (RN06), o null si no aplica.
+  inicioSiesta      DateTime? @map("inicio_siesta")
+  /// Fin de la siesta de 90 min (UTC), o null si no aplica.
+  finSiesta         DateTime? @map("fin_siesta")
+  /// Ventanas de maximo rendimiento cognitivo. Schema JSONB: [{ inicio: ISO, fin: ISO }]
+  picos             Json      @db.JsonB
+  /// Hora maxima para consumir cafeina (RN04, RN05) (UTC).
+  horaCorteCalefina DateTime  @map("hora_corte_cafeina")
+  /// Ventana de exposicion a luz natural. Schema JSONB: { inicio: ISO, fin: ISO }
+  ventanaLuz        Json      @map("ventana_luz") @db.JsonB
+  /// Version del algoritmo generador. Incrementar al cambiar formulas (OCP).
+  versionAlgoritmo  String    @map("version_algoritmo")
+  actualizadoEn     DateTime  @updatedAt @map("actualizado_en")
+  creadoEn          DateTime  @default(now()) @map("creado_en")
+
+  @@unique([idUsuario, fecha])
+  @@map("plan_diario")
+}
