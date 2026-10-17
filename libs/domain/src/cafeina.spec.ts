@@ -93,7 +93,7 @@ describe('dominio farmacocinético de cafeína', () => {
       expect(() => calcularHoraCorte(-1, 20, [])).toThrow(RangeError);
       expect(() => calcularHoraCorte(1, Number.NaN, [])).toThrow(RangeError);
       expect(() => calcularHoraCorte(1, 20, [], -2)).toThrow(RangeError);
-      expect(() => calcularHoraCorte(1, 20, { semivida_h: 0 } as never)).toThrow(RangeError);
+      expect(() => calcularHoraCorte(1, 20, [], { semivida_h: 0 })).toThrow(RangeError);
       expect(() => calcularHoraCorte(1, 20, [], 5, -1)).toThrow(RangeError);
     });
   });

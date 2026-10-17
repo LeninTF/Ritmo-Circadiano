@@ -13,6 +13,22 @@ async function main(): Promise<void> {
       update: {},
       create: { clave: 'umbral_cafeina_mg', valor: '50' },
     });
+
+    const bebidasBase = [
+      { nombre: 'Café pasado', cafeina_mg: '95.0', volumen_ml: 240 },
+      { nombre: 'Espresso', cafeina_mg: '63.0', volumen_ml: 30 },
+      { nombre: 'Té', cafeina_mg: '47.0', volumen_ml: 240 },
+      { nombre: 'Gaseosa cola', cafeina_mg: '34.0', volumen_ml: 355 },
+      { nombre: 'Bebida energizante', cafeina_mg: '80.0', volumen_ml: 250 },
+    ];
+
+    for (const bebida of bebidasBase) {
+      await prisma.bebida.upsert({
+        where: { nombre: bebida.nombre },
+        update: {},
+        create: bebida,
+      });
+    }
   } finally {
     await prisma.$disconnect();
   }
