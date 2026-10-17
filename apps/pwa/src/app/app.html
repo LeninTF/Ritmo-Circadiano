@@ -1,0 +1,11 @@
+<header class="cabecera">
+  <strong>Gestor Circadiano</strong>
+</header>
+<main>
+  <router-outlet />
+</main>
+<nav class="navegacion" aria-label="Secciones">
+  @for (enlace of enlaces; track enlace.ruta) {
+  <a [routerLink]="enlace.ruta" routerLinkActive="activo">{{ enlace.texto }}</a>
+  }
+</nav>
