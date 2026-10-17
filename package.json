@@ -43,6 +43,7 @@
     "angular-eslint": "22.1.0",
     "eslint": "9.8.0",
     "eslint-config-prettier": "10.0.0",
+    "fast-check": "4.10.2",
     "jest": "30.5.2",
     "jest-environment-jsdom": "30.3.0",
     "jest-environment-node": "30.3.0",
