@@ -20,15 +20,15 @@ jobs:
       # Solo para `prisma generate`; los tests no usan BD.
       DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d6fec261f8840adab64b19156c42efa10d3e5229 # v4.2.2
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@1d0ff469b7ec4b3cb4dfde6ef33fe3772f3000b5 # v4.2.0
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - uses: nrwl/nx-set-shas@v4
+      - uses: nrwl/nx-set-shas@411e3b6794697967b2ab14d7a1cd1f54497e2f5f # v4
       - run: npx nx affected -t lint typecheck test build
       - name: Cobertura de libs/domain (>= 70 %)
         run: npm run check:coverage-domain
@@ -36,7 +36,7 @@ jobs:
   secretos:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d6fec261f8840adab64b19156c42efa10d3e5229 # v4.2.2
         with:
           fetch-depth: 0
       - name: gitleaks
@@ -50,14 +50,14 @@ jobs:
     continue-on-error: true
     container: semgrep/semgrep
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d6fec261f8840adab64b19156c42efa10d3e5229 # v4.2.2
       - run: semgrep scan --config p/default --config p/owasp-top-ten --error
 
   osv-scanner:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d6fec261f8840adab64b19156c42efa10d3e5229 # v4.2.2
       - name: osv-scanner
         run: |
           curl -sSfL -o osv-scanner https://github.com/google/osv-scanner/releases/download/v2.7.0/osv-scanner_linux_amd64
