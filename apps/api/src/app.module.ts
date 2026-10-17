@@ -5,6 +5,8 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { validarEntorno } from './config/entorno';
+import { JwtAuthGuard } from './modulos/plataforma/auth/jwt-auth.guard';
+import { RolesGuard } from './modulos/plataforma/auth/roles.guard';
 import { CafeinaModule } from './modulos/cafeina/cafeina.module';
 import { CircadianoModule } from './modulos/circadiano/circadiano.module';
 import { OperacionesModule } from './modulos/operaciones/operaciones.module';
@@ -27,6 +29,11 @@ import { SaludModule } from './salud/salud.module';
     CafeinaModule,
     TrabajadorModule,
   ],
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+  // El orden importa: limite de peticiones, luego token, luego rol.
+  providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
+  ],
 })
 export class AppModule {}
