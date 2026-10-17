@@ -13,6 +13,14 @@ export class Entorno {
   @IsOptional()
   @IsString()
   CORS_ORIGIN?: string;
+
+  @IsOptional()
+  @IsString()
+  VAPID_PUBLIC_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  VAPID_PRIVATE_KEY?: string;
 }
 
 /** Falla al arrancar si falta una variable obligatoria (p. ej. DATABASE_URL). */
@@ -29,3 +37,4 @@ export function validarEntorno(config: Record<string, unknown>): Entorno {
   }
   return entorno;
 }
+

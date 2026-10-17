@@ -7,6 +7,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { validarEntorno } from './config/entorno';
 import { CafeinaModule } from './modulos/cafeina/cafeina.module';
 import { CircadianoModule } from './modulos/circadiano/circadiano.module';
+import { NotificacionesModule } from './modulos/notificaciones/notificaciones.module';
 import { OperacionesModule } from './modulos/operaciones/operaciones.module';
 import { PlataformaModule } from './modulos/plataforma/plataforma.module';
 import { TrabajadorModule } from './modulos/trabajador/trabajador.module';
@@ -25,8 +26,10 @@ import { SaludModule } from './salud/salud.module';
     OperacionesModule,
     CircadianoModule,
     CafeinaModule,
+    NotificacionesModule,
     TrabajadorModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}
+
