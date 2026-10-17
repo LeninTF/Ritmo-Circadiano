@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Prisma } from '../../generated/prisma/client';
 import { CrearTurnoDto } from './dto/crear-turno.dto';
 import { ActualizarTurnoDto } from './dto/actualizar-turno.dto';
 
@@ -35,54 +36,152 @@ export class OperacionesService {
     return turno;
   }
 
+  private async validarYRegistrarExcesoJornadaTx(
+    tx: Prisma.TransactionClient,
+    idUsuario: string,
+    fechaStr: string,
+    horasConduccion: number,
+    confirmarExceso?: boolean,
+    motivoExceso?: string,
+    idTurnoExcluir?: string,
+    idTurnoCreado?: string,
+  ) {
+    const LIMITE_CONTINUO = 5.0;
+    const LIMITE_DIARIO = 10.0;
+
+    const fechaDate = new Date(fechaStr);
+
+    const turnosExistentes = await tx.turnoLaboral.findMany({
+      where: {
+        idUsuario,
+        fecha: fechaDate,
+        ...(idTurnoExcluir ? { id: { not: idTurnoExcluir } } : {}),
+      },
+      select: { horasConduccion: true },
+    });
+
+    const horasAcumuladasPrevias = turnosExistentes.reduce(
+      (acc: number, t: { horasConduccion: Prisma.Decimal | number }) => acc + Number(t.horasConduccion),
+      0,
+    );
+    const horasTotalesDia = horasAcumuladasPrevias + horasConduccion;
+
+    const superaContinuo = horasConduccion > LIMITE_CONTINUO;
+    const superaDiario = horasTotalesDia > LIMITE_DIARIO;
+
+    if (superaContinuo || superaDiario) {
+      if (!confirmarExceso) {
+        throw new ConflictException({
+          mensaje: 'Exceso de jornada laboral detectado (RF14 / RN01). Se requiere confirmación explícita (confirmarExceso: true) y motivo.',
+          horasConduccionTurno: horasConduccion,
+          limiteContinuoMax: LIMITE_CONTINUO,
+          horasAcumuladasDia: horasTotalesDia,
+          limiteDiarioMax: LIMITE_DIARIO,
+          superaContinuo,
+          superaDiario,
+          requiereConfirmacion: true,
+        });
+      }
+
+      if (!motivoExceso || motivoExceso.trim().length === 0) {
+        throw new BadRequestException('Se requiere ingresar un motivo de justificación (motivoExceso) para aprobar el exceso de jornada laboral (RF14).');
+      }
+
+      await tx.excesoJornadaAuditoria.create({
+        data: {
+          idTurno: idTurnoCreado ?? null,
+          idUsuario,
+          fecha: fechaDate,
+          horasConduccion,
+          motivoExceso,
+        },
+      });
+    }
+  }
+
   async crearTurno(dto: CrearTurnoDto) {
     const ruta = await this.prisma.ruta.findUnique({ where: { id: dto.idRuta } });
     if (!ruta) {
       throw new BadRequestException(`Ruta con ID ${dto.idRuta} no existe`);
     }
 
-    return this.prisma.turnoLaboral.create({
-      data: {
-        idUsuario: dto.idUsuario,
-        idRuta: dto.idRuta,
-        fecha: new Date(dto.fecha),
-        inicioProgramado: new Date(dto.inicioProgramado),
-        finProgramado: new Date(dto.finProgramado),
-        horasConduccion: dto.horasConduccion,
-        esNocturno: dto.esNocturno,
-        estadoConfirmacion: dto.estadoConfirmacion ?? 'pendiente',
-        horaInicioReal: dto.horaInicioReal ? new Date(dto.horaInicioReal) : null,
-        horaFinReal: dto.horaFinReal ? new Date(dto.horaFinReal) : null,
-      },
-      include: { ruta: true },
+    return this.prisma.$transaction(async (tx) => {
+      const turno = await tx.turnoLaboral.create({
+        data: {
+          idUsuario: dto.idUsuario,
+          idRuta: dto.idRuta,
+          fecha: new Date(dto.fecha),
+          inicioProgramado: new Date(dto.inicioProgramado),
+          finProgramado: new Date(dto.finProgramado),
+          horasConduccion: dto.horasConduccion,
+          esNocturno: dto.esNocturno,
+          estadoConfirmacion: dto.estadoConfirmacion ?? 'pendiente',
+          horaInicioReal: dto.horaInicioReal ? new Date(dto.horaInicioReal) : null,
+          horaFinReal: dto.horaFinReal ? new Date(dto.horaFinReal) : null,
+        },
+        include: { ruta: true },
+      });
+
+      await this.validarYRegistrarExcesoJornadaTx(
+        tx,
+        dto.idUsuario,
+        dto.fecha,
+        dto.horasConduccion,
+        dto.confirmarExceso,
+        dto.motivoExceso,
+        undefined,
+        turno.id,
+      );
+
+      return turno;
     });
   }
 
   async actualizarTurno(id: string, dto: ActualizarTurnoDto) {
-    await this.obtenerTurnoPorId(id);
-
-    if (dto.idRuta) {
-      const ruta = await this.prisma.ruta.findUnique({ where: { id: dto.idRuta } });
-      if (!ruta) {
-        throw new BadRequestException(`Ruta con ID ${dto.idRuta} no existe`);
+    return this.prisma.$transaction(async (tx) => {
+      const turnoActual = await tx.turnoLaboral.findUnique({ where: { id } });
+      if (!turnoActual) {
+        throw new NotFoundException(`Turno con ID ${id} no encontrado`);
       }
-    }
 
-    return this.prisma.turnoLaboral.update({
-      where: { id },
-      data: {
-        ...(dto.idUsuario ? { idUsuario: dto.idUsuario } : {}),
-        ...(dto.idRuta ? { idRuta: dto.idRuta } : {}),
-        ...(dto.fecha ? { fecha: new Date(dto.fecha) } : {}),
-        ...(dto.inicioProgramado ? { inicioProgramado: new Date(dto.inicioProgramado) } : {}),
-        ...(dto.finProgramado ? { finProgramado: new Date(dto.finProgramado) } : {}),
-        ...(dto.horasConduccion !== undefined ? { horasConduccion: dto.horasConduccion } : {}),
-        ...(dto.esNocturno !== undefined ? { esNocturno: dto.esNocturno } : {}),
-        ...(dto.estadoConfirmacion ? { estadoConfirmacion: dto.estadoConfirmacion } : {}),
-        ...(dto.horaInicioReal !== undefined ? { horaInicioReal: dto.horaInicioReal ? new Date(dto.horaInicioReal) : null } : {}),
-        ...(dto.horaFinReal !== undefined ? { horaFinReal: dto.horaFinReal ? new Date(dto.horaFinReal) : null } : {}),
-      },
-      include: { ruta: true },
+      if (dto.idRuta) {
+        const ruta = await tx.ruta.findUnique({ where: { id: dto.idRuta } });
+        if (!ruta) {
+          throw new BadRequestException(`Ruta con ID ${dto.idRuta} no existe`);
+        }
+      }
+
+      const idUsuarioFinal = dto.idUsuario ?? turnoActual.idUsuario;
+      const fechaFinalStr = dto.fecha ?? turnoActual.fecha.toISOString().split('T')[0];
+      const horasConduccionFinal = dto.horasConduccion !== undefined ? dto.horasConduccion : Number(turnoActual.horasConduccion);
+
+      await this.validarYRegistrarExcesoJornadaTx(
+        tx,
+        idUsuarioFinal,
+        fechaFinalStr,
+        horasConduccionFinal,
+        dto.confirmarExceso,
+        dto.motivoExceso,
+        id,
+        id,
+      );
+
+      return tx.turnoLaboral.update({
+        where: { id },
+        data: {
+          ...(dto.idUsuario ? { idUsuario: dto.idUsuario } : {}),
+          ...(dto.idRuta ? { idRuta: dto.idRuta } : {}),
+          ...(dto.fecha ? { fecha: new Date(dto.fecha) } : {}),
+          ...(dto.inicioProgramado ? { inicioProgramado: new Date(dto.inicioProgramado) } : {}),
+          ...(dto.finProgramado ? { finProgramado: new Date(dto.finProgramado) } : {}),
+          ...(dto.horasConduccion !== undefined ? { horasConduccion: dto.horasConduccion } : {}),
+          ...(dto.esNocturno !== undefined ? { esNocturno: dto.esNocturno } : {}),
+          ...(dto.estadoConfirmacion ? { estadoConfirmacion: dto.estadoConfirmacion } : {}),
+          ...(dto.horaInicioReal !== undefined ? { horaInicioReal: dto.horaInicioReal ? new Date(dto.horaInicioReal) : null } : {}),
+          ...(dto.horaFinReal !== undefined ? { horaFinReal: dto.horaFinReal ? new Date(dto.horaFinReal) : null } : {}),
+        },
+        include: { ruta: true },
+      });
     });
   }
 
@@ -125,8 +224,9 @@ export class OperacionesService {
           estadoConfirmacion: 'pendiente',
         });
         resultados.importados++;
-      } catch (err: any) {
-        resultados.errores.push({ linea: i + 1, motivo: err.message ?? 'Error desconocido' });
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : 'Error desconocido';
+        resultados.errores.push({ linea: i + 1, motivo: errorMsg });
       }
     }
 

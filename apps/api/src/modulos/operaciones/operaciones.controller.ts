@@ -50,17 +50,19 @@ export class OperacionesController {
   }
 
   @Post('turnos')
-  @ApiOperation({ summary: 'Registrar un nuevo turno laboral (RF04)' })
+  @ApiOperation({ summary: 'Registrar un nuevo turno laboral (RF04, RF14)' })
   @ApiResponse({ status: 201, description: 'Turno creado exitosamente.' })
   @ApiResponse({ status: 400, description: 'Datos inválidos o ruta no existente.' })
+  @ApiResponse({ status: 409, description: 'Conflicto por exceso de jornada laboral sin confirmación (RF14)' })
   async crearTurno(@Body() dto: CrearTurnoDto) {
     return this.operacionesService.crearTurno(dto);
   }
 
   @Patch('turnos/:id')
-  @ApiOperation({ summary: 'Actualizar un turno laboral existente' })
+  @ApiOperation({ summary: 'Actualizar un turno laboral existente (RF04, RF14)' })
   @ApiResponse({ status: 200, description: 'Turno actualizado correctamente.' })
   @ApiResponse({ status: 404, description: 'Turno no encontrado.' })
+  @ApiResponse({ status: 409, description: 'Conflicto por exceso de jornada laboral sin confirmación (RF14)' })
   async actualizarTurno(@Param('id') id: string, @Body() dto: ActualizarTurnoDto) {
     return this.operacionesService.actualizarTurno(id, dto);
   }
