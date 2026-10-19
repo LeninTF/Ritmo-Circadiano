@@ -1,0 +1,11 @@
+{
+  "23": "app.module.ts",
+  "42": "seed.ts",
+  "55": "OperacionesService",
+  "56": "CrearTurnoDto",
+  "57": "PrismaHealthIndicator",
+  "58": "PrismaService",
+  "59": "operaciones.module.ts",
+  "60": "@nestjs/common",
+  "61": "api/src/main.ts"
+}
