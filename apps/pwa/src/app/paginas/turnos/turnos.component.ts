@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TurnosService } from './turnos.service';
+import { OfflineStoreService } from './offline-store.service';
 
 @Component({
   selector: 'app-turnos',
@@ -10,6 +11,13 @@ import { TurnosService } from './turnos.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="pagina">
+      @if (!offlineStore.isOnline()) {
+        <div style="background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:0.75rem 1rem;border-radius:0.5rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;">
+          <span>⚠️ <strong>Modo Sin Conexión (Offline):</strong> Mostrando turnos y rutas desde el caché local (OfflineStore).</span>
+          <span style="font-size:0.85rem;background:#f59e0b;color:#fff;padding:0.2rem 0.5rem;border-radius:0.25rem;">Offline</span>
+        </div>
+      }
+
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
         <h1>Grilla Semanal de Turnos</h1>
         <div>
@@ -96,6 +104,7 @@ import { TurnosService } from './turnos.service';
 })
 export class TurnosComponent implements OnInit {
   private readonly svc = inject(TurnosService);
+  readonly offlineStore = inject(OfflineStoreService);
   private readonly fb = inject(FormBuilder);
   rutas = signal<any[]>([]);
   usr = signal<string>('00000000-0000-0000-0000-000000000001');
