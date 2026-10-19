@@ -1,7 +1,16 @@
 {
-  "15": "PrismaService",
-  "23": "@angular/core",
+  "15": "turno.e2e-spec.ts",
+  "23": "app.routes.ts",
   "27": "client.ts",
-  "29": "contracts/src/index.ts",
-  "30": "pull_request_template.md"
+  "29": "client.ts",
+  "30": "pull_request_template.md",
+  "33": "@nestjs/common",
+  "34": "TurnosService",
+  "36": "indicadores.component.ts",
+  "41": "@angular/core",
+  "42": "PrismaService",
+  "66": "Prisma__RutaClient",
+  "71": "cafeina.component.ts",
+  "72": "IndicadoresComponent",
+  "77": "plan.component.ts"
 }

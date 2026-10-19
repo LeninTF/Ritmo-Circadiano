@@ -6,9 +6,9 @@
     "semantic_hash": ""
   },
   "CONSTRAINTS.md": {
-    "mtime": 1792183485.8685596,
-    "seen": 1792436552.08625,
-    "ast_hash": "0e2f086a8ff4835fa1e7c1c1c1a34524",
+    "mtime": 1792441948.3392112,
+    "seen": 1792441972.7008908,
+    "ast_hash": "e697271094cac0055f916c0ddf5d7132",
     "semantic_hash": ""
   },
   "contexto/avance01.md": {
@@ -408,9 +408,9 @@
     "semantic_hash": "6b4f539e674e1cf91f1c426c1a06c853"
   },
   "prisma/migrations/20261016195525_i1_parametro_sistema/migration.sql": {
-    "mtime": 1792180525.4709687,
-    "seen": 1792182871.3866646,
-    "ast_hash": "",
+    "mtime": 1792250543.0358078,
+    "seen": 1792441972.7008908,
+    "ast_hash": "16b18786ad26a3ef0070c1108cec9f1d",
     "semantic_hash": ""
   },
   "apps/pwa/ngsw-config.json": {
@@ -747,6 +747,18 @@
     "mtime": 1792437728.6420555,
     "seen": 1792437731.6792457,
     "ast_hash": "0dc2cddf1978f25a9b2cea1658729583",
+    "semantic_hash": ""
+  },
+  "prisma/migrations/20261016222309_init_i2_operaciones/migration.sql": {
+    "mtime": 1792437692.0749683,
+    "seen": 1792441972.7008908,
+    "ast_hash": "405383b624e84c409d54a3ee14beb8a4",
+    "semantic_hash": ""
+  },
+  "prisma/migrations/20261017000000_vistas_indicadores_rf13/migration.sql": {
+    "mtime": 1792437728.7013183,
+    "seen": 1792441972.7008908,
+    "ast_hash": "0227f835541593a8f67db22c0876e76a",
     "semantic_hash": ""
   }
 }

@@ -27,7 +27,6 @@
   "28": "pwa/tsconfig.app.json",
   "31": "typecheck",
   "32": "pwa/tsconfig.json",
-  "33": "prisma-generate",
   "35": "serve",
   "37": "api/project.json",
   "38": "targets",
