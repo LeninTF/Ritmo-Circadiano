@@ -1,0 +1,10 @@
+{
+  "23": "app.module.ts",
+  "42": "seed.ts",
+  "55": "OperacionesService",
+  "56": "@nestjs/common",
+  "57": "operaciones.controller.ts",
+  "58": "operaciones.module.ts",
+  "59": "PrismaService",
+  "60": "api/src/main.ts"
+}
