@@ -7,14 +7,14 @@ PWA para gestionar ritmos circadianos y la calidad del sueño de los trabajadore
 | Necesitas… | Fuente | Cómo |
 |---|---|---|
 | Ubicar código, dependencias o impacto entre slices | graphify (§13) | `graphify query/path/explain` antes de grep |
-| Texto exacto de un criterio Gherkin CP-01…CP-16 | `contexto/arq_apf1.md` → Anexo 15, Tabla 30 | Grep `RFxx` en esa sección; no leer el archivo entero |
-| Trazabilidad RF ↔ problema/objetivo/sprint | `contexto/arq_apf1.md` → Anexo 16, Tabla 31 | Grep por código |
-| Indicadores del estudio, fórmulas de jetlag social y cafeína de la ficha (RF16, vistas `v_ind_*`) | `contexto/arq_apf1.md` → Tabla 1, Anexo 2, Anexo 3 (Tabla 27) | Solo al tocar exportación o indicadores |
-| Procesos AS-IS/TO-BE, actores, textos de UI del dominio | `contexto/arq_apf1.md` → Cap. IV, Anexo 11 | Solo para copy o flujos |
+| Texto exacto de un criterio Gherkin CP-01…CP-16 | `contexto/avance01.md` → Anexo 15, Tabla 30 | Grep `RFxx` en esa sección; no leer el archivo entero |
+| Trazabilidad RF ↔ problema/objetivo/sprint | `contexto/avance01.md` → Anexo 16, Tabla 31 | Grep por código |
+| Indicadores del estudio, fórmulas de jetlag social y cafeína de la ficha (RF16, vistas `v_ind_*`) | `contexto/avance01.md` → Tabla 1, Anexo 2, Anexo 3 (Tabla 27) | Solo al tocar exportación o indicadores |
+| Procesos AS-IS/TO-BE, actores, textos de UI del dominio | `contexto/avance01.md` → Cap. IV, Anexo 11 | Solo para copy o flujos |
 | Estado, detalle o dueño de una tarea/RF/ERD | MCP Notion (§11) | Consultar la fila, no copiarla |
 | Gates de calidad y excepciones | `CONSTRAINTS.md` | Al cerrar tarea y antes de PR |
 
-Si `contexto/arq_apf1.md` contradice este archivo, **prevalece este archivo** (versión refinada) y se avisa al integrante.
+Si `contexto/avance01.md` contradice este archivo, **prevalece este archivo** (versión refinada) y se avisa al integrante.
 
 ## 1. Arquitectura y SOLID
 
@@ -22,7 +22,7 @@ Monolito modular TypeScript en monorepo **Nx**:
 
 ```
 apps/api         NestJS · API REST · un módulo Nest por slice
-apps/pwa         Angular 17+ standalone · @angular/pwa · rutas lazy por slice
+apps/pwa         Angular 22 standalone · @angular/pwa · rutas lazy por slice
 libs/domain      Funciones PURAS: cafeína, circadiano, rMEQ, RN01, RN09, privacidad (solo TS + SunCalc)
 libs/contracts   DTOs, interfaces y tokens DI = fuente de verdad front/back
 prisma/schema/   Esquema multiarchivo: un .prisma por slice
@@ -42,7 +42,7 @@ SOLID aplicado al stack:
 
 ## 2. Stack
 
-Node.js LTS ≥ 20 (`.nvmrc`), TS strict · Angular 17+, @angular/pwa, SunCalc, Chart.js (ng2-charts), SheetJS · NestJS + event-emitter, schedule, terminus, swagger, throttler · PostgreSQL 16, Prisma multiarchivo, Dexie.js · Argon2id, JWT ≤ 24 h, helmet, CORS restringido, web-push (VAPID) · Jest, Supertest, Playwright (offline e2e), k6, Lighthouse CI, axe-core · GitHub Actions (`nx affected`), Cloudflare Pages/Netlify, Render/Railway, Neon/Supabase, UptimeRobot.
+Node.js 24.15.0 (`.nvmrc`), TypeScript 6.0.3 strict · Angular 22.2.3, @angular/pwa 22.2.3, SunCalc 2.1.1, Chart.js (ng2-charts), SheetJS · NestJS 11.2.7 + event-emitter 3.1.0, schedule 6.1.3, terminus 11.1.1, swagger 11.4.7, throttler 6.7.1 · PostgreSQL 16, Prisma 7.10.1 multiarchivo, Dexie.js · Argon2id (argon2 0.45.1), JWT ≤ 24 h, helmet 8.3.0, CORS restringido, web-push (VAPID) · Jest 30.5.2, Supertest, Playwright (offline e2e), k6, Lighthouse CI, axe-core · Nx 23.3.0, ESLint 9.8.0, Prettier 3.8.1 · GitHub Actions (`nx affected`), Cloudflare Pages/Netlify, Render/Railway, Neon/Supabase, UptimeRobot.
 
 ## 3. Comandos
 

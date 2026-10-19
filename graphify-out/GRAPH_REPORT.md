@@ -1,17 +1,17 @@
 # Graph Report - Ritmo-Circadiano  (2026-10-19)
 
 ## Corpus Check
-- 115 files · ~62,037 words
+- 76 files · ~27,569 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 19 file(s) not represented in the graph (top: (none) 7, .prisma 6, .scss 2)
 
 ## Summary
-- 1456 nodes · 1726 edges · 93 communities (66 shown, 27 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 18 edges (avg confidence: 0.89)
+- 673 nodes · 752 edges · 61 communities (49 shown, 12 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 5 edges (avg confidence: 0.91)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `1612d53c`
+- Built from commit: `f117a03c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -71,72 +71,45 @@
 - jest-preset-angular
 - pwa/jest.config.cts
 - api/tsconfig.json
-- test
-- serve
-- api/tsconfig.json
-- pwa/project.json
-- options
-- typecheck
-- pwa/tsconfig.app.json
-- Constraints
-- contracts/tsconfig.lib.json
-- api/project.json
-- targets
-- Prisma__RutaClient
-- Prisma__TurnoLaboralClient
-- options
-- production
-- test
-- cafeina.component.ts
-- IndicadoresComponent
-- scripts
-- configurations
-- prune-lockfile
-- Prisma__ExcesoJornadaAuditoriaClient
-- plan.component.ts
-- webpack.config.js
-- Prisma__ParametroSistemaClient
-- ngsw-config.json
-- @nx/jest
-- PrismaClientBaseOptions
-- dotenv
-- environment.ts
-- environment.production.ts
-- jest-preset-angular
-- engines
+- prisma.service.ts
+- PrismaHealthIndicator
+- PrismaService
+- overrides
+- api/src/main.ts
+- @nestjs/common
 
 ## God Nodes (most connected - your core abstractions)
-1. `@nestjs/common` - 23 edges
-2. `ExcesoJornadaAuditoriaDelegate` - 18 edges
-3. `ParametroSistemaDelegate` - 18 edges
-4. `RutaDelegate` - 18 edges
-5. `TurnoLaboralDelegate` - 18 edges
-6. `compilerOptions` - 18 edges
-7. `PrismaService` - 17 edges
-8. `OperacionesService` - 16 edges
-9. `CrearTurnoDto` - 16 edges
-10. `CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)` - 15 edges
+1. `compilerOptions` - 18 edges
+2. `CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)` - 15 edges
+3. `@nestjs/common` - 13 edges
+4. `@angular/core` - 9 edges
+5. `PrismaService` - 9 edges
+6. `compilerOptions` - 9 edges
+7. `compilerOptions` - 9 edges
+8. `targets` - 9 edges
+9. `compilerOptions` - 8 edges
+10. `PrismaHealthIndicator` - 7 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `1. Arquitectura y SOLID` --references--> `PrismaService`  [INFERRED]
   CLAUDE.md → apps/api/src/prisma/prisma.service.ts
-- `9. Convenciones de nomenclatura` --references--> `CrearTurnoDto`  [INFERRED]
-  CLAUDE.md → apps/api/src/modulos/operaciones/dto/crear-turno.dto.ts
-- `9. Convenciones de nomenclatura` --references--> `TurnosService`  [INFERRED]
-  CLAUDE.md → apps/pwa/src/app/paginas/turnos/turnos.service.ts
-- `6. Privacidad y seguridad (obligatorio · Ley N.° 29733)` --references--> `assertKAnonymity()`  [INFERRED]
-  CLAUDE.md → libs/domain/src/k-anonymity.ts
+- `10. Flujo Git y validación pre-PR` --references--> `main()`  [INFERRED]
+  CLAUDE.md → prisma/seed.ts
 - `9. Convenciones de nomenclatura` --references--> `ColorSemaforo`  [INFERRED]
   CLAUDE.md → libs/contracts/src/semaforo.ts
+- `RangoRmeq` --references--> `CategoriaCronotipo`  [EXTRACTED]
+  libs/domain/src/constantes.ts → libs/contracts/src/cronotipo.ts
+- `main()` --calls--> `sembrarIdentidad()`  [EXTRACTED]
+  prisma/seed.ts → prisma/seeds/identidad.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (93 total, 27 thin omitted)
+## Communities (61 total, 12 thin omitted)
 
 ### Community 0 - "CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)"
-Cohesion: 0.02
-Nodes (115): AnyNull, Args, At, AtLeast, AtLoose, AtStrict, BatchPayload, Boolean (+107 more)
+Cohesion: 0.07
+Nodes (20): 0. Carga de contexto bajo demanda (no precargar), 10. Flujo Git y validación pre-PR, 11. Protocolo MCP de Notion (estado vivo), 12. CONSTRAINTS.md (límites duros), 13. graphify, 2. Stack, 3. Comandos, 4. Vertical slices (dueños de código) (+12 more)
 
 ### Community 1 - "Constraints"
 Cohesion: 0.02
@@ -155,8 +128,8 @@ Cohesion: 0.04
 Nodes (53): AggregateParametroSistema, GetParametroSistemaAggregateType, GetParametroSistemaGroupByPayload, ParametroSistemaAggregateArgs, ParametroSistemaCountAggregateInputType, ParametroSistemaCountAggregateOutputType, ParametroSistemaCountArgs, ParametroSistemaCountOrderByAggregateInput (+45 more)
 
 ### Community 5 - "dependencies"
-Cohesion: 0.04
-Nodes (49): license, name, private, version, @angular/build, @angular/cli, @angular/compiler, @angular/compiler-cli (+41 more)
+Cohesion: 0.07
+Nodes (29): dependencies, @angular/common, @angular/compiler, @angular/core, @angular/forms, @angular/platform-browser, @angular/platform-browser-dynamic, @angular/router (+21 more)
 
 ### Community 6 - "compilerOptions"
 Cohesion: 0.04
@@ -238,7 +211,19 @@ Nodes (9): $Enums, ExcesoJornadaAuditoria, ParametroSistema, PrismaClient, Ruta,
 Cohesion: 0.40
 Nodes (4): Checklist de Verificación y Calidad, Descripción, Notas Adicionales / Evidencias, Tipo de Cambio
 
-### Community 31 - "typecheck"
+### Community 20 - "compilerOptions"
+Cohesion: 0.22
+Nodes (8): compilerOptions, module, moduleResolution, outDir, types, extends, include, ./tsconfig.json
+
+### Community 21 - "contracts/tsconfig.lib.json"
+Cohesion: 0.25
+Nodes (7): compilerOptions, declaration, outDir, types, extends, include, ./tsconfig.json
+
+### Community 23 - "app.module.ts"
+Cohesion: 0.13
+Nodes (8): CafeinaModule, CircadianoModule, OperacionesModule, PlataformaModule, TrabajadorModule, @nestjs/event-emitter, @nestjs/schedule, @nestjs/throttler
+
+### Community 24 - "compilerOptions"
 Cohesion: 0.15
 Nodes (12): compilerOptions, emitDecoratorMetadata, experimentalDecorators, module, moduleResolution, outDir, target, types (+4 more)
 
@@ -286,137 +271,45 @@ Nodes (14): compilerOptions, forceConsistentCasingInFileNames, importHelpers, mo
 Cohesion: 0.25
 Nodes (7): compilerOptions, esModuleInterop, extends, files, include, ../../tsconfig.base.json, references
 
-### Community 46 - "options"
-Cohesion: 0.25
-Nodes (8): cache, dependsOn, executor, options, outputs, buildTarget, options, copy-workspace-modules
-
-### Community 47 - "production"
-Cohesion: 0.25
-Nodes (8): commands, parallel, typecheck, cache, dependsOn, executor, inputs, options
-
-### Community 48 - "test"
-Cohesion: 0.25
-Nodes (6): $Enums, ExcesoJornadaAuditoria, ParametroSistema, Ruta, TurnoLaboral, EstadoConfirmacion
-
-### Community 49 - "ngsw-config.json"
-Cohesion: 0.22
-Nodes (8): compilerOptions, module, moduleResolution, outDir, types, extends, include, ./tsconfig.json
-
-### Community 50 - "environment.ts"
-Cohesion: 0.25
-Nodes (8): configurations, defaultConfiguration, executor, outputs, executor, targets, build, lint
-
-### Community 51 - "environment.production.ts"
-Cohesion: 0.22
-Nodes (8): compilerOptions, declaration, outDir, types, exclude, extends, include, ./tsconfig.json
-
-### Community 52 - "jest-preset-angular"
-Cohesion: 0.22
-Nodes (8): compilerOptions, module, moduleResolution, outDir, types, extends, include, ./tsconfig.json
-
-### Community 54 - "api/tsconfig.json"
+### Community 55 - "prisma.service.ts"
 Cohesion: 0.29
-Nodes (7): command, cache, executor, inputs, options, outputs, prisma-generate
+Nodes (6): main(), AREAS, sembrarIdentidad(), argon2, @nestjs/config, @prisma/adapter-pg
 
-### Community 55 - "test"
+### Community 57 - "PrismaService"
+Cohesion: 0.20
+Nodes (3): PrismaModule, PrismaService, 1. Arquitectura y SOLID
+
+### Community 58 - "overrides"
+Cohesion: 0.20
+Nodes (10): ajv, picomatch, js-yaml, undici, overrides, @angular-devkit/core@19.0.1, @nestjs/swagger, nx (+2 more)
+
+### Community 59 - "api/src/main.ts"
 Cohesion: 0.29
-Nodes (7): jestConfig, passWithNoTests, test, dependsOn, executor, options, outputs
+Nodes (4): AppModule, helmet, @nestjs/core, @nestjs/swagger
 
-### Community 56 - "serve"
-Cohesion: 0.29
-Nodes (7): runBuildTargetDependencies, continuous, defaultConfiguration, dependsOn, executor, options, serve
-
-### Community 57 - "api/tsconfig.json"
-Cohesion: 0.25
-Nodes (7): compilerOptions, esModuleInterop, extends, files, include, ../../tsconfig.base.json, references
-
-### Community 58 - "pwa/project.json"
-Cohesion: 0.29
-Nodes (6): name, prefix, projectType, $schema, sourceRoot, tags
-
-### Community 59 - "options"
-Cohesion: 0.29
-Nodes (7): buildTarget, spa, staticFilePath, continuous, executor, options, serve-static
-
-### Community 60 - "typecheck"
-Cohesion: 0.29
-Nodes (7): commands, parallel, typecheck, cache, executor, inputs, options
-
-### Community 61 - "pwa/tsconfig.app.json"
-Cohesion: 0.25
-Nodes (7): compilerOptions, outDir, types, exclude, extends, include, ./tsconfig.json
-
-### Community 62 - "Constraints"
-Cohesion: 0.25
-Nodes (7): Constraints, Enforced with numbers, Exceptions, Exceptions, Floor (always enforced, blocks immediately), Measured, not yet enforced, Not set up (and why)
-
-### Community 63 - "contracts/tsconfig.lib.json"
-Cohesion: 0.25
-Nodes (7): compilerOptions, declaration, outDir, types, extends, include, ./tsconfig.json
-
-### Community 64 - "api/project.json"
-Cohesion: 0.33
-Nodes (5): name, projectType, $schema, sourceRoot, tags
-
-### Community 65 - "targets"
-Cohesion: 0.33
-Nodes (6): dependsOn, dependsOn, executor, targets, build, prune
-
-### Community 68 - "options"
-Cohesion: 0.33
-Nodes (6): options, assets, browser, inlineStyleLanguage, outputPath, styles
-
-### Community 69 - "production"
-Cohesion: 0.33
-Nodes (6): production, budgets, buildTarget, fileReplacements, outputHashing, serviceWorker
-
-### Community 70 - "test"
-Cohesion: 0.33
-Nodes (6): jestConfig, tsConfig, test, executor, options, outputs
-
-### Community 73 - "scripts"
-Cohesion: 0.33
-Nodes (6): scripts, check:coverage-domain, check:lint, check:secrets, check:types, db:setup
-
-### Community 74 - "configurations"
-Cohesion: 0.40
-Nodes (5): development, production, buildTarget, buildTarget, configurations
-
-### Community 75 - "prune-lockfile"
-Cohesion: 0.40
-Nodes (5): cache, dependsOn, executor, outputs, prune-lockfile
-
-### Community 78 - "webpack.config.js"
-Cohesion: 0.40
-Nodes (3): { join }, { NxAppWebpackPlugin }, @nx/webpack
-
-### Community 82 - "ngsw-config.json"
-Cohesion: 0.50
-Nodes (3): assetGroups, index, $schema
-
-### Community 85 - "PrismaClientBaseOptions"
-Cohesion: 0.67
-Nodes (3): PrismaClientBaseOptions, PrismaClientOptionsWithAccelerateUrl, PrismaClientOptionsWithAdapter
+### Community 60 - "@nestjs/common"
+Cohesion: 0.52
+Nodes (3): SaludModule, @nestjs/common, @nestjs/terminus
 
 ## Knowledge Gaps
-- **58 isolated node(s):** `./tsconfig.json`, `../../tsconfig.base.json`, `./tsconfig.json`, `./tsconfig.json`, `../../tsconfig.base.json` (+53 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1113 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **27 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **61 isolated node(s):** `@angular-devkit/core`, `@angular-devkit/schematics`, `@angular/build`, `@angular/cli`, `@angular/compiler-cli` (+56 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 454 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **12 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `@prisma/client` connect `client.ts` to `CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)`, `Constraints`, `avance01.md`, `package.json`, `devDependencies`, `dependencies`, `@angular/core`, `jest.config.cts`, `client.ts`?**
-  _High betweenness centrality (0.227) - this node is a cross-community bridge._
-- **What connects `./tsconfig.json`, `../../tsconfig.base.json`, `./tsconfig.json` to the rest of the system?**
-  _58 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)` connect `CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)` to `PrismaService`?**
+  _High betweenness centrality (0.067) - this node is a cross-community bridge._
+- **What connects `@angular-devkit/core`, `@angular-devkit/schematics`, `@angular/build` to the rest of the system?**
+  _61 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)` be split into smaller, more focused modules?**
-  _Cohesion score 0.017241379310344827 - nodes in this community are weakly interconnected._
-- **Why does `devDependencies` connect `compilerOptions` to `dependencies`?**
-  _High betweenness centrality (0.053) - this node is a cross-community bridge._
-- **Should `Constraints` be split into smaller, more focused modules?**
-  _Cohesion score 0.02040816326530612 - nodes in this community are weakly interconnected._
-- **Why does `@nestjs/common` connect `@nestjs/common` to `dependencies`, `engines`, `domain/project.json`, `turno.e2e-spec.ts`, `compilerOptions`?**
-  _High betweenness centrality (0.041) - this node is a cross-community bridge._
-- **Should `avance01.md` be split into smaller, more focused modules?**
-  _Cohesion score 0.024390243902439025 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07407407407407407 - nodes in this community are weakly interconnected._
+- **Why does `devDependencies` connect `devDependencies` to `package.json`?**
+  _High betweenness centrality (0.062) - this node is a cross-community bridge._
+- **Should `package.json` be split into smaller, more focused modules?**
+  _Cohesion score 0.03636363636363636 - nodes in this community are weakly interconnected._
+- **Why does `PrismaService` connect `PrismaService` to `PrismaHealthIndicator`, `@nestjs/common`, `prisma.service.ts`?**
+  _High betweenness centrality (0.057) - this node is a cross-community bridge._
+- **Should `devDependencies` be split into smaller, more focused modules?**
+  _Cohesion score 0.0425531914893617 - nodes in this community are weakly interconnected._
