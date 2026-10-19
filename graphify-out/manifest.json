@@ -156,8 +156,8 @@
     "semantic_hash": ""
   },
   "jest.preset.js": {
-    "mtime": 1792379456.0578468,
-    "seen": 1792436730.9494996,
+    "mtime": 1792437192.7264411,
+    "seen": 1792437195.3548322,
     "ast_hash": "14e2a8aeaa9b425f7945f592e2352c67",
     "semantic_hash": ""
   },
@@ -258,8 +258,8 @@
     "semantic_hash": ""
   },
   "libs/domain/src/index.ts": {
-    "mtime": 1792379456.0588384,
-    "seen": 1792436730.9494996,
+    "mtime": 1792437192.7274399,
+    "seen": 1792437195.356833,
     "ast_hash": "62b9787053a33ef3b770f78221eaea77",
     "semantic_hash": ""
   },
@@ -534,75 +534,75 @@
     "semantic_hash": ""
   },
   "apps/api/src/generated/prisma/browser.ts": {
-    "mtime": 1792247854.7112062,
-    "seen": 1792436730.9494996,
-    "ast_hash": "e1abc4a13af1d568cdd0681718ae13bb",
+    "mtime": 1792437192.7072594,
+    "seen": 1792437195.3488324,
+    "ast_hash": "ed7c6da35ec0d97c04d50e69c534154c",
     "semantic_hash": ""
   },
   "apps/api/src/generated/prisma/client.ts": {
-    "mtime": 1792247854.7112062,
-    "seen": 1792436730.9494996,
-    "ast_hash": "324161038184cc67105a8c9e9a5c6940",
+    "mtime": 1792437192.7072594,
+    "seen": 1792437195.3488324,
+    "ast_hash": "477ebf5cb3f9201a7b455383b522df41",
     "semantic_hash": ""
   },
   "apps/api/src/generated/prisma/commonInputTypes.ts": {
-    "mtime": 1792247854.7112062,
-    "seen": 1792436730.9494996,
-    "ast_hash": "2aeccc75934ebb9e2cf35a81e2e01359",
+    "mtime": 1792437192.7082596,
+    "seen": 1792437195.3488324,
+    "ast_hash": "8c18e148409e0aa6b8c00ea2a701b5d7",
     "semantic_hash": ""
   },
   "apps/api/src/generated/prisma/enums.ts": {
-    "mtime": 1792247854.7112062,
-    "seen": 1792436730.9494996,
-    "ast_hash": "b4a28ff04805b80bf23b496ee2cf157e",
+    "mtime": 1792437192.7082596,
+    "seen": 1792437195.3488324,
+    "ast_hash": "a19dcc95b33e0ef911e9e824464be092",
     "semantic_hash": ""
   },
   "apps/api/src/generated/prisma/internal/class.ts": {
-    "mtime": 1792247854.7140775,
-    "seen": 1792436730.9494996,
-    "ast_hash": "a305346d7a2957aac6e35833f38bc845",
+    "mtime": 1792437192.7093565,
+    "seen": 1792437195.3488324,
+    "ast_hash": "91d2372e14f23f522d6fc008e6a80745",
     "semantic_hash": ""
   },
   "apps/api/src/generated/prisma/internal/prismaNamespace.ts": {
-    "mtime": 1792247854.7140775,
-    "seen": 1792436730.9494996,
-    "ast_hash": "30bca4d34f070d192061403dd6d2e15a",
+    "mtime": 1792437192.7103577,
+    "seen": 1792437195.3488324,
+    "ast_hash": "98e02efe0a509e08017af3176d12e149",
     "semantic_hash": ""
   },
   "apps/api/src/generated/prisma/internal/prismaNamespaceBrowser.ts": {
-    "mtime": 1792247854.7140775,
-    "seen": 1792436730.9494996,
-    "ast_hash": "0ea8602e7495c6f79477a2375c60cfa9",
+    "mtime": 1792437192.7103577,
+    "seen": 1792437195.3488324,
+    "ast_hash": "35b406ef78ca040158329bf41a2af84d",
     "semantic_hash": ""
   },
   "apps/api/src/generated/prisma/models.ts": {
-    "mtime": 1792247854.7112062,
-    "seen": 1792436730.9494996,
-    "ast_hash": "f2135ef430e38f622a7e2f9751b18f06",
+    "mtime": 1792437192.7113597,
+    "seen": 1792437195.3488324,
+    "ast_hash": "9b252eacfc60f0b7007a9b3edd97825e",
     "semantic_hash": ""
   },
   "apps/api/src/generated/prisma/models/ExcesoJornadaAuditoria.ts": {
-    "mtime": 1792247854.7140775,
-    "seen": 1792436730.9494996,
-    "ast_hash": "03a3c2ad28ddf7c502a4ca038e3d25c2",
+    "mtime": 1792437192.7124383,
+    "seen": 1792437195.3488324,
+    "ast_hash": "379143ebe73adbcafa6267e59fb8dfbe",
     "semantic_hash": ""
   },
   "apps/api/src/generated/prisma/models/ParametroSistema.ts": {
-    "mtime": 1792247854.7140775,
-    "seen": 1792436730.9494996,
-    "ast_hash": "5c1a855cf189451dd7c79d50cb22c837",
+    "mtime": 1792437192.7134411,
+    "seen": 1792437195.3488324,
+    "ast_hash": "493d78673738bfccdda17f18440e52ec",
     "semantic_hash": ""
   },
   "apps/api/src/generated/prisma/models/Ruta.ts": {
-    "mtime": 1792247854.7140775,
-    "seen": 1792436730.9494996,
-    "ast_hash": "d23d71a18df076174854bfe15f64fdf0",
+    "mtime": 1792437192.7134411,
+    "seen": 1792437195.3488324,
+    "ast_hash": "dbd52d162fa04a7bf1f42037ac68ce75",
     "semantic_hash": ""
   },
   "apps/api/src/generated/prisma/models/TurnoLaboral.ts": {
-    "mtime": 1792247854.7140775,
-    "seen": 1792436730.9494996,
-    "ast_hash": "526ac9b184481ec195c36a2f76aa74ef",
+    "mtime": 1792437192.7144396,
+    "seen": 1792437195.3488324,
+    "ast_hash": "69c09827a77b0639859592332b981d17",
     "semantic_hash": ""
   },
   "apps/api/src/modulos/indicadores/indicadores.controller.ts": {
@@ -654,8 +654,8 @@
     "semantic_hash": ""
   },
   "apps/api/src/modulos/operaciones/operaciones.service.ts": {
-    "mtime": 1792379456.048141,
-    "seen": 1792436730.9494996,
+    "mtime": 1792437192.7154403,
+    "seen": 1792437195.3498323,
     "ast_hash": "565cdfe91212679debeb0a24c5b9ecf3",
     "semantic_hash": ""
   },
@@ -696,8 +696,8 @@
     "semantic_hash": ""
   },
   "libs/domain/src/rn01.ts": {
-    "mtime": 1792379456.0598395,
-    "seen": 1792436730.9494996,
+    "mtime": 1792437192.7284393,
+    "seen": 1792437195.356833,
     "ast_hash": "fb95bb5d1b6ee171e0484eea7ed451cc",
     "semantic_hash": ""
   },
@@ -714,8 +714,8 @@
     "semantic_hash": ""
   },
   ".github/pull_request_template.md": {
-    "mtime": 1792379456.0456216,
-    "seen": 1792436730.9494996,
+    "mtime": 1792437192.7062595,
+    "seen": 1792437195.3578327,
     "ast_hash": "0dc2cddf1978f25a9b2cea1658729583",
     "semantic_hash": ""
   }
