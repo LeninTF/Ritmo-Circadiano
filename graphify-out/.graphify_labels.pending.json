@@ -1,0 +1,12 @@
+{
+  "8": "@angular/core",
+  "23": "app.module.ts",
+  "42": "seed.ts",
+  "55": "CrearTurnoDto",
+  "56": "salud.controller.ts",
+  "57": "operaciones.service.ts",
+  "58": "@nestjs/common",
+  "59": "TurnosComponent",
+  "60": ".obtenerPanel",
+  "61": "operaciones.module.ts"
+}
