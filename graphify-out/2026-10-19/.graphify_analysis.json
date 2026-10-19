@@ -985,14 +985,14 @@
     "24": [
       "claude",
       "claude_0_carga_de_contexto_bajo_demanda_no_precargar",
-      "claude_10_flujo_git_y_validaci\u00f3n_pre_pr",
+      "claude_10_flujo_git_y_validación_pre_pr",
       "claude_11_protocolo_mcp_de_notion_estado_vivo",
-      "claude_12_constraints_md_l\u00edmites_duros",
+      "claude_12_constraints_md_límites_duros",
       "claude_13_graphify",
       "claude_2_stack",
       "claude_3_comandos",
-      "claude_4_vertical_slices_due\u00f1os_de_c\u00f3digo",
-      "claude_5_reglas_de_negocio_implementar_exactamente_as\u00ed",
+      "claude_4_vertical_slices_dueños_de_código",
+      "claude_5_reglas_de_negocio_implementar_exactamente_así",
       "claude_6_privacidad_y_seguridad_obligatorio_ley_n_29733",
       "claude_7_offline_rnf03",
       "claude_8_modelo_de_datos",
@@ -1778,28 +1778,17 @@
       "degree": 16
     },
     {
-      "id": "claude_claude_md_gestor_web_circadiano_transporte_cueva_s_a_c",
-      "label": "CLAUDE.md \u2014 Gestor Web Circadiano (Transporte Cueva S.A.C.)",
+      "id": "apps_api_src_modulos_operaciones_dto_crear_turno_dto_crearturnodto",
+      "label": "CrearTurnoDto",
       "degree": 15
     },
     {
-      "id": "apps_api_src_modulos_operaciones_dto_crear_turno_dto_crearturnodto",
-      "label": "CrearTurnoDto",
+      "id": "claude_claude_md_gestor_web_circadiano_transporte_cueva_s_a_c",
+      "label": "CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)",
       "degree": 15
     }
   ],
   "surprises": [
-    {
-      "source": "10. Flujo Git y validaci\u00f3n pre-PR",
-      "target": "main()",
-      "source_files": [
-        "CLAUDE.md",
-        "prisma/seed.ts"
-      ],
-      "confidence": "INFERRED",
-      "relation": "references",
-      "why": "inferred connection - not explicitly stated in source; crosses file types (doc \u2194 code); connects across different repos/directories; bridges separate communities"
-    },
     {
       "source": "1. Arquitectura y SOLID",
       "target": "PrismaService",
@@ -1809,7 +1798,18 @@
       ],
       "confidence": "INFERRED",
       "relation": "references",
-      "why": "inferred connection - not explicitly stated in source; crosses file types (doc \u2194 code); connects across different repos/directories; peripheral node `1. Arquitectura y SOLID` unexpectedly reaches hub `PrismaService`"
+      "why": "inferred connection - not explicitly stated in source; crosses file types (code ↔ doc); connects across different repos/directories; peripheral node `1. Arquitectura y SOLID` unexpectedly reaches hub `PrismaService`"
+    },
+    {
+      "source": "10. Flujo Git y validación pre-PR",
+      "target": "main()",
+      "source_files": [
+        "CLAUDE.md",
+        "prisma/seed.ts"
+      ],
+      "confidence": "INFERRED",
+      "relation": "references",
+      "why": "inferred connection - not explicitly stated in source; crosses file types (code ↔ doc); connects across different repos/directories; bridges separate communities"
     },
     {
       "source": "9. Convenciones de nomenclatura",
@@ -1820,7 +1820,7 @@
       ],
       "confidence": "INFERRED",
       "relation": "references",
-      "why": "inferred connection - not explicitly stated in source; crosses file types (doc \u2194 code); connects across different repos/directories"
+      "why": "inferred connection - not explicitly stated in source; crosses file types (code ↔ doc); connects across different repos/directories"
     },
     {
       "source": "main()",
@@ -1845,8 +1845,41 @@
       "why": "bridges separate communities"
     }
   ],
-  "tokens": {
-    "input": 0,
-    "output": 0
-  }
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `@prisma/client` connect `test` to `CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)`, `Constraints`, `avance01.md`, `package.json`, `devDependencies`, `dependencies`, `@angular/core`, `jest.config.cts`, `copy-workspace-modules`?",
+      "why": "High betweenness centrality (0.249) - this node is a cross-community bridge."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `@angular/build`, `@angular/cli`, `@angular/compiler` to the rest of the system?",
+      "why": "45 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.017241379310344827 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `devDependencies` connect `compilerOptions` to `dependencies`?",
+      "why": "High betweenness centrality (0.056) - this node is a cross-community bridge."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Constraints` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.02040816326530612 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `@nestjs/common` connect `prisma-generate` to `api/src/main.ts`, `dependencies`, `engines`, `domain/project.json`, `compilerOptions`, `compilerOptions`, `compilerOptions`?",
+      "why": "High betweenness centrality (0.043) - this node is a cross-community bridge."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `avance01.md` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.024390243902439025 - nodes in this community are weakly interconnected."
+    }
+  ]
 }

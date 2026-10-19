@@ -1,19 +1,19 @@
 {
   "CLAUDE.md": {
-    "mtime": 1792177897.264285,
-    "seen": 1792179195.0329611,
+    "mtime": 1792183485.867561,
+    "seen": 1792436552.08625,
     "ast_hash": "3ce93fc2b8dddfd3155fb56dfacec197",
     "semantic_hash": ""
   },
   "CONSTRAINTS.md": {
-    "mtime": 1792176877.9578812,
-    "seen": 1792179195.0329666,
-    "ast_hash": "575b3f4726d99d96b3749fa07bec7c4b",
+    "mtime": 1792183485.8685596,
+    "seen": 1792436552.08625,
+    "ast_hash": "0e2f086a8ff4835fa1e7c1c1c1a34524",
     "semantic_hash": ""
   },
   "contexto/avance01.md": {
-    "mtime": 1792173372.3380373,
-    "seen": 1792179195.0329692,
+    "mtime": 1792183485.8695605,
+    "seen": 1792436552.08625,
     "ast_hash": "8ac5f3ceb0b8a5c7b25e6aaec2cdb115",
     "semantic_hash": ""
   },
@@ -300,15 +300,15 @@
     "semantic_hash": "82cdf485394b5d7bff83d8e5dffdf73b"
   },
   "apps/pwa/src/app/app.html": {
-    "mtime": 1792181150.9615047,
-    "seen": 1792181176.004894,
-    "ast_hash": "329c89589f28daff26869f7e198a1318",
+    "mtime": 1792250543.0014644,
+    "seen": 1792436552.08625,
+    "ast_hash": "a6afe12f859d10503d91e83b2bbc2957",
     "semantic_hash": ""
   },
   "apps/pwa/src/index.html": {
-    "mtime": 1792181151.0554237,
-    "seen": 1792181176.0048957,
-    "ast_hash": "29f211d2c91a34e2f94693a8847b5697",
+    "mtime": 1792250543.002567,
+    "seen": 1792436552.08625,
+    "ast_hash": "41af145546ce8b094214ff346b1f2d06",
     "semantic_hash": ""
   },
   "apps/api/src/modulos/cafeina/cafeina.module.ts": {
@@ -354,9 +354,9 @@
     "semantic_hash": "54215782987f8618c9416d0abfb03134"
   },
   "docker-compose.yml": {
-    "mtime": 1792180482.1296465,
-    "seen": 1792180561.3144372,
-    "ast_hash": "62f927abbdb93bf1db0a3c8935b63051",
+    "mtime": 1792250543.002567,
+    "seen": 1792436552.08625,
+    "ast_hash": "765059aa48f722f74950a9e662f2ccd8",
     "semantic_hash": ""
   },
   "apps/api/src/app.module.ts": {
@@ -462,57 +462,57 @@
     "semantic_hash": "8275f96d296631075c9e18350589150f"
   },
   "apps/pwa/public/icons/icon-128x128.png": {
-    "mtime": 1792181090.8588266,
-    "seen": 1792181176.0049012,
+    "mtime": 1792250542.985835,
+    "seen": 1792436552.08625,
     "ast_hash": "51af1881513c675146ffc7e71532404c",
     "semantic_hash": ""
   },
   "apps/pwa/public/icons/icon-144x144.png": {
-    "mtime": 1792181090.8598244,
-    "seen": 1792181176.0049026,
+    "mtime": 1792250542.985835,
+    "seen": 1792436552.08625,
     "ast_hash": "66e8778e74bcd3d576f6e8017f790e37",
     "semantic_hash": ""
   },
   "apps/pwa/public/icons/icon-152x152.png": {
-    "mtime": 1792181090.860824,
-    "seen": 1792181176.004904,
+    "mtime": 1792250542.985835,
+    "seen": 1792436552.08625,
     "ast_hash": "73e796b03c858eacba425c4d23ec68a3",
     "semantic_hash": ""
   },
   "apps/pwa/public/icons/icon-192x192.png": {
-    "mtime": 1792181090.860824,
-    "seen": 1792181176.0049055,
+    "mtime": 1792250542.985835,
+    "seen": 1792436552.08625,
     "ast_hash": "fe38d9e1f1de91d8623bd412d4061850",
     "semantic_hash": ""
   },
   "apps/pwa/public/icons/icon-384x384.png": {
-    "mtime": 1792181090.861824,
-    "seen": 1792181176.0049076,
+    "mtime": 1792250542.985835,
+    "seen": 1792436552.08625,
     "ast_hash": "747d0c4f12a19f93026d55a3f040d536",
     "semantic_hash": ""
   },
   "apps/pwa/public/icons/icon-512x512.png": {
-    "mtime": 1792181090.8628228,
-    "seen": 1792181176.0049095,
+    "mtime": 1792250542.985835,
+    "seen": 1792436552.08625,
     "ast_hash": "2cca1ff3051b0d322f30d39a37214e28",
     "semantic_hash": ""
   },
   "apps/pwa/public/icons/icon-72x72.png": {
-    "mtime": 1792181090.8638268,
-    "seen": 1792181176.0049112,
+    "mtime": 1792250542.985835,
+    "seen": 1792436552.08625,
     "ast_hash": "2c80564bda774d59a145f5ce05b0cd4d",
     "semantic_hash": ""
   },
   "apps/pwa/public/icons/icon-96x96.png": {
-    "mtime": 1792181090.8649967,
-    "seen": 1792181176.0049126,
+    "mtime": 1792250542.985835,
+    "seen": 1792436552.08625,
     "ast_hash": "ad68075f59b101ac4943c78e1fd9198e",
     "semantic_hash": ""
   },
   ".github/workflows/ci.yml": {
-    "mtime": 1792182455.6177385,
-    "seen": 1792182867.8017602,
-    "ast_hash": "80b312b4d663296608c98960551e4077",
+    "mtime": 1792379456.0456216,
+    "seen": 1792436552.08625,
+    "ast_hash": "1a564780ccc3daf65c453d836fa4de72",
     "semantic_hash": ""
   },
   "apps/api-e2e/jest.config.cts": {
@@ -742,5 +742,11 @@
     "seen": 1792436097.8678894,
     "ast_hash": "41795d4b46d652d050ff630de2a914a1",
     "semantic_hash": "41795d4b46d652d050ff630de2a914a1"
+  },
+  ".github/pull_request_template.md": {
+    "mtime": 1792379456.0456216,
+    "seen": 1792436552.08625,
+    "ast_hash": "0dc2cddf1978f25a9b2cea1658729583",
+    "semantic_hash": ""
   }
 }
