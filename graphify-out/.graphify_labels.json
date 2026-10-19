@@ -22,7 +22,6 @@
   "20": "compilerOptions",
   "21": "contracts/tsconfig.lib.json",
   "22": "jest.config.cts",
-  "23": "app.module.ts",
   "24": "compilerOptions",
   "25": "development",
   "26": "targets",
@@ -41,7 +40,6 @@
   "39": "configurations",
   "40": "prune-lockfile",
   "41": "webpack.config.js",
-  "42": "dotenv",
   "43": "api/jest.config.cts",
   "44": "options",
   "45": "typecheck",
@@ -54,11 +52,7 @@
   "52": "jest-preset-angular",
   "53": "pwa/jest.config.cts",
   "54": "api/tsconfig.json",
-  "55": "PrismaService",
   "56": "auth.e2e.spec.ts",
-  "57": "prisma.service.ts",
   "58": "salud.controller.ts",
-  "59": "api/src/main.ts",
-  "60": ".comprobar",
   "65": "README.md"
 }

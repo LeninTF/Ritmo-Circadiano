@@ -1,4 +1,4 @@
-# Graph Report - Ritmo-Circadiano  (2026-10-17)
+# Graph Report - Ritmo-Circadiano  (2026-10-19)
 
 ## Corpus Check
 - 86 files · ~28,675 words
@@ -6,12 +6,12 @@
 - Unclassified: 19 file(s) not represented in the graph (top: (none) 7, .prisma 6, .scss 2)
 
 ## Summary
-- 715 nodes · 878 edges · 62 communities (48 shown, 14 thin omitted)
+- 711 nodes · 866 edges · 57 communities (46 shown, 11 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 7 edges (avg confidence: 0.92)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `c294391c`
+- Built from commit: `047a9242`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -37,7 +37,6 @@
 - domain/tsconfig.lib.json
 - compilerOptions
 - contracts/tsconfig.lib.json
-- app.module.ts
 - compilerOptions
 - development
 - targets
@@ -56,7 +55,7 @@
 - configurations
 - prune-lockfile
 - webpack.config.js
-- dotenv
+- seed.ts
 - options
 - typecheck
 - options
@@ -67,11 +66,8 @@
 - environment.production.ts
 - jest-preset-angular
 - api/tsconfig.json
-- PrismaService
 - auth.e2e.spec.ts
-- prisma.service.ts
 - salud.controller.ts
-- api/src/main.ts
 - README.md
 
 ## God Nodes (most connected - your core abstractions)
@@ -101,7 +97,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (62 total, 14 thin omitted)
+## Communities (57 total, 11 thin omitted)
 
 ### Community 0 - "CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)"
 Cohesion: 0.09
@@ -140,7 +136,7 @@ Cohesion: 0.33
 Nodes (6): scripts, check:coverage-domain, check:lint, check:secrets, check:types, db:setup
 
 ### Community 13 - "constantes.ts"
-Cohesion: 0.13
+Cohesion: 0.14
 Nodes (23): CategoriaCronotipo, CATEGORIA_RMEQ_SIN_RESPUESTA, CONDUCCION_MAX_ACUMULADA_H, CONDUCCION_MAX_DIURNA_H, CONDUCCION_MAX_NOCTURNA_H, CONDUCCION_VENTANA_H, CORTE_CAFEINA_ANTES_DORMIR_H, HORA_FIN_NOCTURNO (+15 more)
 
 ### Community 14 - "domain/project.json"
@@ -174,10 +170,6 @@ Nodes (8): compilerOptions, module, moduleResolution, outDir, types, extends, in
 ### Community 21 - "contracts/tsconfig.lib.json"
 Cohesion: 0.25
 Nodes (7): compilerOptions, declaration, outDir, types, extends, include, ./tsconfig.json
-
-### Community 23 - "app.module.ts"
-Cohesion: 0.14
-Nodes (8): CafeinaModule, CircadianoModule, OperacionesModule, PlataformaModule, TrabajadorModule, @nestjs/event-emitter, @nestjs/schedule, @nestjs/throttler
 
 ### Community 24 - "compilerOptions"
 Cohesion: 0.15
@@ -251,6 +243,10 @@ Nodes (5): cache, dependsOn, executor, outputs, prune-lockfile
 Cohesion: 0.40
 Nodes (3): { join }, { NxAppWebpackPlugin }, @nx/webpack
 
+### Community 42 - "seed.ts"
+Cohesion: 0.33
+Nodes (3): dotenv, prisma, @prisma/adapter-pg
+
 ### Community 44 - "options"
 Cohesion: 0.29
 Nodes (7): buildTarget, spa, staticFilePath, continuous, executor, options, serve-static
@@ -279,26 +275,18 @@ Nodes (3): assetGroups, index, $schema
 Cohesion: 0.25
 Nodes (7): compilerOptions, esModuleInterop, extends, files, include, ../../tsconfig.base.json, references
 
-### Community 55 - "PrismaService"
-Cohesion: 0.20
-Nodes (3): PrismaModule, PrismaService, 1. Arquitectura y SOLID
-
 ### Community 56 - "auth.e2e.spec.ts"
-Cohesion: 0.09
-Nodes (25): PruebaController, AuthModule, ES_PUBLICA, Roles(), ROLES_PERMITIDOS, RolesGuard, contexto(), SolicitudAutenticada (+17 more)
+Cohesion: 0.05
+Nodes (37): AppModule, CafeinaModule, CircadianoModule, OperacionesModule, PruebaController, AuthModule, ES_PUBLICA, Roles() (+29 more)
 
 ### Community 58 - "salud.controller.ts"
-Cohesion: 0.21
-Nodes (5): Publica(), PrismaHealthIndicator, SaludController, SaludModule, @nestjs/terminus
-
-### Community 59 - "api/src/main.ts"
-Cohesion: 0.33
-Nodes (3): AppModule, helmet, @nestjs/swagger
+Cohesion: 0.11
+Nodes (8): Publica(), PrismaService, PrismaHealthIndicator, SaludController, SaludModule, 1. Arquitectura y SOLID, @nestjs/terminus, @nestjs/throttler
 
 ## Knowledge Gaps
 - **61 isolated node(s):** `./tsconfig.json`, `../../tsconfig.base.json`, `./tsconfig.json`, `./tsconfig.json`, `../../tsconfig.base.json` (+56 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 466 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **14 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 467 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **11 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
@@ -309,8 +297,8 @@ _Questions this graph is uniquely positioned to answer:_
   _61 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)` be split into smaller, more focused modules?**
   _Cohesion score 0.09486166007905138 - nodes in this community are weakly interconnected._
-- **Why does `@nestjs/common` connect `auth.e2e.spec.ts` to `package.json`, `app.module.ts`, `PrismaService`, `prisma.service.ts`, `salud.controller.ts`, `api/src/main.ts`?**
-  _High betweenness centrality (0.048) - this node is a cross-community bridge._
+- **Why does `@nestjs/common` connect `auth.e2e.spec.ts` to `salud.controller.ts`, `package.json`?**
+  _High betweenness centrality (0.047) - this node is a cross-community bridge._
 - **Should `package.json` be split into smaller, more focused modules?**
   _Cohesion score 0.03508771929824561 - nodes in this community are weakly interconnected._
 - **Why does `dependencies` connect `dependencies` to `package.json`?**
