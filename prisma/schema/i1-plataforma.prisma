@@ -8,3 +8,52 @@ model ParametroSistema {
 
   @@map("parametro_sistema")
 }
+
+enum Rol {
+  trabajador
+  jefe_operaciones
+  despachador
+  administrador
+
+  @@map("rol")
+}
+
+enum EstadoUsuario {
+  activo
+  retirado
+
+  @@map("estado_usuario")
+}
+
+/// Areas de la empresa (Tabla 5 del informe). La sede no esta definida aun.
+model Area {
+  id       String    @id @default(uuid()) @db.Uuid
+  nombre   String    @unique @db.VarChar(120)
+  sede     String?   @db.VarChar(120)
+  usuarios Usuario[]
+
+  @@map("area")
+}
+
+/// Participante o usuario del sistema. Se identifica por codigo_participante (P01-P17).
+model Usuario {
+  id                  String        @id @default(uuid()) @db.Uuid
+  idArea              String        @map("id_area") @db.Uuid
+  codigoParticipante  String        @unique @map("codigo_participante") @db.VarChar(10)
+  rol                 Rol
+  cargo               String?       @db.VarChar(120)
+  correo              String        @unique @db.VarChar(255)
+  hashClave           String        @map("hash_clave")
+  rangoEdad           String?       @map("rango_edad") @db.VarChar(20)
+  sexo                String?       @db.VarChar(20)
+  consentimiento      Boolean       @default(false)
+  fechaConsentimiento DateTime?     @map("fecha_consentimiento") @db.Timestamptz()
+  estado              EstadoUsuario @default(activo)
+  /// ERD01
+  semividaH           Decimal       @default(5) @map("semivida_h") @db.Decimal(3, 1)
+  fuma                Boolean       @default(false)
+
+  area Area @relation(fields: [idArea], references: [id])
+
+  @@map("usuario")
+}
