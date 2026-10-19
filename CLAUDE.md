@@ -7,14 +7,14 @@ PWA para gestionar ritmos circadianos y la calidad del sueño de los trabajadore
 | Necesitas… | Fuente | Cómo |
 |---|---|---|
 | Ubicar código, dependencias o impacto entre slices | graphify (§13) | `graphify query/path/explain` antes de grep |
-| Texto exacto de un criterio Gherkin CP-01…CP-16 | `contexto/arq_apf1.md` → Anexo 15, Tabla 30 | Grep `RFxx` en esa sección; no leer el archivo entero |
-| Trazabilidad RF ↔ problema/objetivo/sprint | `contexto/arq_apf1.md` → Anexo 16, Tabla 31 | Grep por código |
-| Indicadores del estudio, fórmulas de jetlag social y cafeína de la ficha (RF16, vistas `v_ind_*`) | `contexto/arq_apf1.md` → Tabla 1, Anexo 2, Anexo 3 (Tabla 27) | Solo al tocar exportación o indicadores |
-| Procesos AS-IS/TO-BE, actores, textos de UI del dominio | `contexto/arq_apf1.md` → Cap. IV, Anexo 11 | Solo para copy o flujos |
+| Texto exacto de un criterio Gherkin CP-01…CP-16 | `contexto/avance01.md` → Anexo 15, Tabla 30 | Grep `RFxx` en esa sección; no leer el archivo entero |
+| Trazabilidad RF ↔ problema/objetivo/sprint | `contexto/avance01.md` → Anexo 16, Tabla 31 | Grep por código |
+| Indicadores del estudio, fórmulas de jetlag social y cafeína de la ficha (RF16, vistas `v_ind_*`) | `contexto/avance01.md` → Tabla 1, Anexo 2, Anexo 3 (Tabla 27) | Solo al tocar exportación o indicadores |
+| Procesos AS-IS/TO-BE, actores, textos de UI del dominio | `contexto/avance01.md` → Cap. IV, Anexo 11 | Solo para copy o flujos |
 | Estado, detalle o dueño de una tarea/RF/ERD | MCP Notion (§11) | Consultar la fila, no copiarla |
 | Gates de calidad y excepciones | `CONSTRAINTS.md` | Al cerrar tarea y antes de PR |
 
-Si `contexto/arq_apf1.md` contradice este archivo, **prevalece este archivo** (versión refinada) y se avisa al integrante.
+Si `contexto/avance01.md` contradice este archivo, **prevalece este archivo** (versión refinada) y se avisa al integrante.
 
 ## 1. Arquitectura y SOLID
 
