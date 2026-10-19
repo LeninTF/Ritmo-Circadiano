@@ -54,5 +54,10 @@
   "52": "jest-preset-angular",
   "53": "pwa/jest.config.cts",
   "54": "api/tsconfig.json",
-  "55": "seed.ts"
+  "55": "prisma.service.ts",
+  "56": "PrismaHealthIndicator",
+  "57": "PrismaService",
+  "58": "overrides",
+  "59": "api/src/main.ts",
+  "60": "@nestjs/common"
 }
