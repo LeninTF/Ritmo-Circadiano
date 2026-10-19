@@ -1,0 +1,11 @@
+{
+  "23": "app.module.ts",
+  "42": "seed.ts",
+  "55": "CrearTurnoDto",
+  "56": "salud.controller.ts",
+  "57": "PrismaService",
+  "58": "operaciones.service.ts",
+  "59": ".obtenerPanel",
+  "60": "@nestjs/common",
+  "61": "api/src/main.ts"
+}
