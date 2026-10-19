@@ -102,14 +102,14 @@
     "semantic_hash": ""
   },
   "apps/pwa/src/app/app.spec.ts": {
-    "mtime": 1792250543.002567,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437692.0450516,
+    "seen": 1792437694.1901104,
     "ast_hash": "fcb0558358ca7b67af0daacae99bae21",
     "semantic_hash": ""
   },
   "apps/pwa/src/app/app.ts": {
-    "mtime": 1792250543.002567,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437692.0450516,
+    "seen": 1792437694.1901104,
     "ast_hash": "08586e6499b19507df56003eba0b7eb2",
     "semantic_hash": ""
   },
@@ -180,14 +180,14 @@
     "semantic_hash": ""
   },
   "libs/contracts/src/error-api.dto.ts": {
-    "mtime": 1792257699.0864382,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437623.5418346,
+    "seen": 1792437694.193111,
     "ast_hash": "7fcf2f074dd226b5c2bbb709a2802c88",
     "semantic_hash": ""
   },
   "libs/contracts/src/index.ts": {
-    "mtime": 1792257699.0864382,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437623.5418346,
+    "seen": 1792437694.193111,
     "ast_hash": "c9e292b076787695f575a9f57220bcfa",
     "semantic_hash": ""
   },
@@ -198,8 +198,8 @@
     "semantic_hash": ""
   },
   "libs/contracts/src/rol.ts": {
-    "mtime": 1792257699.0864382,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437623.5418346,
+    "seen": 1792437694.193111,
     "ast_hash": "e3a516c70ab710effb1ef8b1256b748a",
     "semantic_hash": ""
   },
@@ -258,8 +258,8 @@
     "semantic_hash": ""
   },
   "libs/domain/src/index.ts": {
-    "mtime": 1792437498.1568918,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437692.0694444,
+    "seen": 1792437694.1951106,
     "ast_hash": "7ca8f0eff39a677510629ea6128db3df",
     "semantic_hash": ""
   },
@@ -288,8 +288,8 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1792436913.2206295,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437623.5554488,
+    "seen": 1792437694.1951106,
     "ast_hash": "8df9f6ab729a380fde5651b9b8b07bc2",
     "semantic_hash": ""
   },
@@ -300,14 +300,14 @@
     "semantic_hash": ""
   },
   "apps/pwa/src/app/app.html": {
-    "mtime": 1792250543.0014644,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437692.0450516,
+    "seen": 1792437694.1961453,
     "ast_hash": "a6afe12f859d10503d91e83b2bbc2957",
     "semantic_hash": ""
   },
   "apps/pwa/src/index.html": {
-    "mtime": 1792250543.002567,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437692.0450516,
+    "seen": 1792437694.1961453,
     "ast_hash": "41af145546ce8b094214ff346b1f2d06",
     "semantic_hash": ""
   },
@@ -324,14 +324,14 @@
     "semantic_hash": ""
   },
   "apps/api/src/modulos/operaciones/operaciones.module.ts": {
-    "mtime": 1792338549.0332503,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437692.0450516,
+    "seen": 1792437694.1874707,
     "ast_hash": "ec12c1a3a4daabc2a675b0601cb070f5",
     "semantic_hash": ""
   },
   "apps/api/src/modulos/plataforma/plataforma.module.ts": {
-    "mtime": 1792257699.08143,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437623.522131,
+    "seen": 1792437694.1874707,
     "ast_hash": "2340130057b391f46c4a665daceaabcc",
     "semantic_hash": ""
   },
@@ -348,8 +348,8 @@
     "semantic_hash": ""
   },
   "prisma/seed.ts": {
-    "mtime": 1792338549.04225,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437692.0749683,
+    "seen": 1792437694.1951106,
     "ast_hash": "54215782987f8618c9416d0abfb03134",
     "semantic_hash": ""
   },
@@ -360,20 +360,20 @@
     "semantic_hash": ""
   },
   "apps/api/src/app.module.ts": {
-    "mtime": 1792437498.1378927,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437623.522131,
+    "seen": 1792437694.1874707,
     "ast_hash": "0f163a1d5e5007b4be5defa82c14b291",
     "semantic_hash": ""
   },
   "apps/api/src/config/entorno.spec.ts": {
-    "mtime": 1792257699.0717795,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437623.522131,
+    "seen": 1792437694.1874707,
     "ast_hash": "30fc5092ceba96e722f3c2f5a832c537",
     "semantic_hash": ""
   },
   "apps/api/src/config/entorno.ts": {
-    "mtime": 1792257699.07278,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437623.522131,
+    "seen": 1792437694.1874707,
     "ast_hash": "723fd77eb7b4150dfc67cd9cfc7e90c7",
     "semantic_hash": ""
   },
@@ -396,8 +396,8 @@
     "semantic_hash": ""
   },
   "apps/api/src/salud/salud.controller.ts": {
-    "mtime": 1792437452.4807086,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437623.522131,
+    "seen": 1792437694.1884694,
     "ast_hash": "630f374b687868f8146bc37dc39d6203",
     "semantic_hash": ""
   },
@@ -510,44 +510,44 @@
     "semantic_hash": ""
   },
   ".github/workflows/ci.yml": {
-    "mtime": 1792379456.0456216,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437605.9090197,
+    "seen": 1792437694.1951106,
     "ast_hash": "1a564780ccc3daf65c453d836fa4de72",
     "semantic_hash": ""
   },
   "apps/api/src/modulos/operaciones/dto/actualizar-turno.dto.ts": {
-    "mtime": 1792338549.0322504,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437692.0450516,
+    "seen": 1792437694.1874707,
     "ast_hash": "3f1a2533796ce34b7faeccdc43523256",
     "semantic_hash": ""
   },
   "apps/api/src/modulos/operaciones/dto/crear-turno.dto.ts": {
-    "mtime": 1792437405.33032,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437692.0450516,
+    "seen": 1792437694.1874707,
     "ast_hash": "f8a1fea9640559eb62ede1d0ff34f4c1",
     "semantic_hash": ""
   },
   "apps/api/src/modulos/operaciones/operaciones.controller.ts": {
-    "mtime": 1792437498.1388924,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437692.0450516,
+    "seen": 1792437694.1874707,
     "ast_hash": "81d91b99d3618244c869b439d78bf307",
     "semantic_hash": ""
   },
   "apps/api/src/modulos/operaciones/operaciones.service.ts": {
-    "mtime": 1792437498.1398935,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437692.0450516,
+    "seen": 1792437694.1874707,
     "ast_hash": "95af37bfe6ff1f10bf09b31d60ca89f6",
     "semantic_hash": ""
   },
   "libs/domain/src/ruta.ts": {
-    "mtime": 1792338549.03525,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437692.0694444,
+    "seen": 1792437694.1951106,
     "ast_hash": "6c8ec71c98892f753a90fe5551ba5ca6",
     "semantic_hash": ""
   },
   "libs/domain/src/turno-laboral.ts": {
-    "mtime": 1792338549.03525,
-    "seen": 1792437500.7622201,
+    "mtime": 1792437692.0694444,
+    "seen": 1792437694.1951106,
     "ast_hash": "41795d4b46d652d050ff630de2a914a1",
     "semantic_hash": ""
   }
