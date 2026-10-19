@@ -1,19 +1,19 @@
 {
   "CLAUDE.md": {
-    "mtime": 1792252764.2160795,
-    "seen": 1792252968.1922224,
-    "ast_hash": "3ce93fc2b8dddfd3155fb56dfacec197",
+    "mtime": 1792253371.9763737,
+    "seen": 1792430219.530853,
+    "ast_hash": "ea605b3fbea5f09fb95587fc29819248",
     "semantic_hash": ""
   },
   "CONSTRAINTS.md": {
-    "mtime": 1792176877.9578812,
-    "seen": 1792179195.0329666,
-    "ast_hash": "575b3f4726d99d96b3749fa07bec7c4b",
+    "mtime": 1792430603.0332854,
+    "seen": 1792430850.951876,
+    "ast_hash": "2d572efb667e0bd1a346c6f2adb149ea",
     "semantic_hash": ""
   },
   "contexto/avance01.md": {
-    "mtime": 1792173372.3380373,
-    "seen": 1792179195.0329692,
+    "mtime": 1792183485.8695605,
+    "seen": 1792436552.08625,
     "ast_hash": "8ac5f3ceb0b8a5c7b25e6aaec2cdb115",
     "semantic_hash": ""
   },
@@ -288,9 +288,9 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1792252984.3656144,
-    "seen": 1792253077.201129,
-    "ast_hash": "5ae648dfe09f1ee2081c64e3a9d351db",
+    "mtime": 1792427874.4338655,
+    "seen": 1792430219.530836,
+    "ast_hash": "36989c819b43a636cbc104149976ffbb",
     "semantic_hash": ""
   },
   "tsconfig.base.json": {
@@ -409,15 +409,15 @@
   },
   "prisma/migrations/20261016195525_i1_parametro_sistema/migration.sql": {
     "mtime": 1792251406.6259983,
-    "seen": 1792253077.2012875,
-    "ast_hash": "",
+    "seen": 1792430219.5308414,
+    "ast_hash": "16b18786ad26a3ef0070c1108cec9f1d",
     "semantic_hash": ""
   },
   "apps/pwa/ngsw-config.json": {
     "mtime": 1792251406.5019698,
     "seen": 1792252968.1919885,
     "ast_hash": "e832c0e109856ea6f6dfc1ae561c6efe",
-    "semantic_hash": ""
+    "semantic_hash": "e832c0e109856ea6f6dfc1ae561c6efe"
   },
   "apps/pwa/src/app/paginas/cafeina/cafeina.component.ts": {
     "mtime": 1792251406.5178833,
@@ -519,6 +519,12 @@
     "mtime": 1792252971.9769497,
     "seen": 1792253077.2012935,
     "ast_hash": "82b006f84c84a7393cbaae4004a9ffb4",
+    "semantic_hash": ""
+  },
+  "prisma/migrations/20261017153939_i1_area_usuario/migration.sql": {
+    "mtime": 1792252971.971556,
+    "seen": 1792430219.5308437,
+    "ast_hash": "83b5f16287c3233da6df01f8aa25313b",
     "semantic_hash": ""
   }
 }
