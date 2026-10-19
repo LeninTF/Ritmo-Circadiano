@@ -1,4 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { TURNO_ASIGNADO, TurnoAsignadoEvento } from '@circadiano/contracts';
+import { validarJornadaRN01, detectarTurnoNocturno, validarDescansoMinimo } from '@circadiano/domain';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '../../generated/prisma/client';
 import { CrearTurnoDto } from './dto/crear-turno.dto';
@@ -6,7 +9,10 @@ import { ActualizarTurnoDto } from './dto/actualizar-turno.dto';
 
 @Injectable()
 export class OperacionesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
   async listarRutas() {
     return this.prisma.ruta.findMany({
@@ -20,6 +26,33 @@ export class OperacionesService {
         ...(filtros?.idUsuario ? { idUsuario: filtros.idUsuario } : {}),
         ...(filtros?.fecha ? { fecha: new Date(filtros.fecha) } : {}),
       },
+      include: { ruta: true },
+      orderBy: { inicioProgramado: 'asc' },
+    });
+  }
+
+  async listarTurnosMe(idUsuario: string, desde?: string, hasta?: string) {
+    if (!idUsuario) {
+      throw new BadRequestException('ID de usuario requerido para listar turnos propios.');
+    }
+    const where: Prisma.TurnoLaboralWhereInput = {
+      idUsuario,
+    };
+
+    if (desde || hasta) {
+      where.fecha = {};
+      if (desde) {
+        (where.fecha as Prisma.DateTimeFilter).gte = new Date(desde);
+      }
+      if (hasta) {
+        const fechaFin = new Date(hasta);
+        fechaFin.setDate(fechaFin.getDate() + 1);
+        (where.fecha as Prisma.DateTimeFilter).lt = fechaFin;
+      }
+    }
+
+    return this.prisma.turnoLaboral.findMany({
+      where,
       include: { ruta: true },
       orderBy: { inicioProgramado: 'asc' },
     });
@@ -41,14 +74,12 @@ export class OperacionesService {
     idUsuario: string,
     fechaStr: string,
     horasConduccion: number,
+    esNocturno: boolean,
     confirmarExceso?: boolean,
     motivoExceso?: string,
     idTurnoExcluir?: string,
     idTurnoCreado?: string,
   ) {
-    const LIMITE_CONTINUO = 5.0;
-    const LIMITE_DIARIO = 10.0;
-
     const fechaDate = new Date(fechaStr);
 
     const turnosExistentes = await tx.turnoLaboral.findMany({
@@ -66,8 +97,16 @@ export class OperacionesService {
     );
     const horasTotalesDia = horasAcumuladasPrevias + horasConduccion;
 
-    const superaContinuo = horasConduccion > LIMITE_CONTINUO;
-    const superaDiario = horasTotalesDia > LIMITE_DIARIO;
+    const resultadoRN01 = validarJornadaRN01({
+      horasConduccion,
+      horasAcumuladasDia: horasTotalesDia,
+      esNocturno,
+    });
+
+    const superaContinuo = resultadoRN01.superaContinuo;
+    const superaDiario = resultadoRN01.superaDiario;
+    const LIMITE_CONTINUO = resultadoRN01.limiteContinuo;
+    const LIMITE_DIARIO = resultadoRN01.limiteDiario;
 
     if (superaContinuo || superaDiario) {
       if (!confirmarExceso) {
@@ -105,8 +144,10 @@ export class OperacionesService {
       throw new BadRequestException(`Ruta con ID ${dto.idRuta} no existe`);
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      const turno = await tx.turnoLaboral.create({
+    const esNocturnoCalculado = dto.esNocturno ?? detectarTurnoNocturno(dto.inicioProgramado, dto.finProgramado);
+
+    const turno = await this.prisma.$transaction(async (tx) => {
+      const nuevoTurno = await tx.turnoLaboral.create({
         data: {
           idUsuario: dto.idUsuario,
           idRuta: dto.idRuta,
@@ -114,7 +155,7 @@ export class OperacionesService {
           inicioProgramado: new Date(dto.inicioProgramado),
           finProgramado: new Date(dto.finProgramado),
           horasConduccion: dto.horasConduccion,
-          esNocturno: dto.esNocturno,
+          esNocturno: esNocturnoCalculado,
           estadoConfirmacion: dto.estadoConfirmacion ?? 'pendiente',
           horaInicioReal: dto.horaInicioReal ? new Date(dto.horaInicioReal) : null,
           horaFinReal: dto.horaFinReal ? new Date(dto.horaFinReal) : null,
@@ -127,18 +168,29 @@ export class OperacionesService {
         dto.idUsuario,
         dto.fecha,
         dto.horasConduccion,
+        esNocturnoCalculado,
         dto.confirmarExceso,
         dto.motivoExceso,
         undefined,
-        turno.id,
+        nuevoTurno.id,
       );
 
-      return turno;
+      return nuevoTurno;
     });
+
+    const evento: TurnoAsignadoEvento = {
+      idTurno: turno.id,
+      idUsuario: turno.idUsuario,
+      fecha: turno.fecha instanceof Date ? turno.fecha.toISOString().split('T')[0] : String(turno.fecha).substring(0, 10),
+    };
+    this.eventEmitter.emit(TURNO_ASIGNADO, evento);
+    this.eventEmitter.emit('turno.asignado', evento);
+
+    return turno;
   }
 
   async actualizarTurno(id: string, dto: ActualizarTurnoDto) {
-    return this.prisma.$transaction(async (tx) => {
+    const turnoActualizado = await this.prisma.$transaction(async (tx) => {
       const turnoActual = await tx.turnoLaboral.findUnique({ where: { id } });
       if (!turnoActual) {
         throw new NotFoundException(`Turno con ID ${id} no encontrado`);
@@ -154,12 +206,16 @@ export class OperacionesService {
       const idUsuarioFinal = dto.idUsuario ?? turnoActual.idUsuario;
       const fechaFinalStr = dto.fecha ?? turnoActual.fecha.toISOString().split('T')[0];
       const horasConduccionFinal = dto.horasConduccion !== undefined ? dto.horasConduccion : Number(turnoActual.horasConduccion);
+      const inicioProgFinal = dto.inicioProgramado ?? turnoActual.inicioProgramado.toISOString();
+      const finProgFinal = dto.finProgramado ?? turnoActual.finProgramado.toISOString();
+      const esNocturnoFinal = dto.esNocturno ?? turnoActual.esNocturno ?? detectarTurnoNocturno(inicioProgFinal, finProgFinal);
 
       await this.validarYRegistrarExcesoJornadaTx(
         tx,
         idUsuarioFinal,
         fechaFinalStr,
         horasConduccionFinal,
+        esNocturnoFinal,
         dto.confirmarExceso,
         dto.motivoExceso,
         id,
@@ -183,6 +239,16 @@ export class OperacionesService {
         include: { ruta: true },
       });
     });
+
+    const evento: TurnoAsignadoEvento = {
+      idTurno: turnoActualizado.id,
+      idUsuario: turnoActualizado.idUsuario,
+      fecha: turnoActualizado.fecha instanceof Date ? turnoActualizado.fecha.toISOString().split('T')[0] : String(turnoActualizado.fecha).substring(0, 10),
+    };
+    this.eventEmitter.emit(TURNO_ASIGNADO, evento);
+    this.eventEmitter.emit('turno.asignado', evento);
+
+    return turnoActualizado;
   }
 
   async eliminarTurno(id: string) {

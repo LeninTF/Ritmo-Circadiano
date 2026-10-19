@@ -17,6 +17,13 @@ export const appRoutes: Route[] = [
       ),
   },
   {
+    path: 'indicadores',
+    loadComponent: () =>
+      import('./paginas/indicadores/indicadores.component').then(
+        (m) => m.IndicadoresComponent,
+      ),
+  },
+  {
     path: 'plan',
     loadComponent: () =>
       import('./paginas/plan/plan.component').then((m) => m.PlanComponent),
