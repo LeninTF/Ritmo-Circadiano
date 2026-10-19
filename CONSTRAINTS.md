@@ -44,6 +44,10 @@ Run `/constraints ratchet` after the first code lands.
 
 ## Exceptions
 
+## Exceptions
+
 | ID | Rule | Path | Reason | Owner | Expires |
 |----|------|------|--------|-------|---------|
-| (none) | | | | | |
+| EX-01 | Security: deps | package-lock.json (braces 3.0.3, GHSA-vfj7-8cjw-p6xm, CVSS 8.7) | Sin versión corregida. Solo dev; no llega al bundle ni al API. | @Fabriziofc12 | 2026-11-30 |
+| EX-02 | Security: deps | package-lock.json (node-forge 1.4.0, GHSA-86w9-cpqp-85rv, CVSS 8.7) | Sin versión corregida. Solo dev; no llega al bundle ni al API. | @Fabriziofc12 | 2026-11-30 |
+| EX-03 | Security: deps | package-lock.json (sprintf-js 1.0.3, GHSA-hp3w-g68c-fv3c, CVSS 6.9) | Sin versión corregida. Solo dev (via ts-jest); no llega al bundle ni al API. | @Fabriziofc12 | 2026-11-30 |
