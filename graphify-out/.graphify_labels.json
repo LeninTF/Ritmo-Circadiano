@@ -41,6 +41,7 @@
   "39": "configurations",
   "40": "prune-lockfile",
   "41": "webpack.config.js",
+  "42": "dotenv",
   "43": "api/jest.config.cts",
   "44": "options",
   "45": "typecheck",
