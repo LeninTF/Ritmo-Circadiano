@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../apps/api/src/generated/prisma/client';
+import { sembrarIdentidad } from './seeds/identidad';
 
 async function main(): Promise<void> {
   const prisma = new PrismaClient({
@@ -13,6 +14,7 @@ async function main(): Promise<void> {
       update: {},
       create: { clave: 'umbral_cafeina_mg', valor: '50' },
     });
+    await sembrarIdentidad(prisma);
 
     const bebidasBase = [
       { nombre: 'Café pasado', cafeina_mg: '95.0', volumen_ml: 240 },
