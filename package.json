@@ -96,6 +96,7 @@
     "suncalc": "2.1.1"
   },
   "overrides": {
+    "vite": "8.3.3",
     "@angular-devkit/core@19.0.1": {
       "ajv": "8.18.0",
       "picomatch": "4.0.4"
@@ -109,7 +110,6 @@
     "sockjs": {
       "uuid": "11.1.1"
     },
-    "vite": "8.3.3",
     "@angular/build": {
       "vite": "8.3.3"
     }
