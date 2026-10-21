@@ -27,7 +27,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      - run: npm ci
+      - run: npm install --legacy-peer-deps
       - uses: nrwl/nx-set-shas@e602fada7ad5987b0f7b1905e7a99ea1c661514c # v5
       - run: npx nx affected -t lint typecheck test build
       - name: Cobertura de libs/domain (>= 70 %)
