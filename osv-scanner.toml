@@ -1,0 +1,12 @@
+# Excepciones de osv-scanner. Cada una tiene su fila en CONSTRAINTS.md (Exceptions).
+# Ambas son dependencias de desarrollo sin version corregida publicada.
+
+[[IgnoredVulns]]
+id = "GHSA-vfj7-8cjw-p6xm" # braces 3.0.3 (dev, via webpack-dev-server)
+ignoreUntil = 2026-11-30
+reason = "EX-01: sin version corregida; solo dev, no llega al bundle ni al API. Revisar al vencer."
+
+[[IgnoredVulns]]
+id = "GHSA-hp3w-g68c-fv3c" # sprintf-js 1.0.3 (dev, via ts-jest)
+ignoreUntil = 2026-11-30
+reason = "EX-02: sin version corregida; solo dev (tests), no llega al bundle ni al API. Revisar al vencer."
