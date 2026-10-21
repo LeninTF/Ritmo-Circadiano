@@ -21,12 +21,12 @@
   "19": "domain/tsconfig.lib.json",
   "20": "compilerOptions",
   "21": "contracts/tsconfig.lib.json",
-  "22": "jest.config.cts",
+  "22": "domain/jest.config.cts",
   "23": "app.module.ts",
   "24": "compilerOptions",
   "25": "development",
   "26": "targets",
-  "27": "entorno.ts",
+  "27": "CrearTurnoDto",
   "28": "pwa/tsconfig.app.json",
   "29": "compilerOptions",
   "30": "copy-workspace-modules",
@@ -41,6 +41,7 @@
   "39": "configurations",
   "40": "prune-lockfile",
   "41": "webpack.config.js",
+  "42": "dotenv",
   "43": "api/jest.config.cts",
   "44": "options",
   "45": "typecheck",
@@ -52,5 +53,7 @@
   "51": "environment.production.ts",
   "52": "jest-preset-angular",
   "53": "pwa/jest.config.cts",
-  "54": "api/tsconfig.json"
+  "54": "api/tsconfig.json",
+  "55": "OperacionesController",
+  "58": "overrides"
 }

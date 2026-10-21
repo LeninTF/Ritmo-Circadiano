@@ -47,7 +47,6 @@ export class CrearTurnoDto {
 
   @ApiPropertyOptional({ description: 'Confirma explícitamente el exceso de jornada laboral (RF14)', example: false })
   @IsOptional()
-  @IsBoolean()
   confirmarExceso?: boolean;
 
   @ApiPropertyOptional({ description: 'Motivo justificado de la aprobación del exceso de jornada (RF14)', example: 'Retraso por congestión vehicular en ruta' })
