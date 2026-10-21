@@ -53,5 +53,6 @@
   "51": "environment.production.ts",
   "52": "jest-preset-angular",
   "53": "pwa/jest.config.cts",
-  "54": "api/tsconfig.json"
+  "54": "api/tsconfig.json",
+  "55": "seed.ts"
 }
