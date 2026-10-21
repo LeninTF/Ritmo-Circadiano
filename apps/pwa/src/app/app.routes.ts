@@ -36,6 +36,13 @@ export const appRoutes: Route[] = [
       ),
   },
   {
+    path: 'aptitud',
+    loadComponent: () =>
+      import('./paginas/aptitud/aptitud.component').then(
+        (m) => m.AptitudComponent,
+      ),
+  },
+  {
     path: 'diario',
     loadComponent: () =>
       import('./paginas/diario/diario.component').then(

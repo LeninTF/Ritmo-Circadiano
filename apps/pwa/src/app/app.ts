@@ -9,10 +9,9 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 })
 export class App {
   protected readonly enlaces = [
-    { ruta: '/plataforma', texto: 'Inicio' },
-    { ruta: '/turnos', texto: 'Turnos' },
-    { ruta: '/plan', texto: 'Plan' },
-    { ruta: '/cafeina', texto: 'Cafeina' },
+    { ruta: '/plan', texto: 'Hoy' },
+    { ruta: '/cafeina', texto: 'Cafeína' },
+    { ruta: '/aptitud', texto: 'Pre-salida' },
     { ruta: '/diario', texto: 'Diario' },
   ];
 }
