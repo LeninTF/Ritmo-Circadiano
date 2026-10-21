@@ -39,6 +39,7 @@
     "@types/node": "22.0.0",
     "@types/pg": "8.23.1",
     "@types/suncalc": "1.9.2",
+    "@types/web-push": "3.6.4",
     "@typescript-eslint/utils": "8.58.0",
     "angular-eslint": "22.1.0",
     "eslint": "9.8.0",
@@ -88,6 +89,7 @@
     "pg": "8.23.1",
     "reflect-metadata": "0.2.0",
     "rxjs": "7.8.0",
-    "suncalc": "2.1.1"
+    "suncalc": "2.1.1",
+    "web-push": "3.6.7"
   }
 }

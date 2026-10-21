@@ -150,13 +150,14 @@ export class NotificacionesService {
               payloadPush,
             );
             enviado = true;
-          } catch (err: any) {
-            if (err.statusCode === 410 || err.statusCode === 404) {
+          } catch (err: unknown) {
+            const errorObj = err as { statusCode?: number; message: string };
+            if (errorObj.statusCode === 410 || errorObj.statusCode === 404) {
               await this.prisma.suscripcionPush.delete({
                 where: { endpoint: sub.endpoint },
               });
             }
-            this.logger.error(`Error enviando push a ${sub.endpoint}: ${err.message}`);
+            this.logger.error(`Error enviando push a ${sub.endpoint}: ${errorObj.message}`);
           }
         }
 
@@ -167,8 +168,9 @@ export class NotificacionesService {
             enviada_en: ahora,
           },
         });
-      } catch (error: any) {
-        this.logger.error(`Error procesando notificación ${notif.id_notificacion}: ${error.message}`);
+      } catch (error: unknown) {
+        const errObj = error as { message: string };
+        this.logger.error(`Error procesando notificación ${notif.id_notificacion}: ${errObj.message}`);
       }
     }
   }
