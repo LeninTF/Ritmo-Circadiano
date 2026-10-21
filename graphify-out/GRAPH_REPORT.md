@@ -1,17 +1,17 @@
-# Graph Report - Ritmo-Circadiano  (2026-10-16)
+# Graph Report - Ritmo-Circadiano  (2026-10-19)
 
 ## Corpus Check
-- 74 files · ~27,226 words
+- 76 files · ~27,569 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 19 file(s) not represented in the graph (top: (none) 7, .prisma 6, .scss 2)
 
 ## Summary
-- 658 nodes · 732 edges · 55 communities (44 shown, 11 thin omitted)
+- 673 nodes · 752 edges · 61 communities (49 shown, 12 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 5 edges (avg confidence: 0.91)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `235d62fa`
+- Built from commit: `f117a03c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -67,37 +67,45 @@
 - environment.production.ts
 - jest-preset-angular
 - api/tsconfig.json
+- prisma.service.ts
+- PrismaHealthIndicator
+- PrismaService
+- overrides
+- api/src/main.ts
+- @nestjs/common
 
 ## God Nodes (most connected - your core abstractions)
 1. `compilerOptions` - 18 edges
 2. `CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)` - 15 edges
 3. `@nestjs/common` - 13 edges
-4. `targets` - 9 edges
+4. `@angular/core` - 9 edges
 5. `PrismaService` - 9 edges
 6. `compilerOptions` - 9 edges
 7. `compilerOptions` - 9 edges
-8. `@angular/core` - 9 edges
+8. `targets` - 9 edges
 9. `compilerOptions` - 8 edges
-10. `serve` - 7 edges
+10. `PrismaHealthIndicator` - 7 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `1. Arquitectura y SOLID` --references--> `PrismaService`  [INFERRED]
   CLAUDE.md → apps/api/src/prisma/prisma.service.ts
-- `9. Convenciones de nomenclatura` --references--> `ColorSemaforo`  [INFERRED]
-  CLAUDE.md → libs/contracts/src/semaforo.ts
 - `10. Flujo Git y validación pre-PR` --references--> `main()`  [INFERRED]
   CLAUDE.md → prisma/seed.ts
+- `9. Convenciones de nomenclatura` --references--> `ColorSemaforo`  [INFERRED]
+  CLAUDE.md → libs/contracts/src/semaforo.ts
 - `RangoRmeq` --references--> `CategoriaCronotipo`  [EXTRACTED]
   libs/domain/src/constantes.ts → libs/contracts/src/cronotipo.ts
+- `main()` --calls--> `sembrarIdentidad()`  [EXTRACTED]
+  prisma/seed.ts → prisma/seeds/identidad.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (55 total, 11 thin omitted)
+## Communities (61 total, 12 thin omitted)
 
 ### Community 0 - "CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)"
 Cohesion: 0.07
-Nodes (21): 0. Carga de contexto bajo demanda (no precargar), 10. Flujo Git y validación pre-PR, 11. Protocolo MCP de Notion (estado vivo), 12. CONSTRAINTS.md (límites duros), 13. graphify, 2. Stack, 3. Comandos, 4. Vertical slices (dueños de código) (+13 more)
+Nodes (20): 0. Carga de contexto bajo demanda (no precargar), 10. Flujo Git y validación pre-PR, 11. Protocolo MCP de Notion (estado vivo), 12. CONSTRAINTS.md (límites duros), 13. graphify, 2. Stack, 3. Comandos, 4. Vertical slices (dueños de código) (+12 more)
 
 ### Community 1 - "Constraints"
 Cohesion: 0.29
@@ -113,7 +121,7 @@ Nodes (47): devDependencies, @angular/build, @angular/cli, @angular/compiler-cli
 
 ### Community 5 - "dependencies"
 Cohesion: 0.07
-Nodes (28): dependencies, @angular/common, @angular/compiler, @angular/core, @angular/forms, @angular/platform-browser, @angular/platform-browser-dynamic, @angular/router (+20 more)
+Nodes (29): dependencies, @angular/common, @angular/compiler, @angular/core, @angular/forms, @angular/platform-browser, @angular/platform-browser-dynamic, @angular/router (+21 more)
 
 ### Community 6 - "compilerOptions"
 Cohesion: 0.09
@@ -168,8 +176,8 @@ Cohesion: 0.25
 Nodes (7): compilerOptions, declaration, outDir, types, extends, include, ./tsconfig.json
 
 ### Community 23 - "app.module.ts"
-Cohesion: 0.05
-Nodes (22): AppModule, CafeinaModule, CircadianoModule, OperacionesModule, PlataformaModule, TrabajadorModule, PrismaModule, PrismaService (+14 more)
+Cohesion: 0.13
+Nodes (8): CafeinaModule, CircadianoModule, OperacionesModule, PlataformaModule, TrabajadorModule, @nestjs/event-emitter, @nestjs/schedule, @nestjs/throttler
 
 ### Community 24 - "compilerOptions"
 Cohesion: 0.15
@@ -271,25 +279,45 @@ Nodes (3): assetGroups, index, $schema
 Cohesion: 0.25
 Nodes (7): compilerOptions, esModuleInterop, extends, files, include, ../../tsconfig.base.json, references
 
+### Community 55 - "prisma.service.ts"
+Cohesion: 0.29
+Nodes (6): main(), AREAS, sembrarIdentidad(), argon2, @nestjs/config, @prisma/adapter-pg
+
+### Community 57 - "PrismaService"
+Cohesion: 0.20
+Nodes (3): PrismaModule, PrismaService, 1. Arquitectura y SOLID
+
+### Community 58 - "overrides"
+Cohesion: 0.20
+Nodes (10): ajv, picomatch, js-yaml, undici, overrides, @angular-devkit/core@19.0.1, @nestjs/swagger, nx (+2 more)
+
+### Community 59 - "api/src/main.ts"
+Cohesion: 0.29
+Nodes (4): AppModule, helmet, @nestjs/core, @nestjs/swagger
+
+### Community 60 - "@nestjs/common"
+Cohesion: 0.52
+Nodes (3): SaludModule, @nestjs/common, @nestjs/terminus
+
 ## Knowledge Gaps
-- **61 isolated node(s):** `./tsconfig.json`, `../../tsconfig.base.json`, `./tsconfig.json`, `./tsconfig.json`, `../../tsconfig.base.json` (+56 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 447 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **11 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **61 isolated node(s):** `@angular-devkit/core`, `@angular-devkit/schematics`, `@angular/build`, `@angular/cli`, `@angular/compiler-cli` (+56 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 454 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **12 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)` connect `CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)` to `app.module.ts`?**
+- **Why does `CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)` connect `CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)` to `PrismaService`?**
   _High betweenness centrality (0.067) - this node is a cross-community bridge._
-- **What connects `./tsconfig.json`, `../../tsconfig.base.json`, `./tsconfig.json` to the rest of the system?**
+- **What connects `@angular-devkit/core`, `@angular-devkit/schematics`, `@angular/build` to the rest of the system?**
   _61 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)` be split into smaller, more focused modules?**
-  _Cohesion score 0.07142857142857142 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07407407407407407 - nodes in this community are weakly interconnected._
 - **Why does `devDependencies` connect `devDependencies` to `package.json`?**
   _High betweenness centrality (0.062) - this node is a cross-community bridge._
 - **Should `package.json` be split into smaller, more focused modules?**
   _Cohesion score 0.03636363636363636 - nodes in this community are weakly interconnected._
+- **Why does `PrismaService` connect `PrismaService` to `PrismaHealthIndicator`, `@nestjs/common`, `prisma.service.ts`?**
+  _High betweenness centrality (0.057) - this node is a cross-community bridge._
 - **Should `devDependencies` be split into smaller, more focused modules?**
   _Cohesion score 0.0425531914893617 - nodes in this community are weakly interconnected._
-- **Should `dependencies` be split into smaller, more focused modules?**
-  _Cohesion score 0.07142857142857142 - nodes in this community are weakly interconnected._
