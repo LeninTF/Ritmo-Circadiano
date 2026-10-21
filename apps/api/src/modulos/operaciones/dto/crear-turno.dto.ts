@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsUUID } from 'class-validator';
+import { IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CrearTurnoDto {
   @ApiProperty({ description: 'UUID del trabajador asignado' })
@@ -44,4 +44,13 @@ export class CrearTurnoDto {
   @IsOptional()
   @IsDateString()
   horaFinReal?: string;
+
+  @ApiPropertyOptional({ description: 'Confirma explícitamente el exceso de jornada laboral (RF14)', example: false })
+  @IsOptional()
+  confirmarExceso?: boolean;
+
+  @ApiPropertyOptional({ description: 'Motivo justificado de la aprobación del exceso de jornada (RF14)', example: 'Retraso por congestión vehicular en ruta' })
+  @IsOptional()
+  @IsString()
+  motivoExceso?: string;
 }
