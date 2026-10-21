@@ -46,4 +46,5 @@ Run `/constraints ratchet` after the first code lands.
 
 | ID | Rule | Path | Reason | Owner | Expires |
 |----|------|------|--------|-------|---------|
-| (none) | | | | | |
+| EX-01 | Security: deps | `package-lock.json` (`braces` 3.0.3, GHSA-vfj7-8cjw-p6xm, CVSS 8.7) | Sin version corregida. Solo dev (via `webpack-dev-server`); no llega al bundle ni al API. Ignorado en `osv-scanner.toml` | @LeninTF | 2026-11-30 |
+| EX-02 | Security: deps | `package-lock.json` (`sprintf-js` 1.0.3, GHSA-hp3w-g68c-fv3c, CVSS 6.9) | Sin version corregida. Solo dev (via `ts-jest`); no llega al bundle ni al API. Ignorado en `osv-scanner.toml` | @LeninTF | 2026-11-30 |
