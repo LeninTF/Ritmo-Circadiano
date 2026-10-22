@@ -112,7 +112,6 @@
     "sockjs": {
       "uuid": "11.1.1"
     },
-    "vite": "8.3.3",
     "@angular/build": {
       "vite": "8.3.3"
     }
