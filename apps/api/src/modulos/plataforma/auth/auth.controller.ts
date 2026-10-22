@@ -7,14 +7,26 @@ import type {
 } from '@circadiano/contracts';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { RegistroDto } from './dto/registro.dto';
 import { RefrescarTokenDto } from './dto/refrescar-token.dto';
+import { RegistroService } from './registro.service';
 import { Publica } from './publica.decorator';
 import { UsuarioActual } from './usuario-actual.decorator';
 
 @ApiTags('Identidad (RF02)')
 @Controller()
 export class AuthController {
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly registro: RegistroService,
+  ) {}
+
+  @Publica()
+  @Post('auth/registro')
+  @ApiOperation({ summary: 'Registrar un participante con consentimiento (RN11)' })
+  registrar(@Body() dto: RegistroDto): Promise<UsuarioDto> {
+    return this.registro.registrar(dto);
+  }
 
   @Publica()
   @Post('auth/login')
