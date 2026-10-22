@@ -69,3 +69,23 @@ export type TurnoLaboral = Prisma.TurnoLaboralModel
  * Auditoría de excesos de jornada laboral aprobados (RF14).
  */
 export type ExcesoJornadaAuditoria = Prisma.ExcesoJornadaAuditoriaModel
+/**
+ * Model Bebida
+ * 
+ */
+export type Bebida = Prisma.BebidaModel
+/**
+ * Model IngestaCafeina
+ * 
+ */
+export type IngestaCafeina = Prisma.IngestaCafeinaModel
+/**
+ * Model SuscripcionPush
+ * 
+ */
+export type SuscripcionPush = Prisma.SuscripcionPushModel
+/**
+ * Model Notificacion
+ * 
+ */
+export type Notificacion = Prisma.NotificacionModel

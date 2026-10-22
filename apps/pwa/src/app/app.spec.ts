@@ -12,18 +12,19 @@ describe('App', () => {
     }).compileComponents();
   });
 
-  it('muestra navegación accesible a las cinco secciones requeridas', async () => {
+  it('muestra navegación accesible a las cuatro secciones del Figma', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const navegacion = fixture.nativeElement.querySelector('nav');
     const enlaces = navegacion.querySelectorAll('a');
-    expect(enlaces.length).toBe(5);
+    expect(enlaces.length).toBe(4);
     expect(navegacion.getAttribute('aria-label')).toBe('Navegación principal');
     expect(Array.from(enlaces, (enlace: Element) => enlace.getAttribute('href'))).toEqual([
-      '/plan', '/turnos', '/cafeina', '/diario', '/plataforma',
+      '/plan', '/cafeina', '/aptitud', '/diario',
     ]);
   });
-  
+
+
   it('muestra las cuatro pestañas del Figma', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
