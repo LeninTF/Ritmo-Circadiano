@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-rmeq',
   standalone: true,
+  imports: [FormsModule], 
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="rmeq">

@@ -288,9 +288,9 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1792262360.88063,
-    "seen": 1792475936.5328612,
-    "ast_hash": "d92a1094f6c56d05003d9b85c106e559",
+    "mtime": 1792670183.6862602,
+    "seen": 1792672075.479669,
+    "ast_hash": "78689fa16bfea8c0b8b8493cbcabd4fc",
     "semantic_hash": ""
   },
   "tsconfig.base.json": {
@@ -408,9 +408,9 @@
     "semantic_hash": ""
   },
   "prisma/migrations/20261016195525_i1_parametro_sistema/migration.sql": {
-    "mtime": 1792180525.4709687,
-    "seen": 1792182871.3866646,
-    "ast_hash": "",
+    "mtime": 1792257740.2449248,
+    "seen": 1792672075.4796731,
+    "ast_hash": "16b18786ad26a3ef0070c1108cec9f1d",
     "semantic_hash": ""
   },
   "apps/pwa/ngsw-config.json": {
@@ -534,9 +534,9 @@
     "semantic_hash": ""
   },
   "apps/pwa/src/app/paginas/circadiano/rmeq.component.ts": {
-    "mtime": 1792364531.836023,
-    "seen": 1792475936.532793,
-    "ast_hash": "238be5f490bf66a899246292a791f0f1",
+    "mtime": 1792672052.244828,
+    "seen": 1792672075.479583,
+    "ast_hash": "07522326fac1f088be333eaf3b172269",
     "semantic_hash": ""
   },
   "apps/pwa/src/app/services/geo.service.ts": {

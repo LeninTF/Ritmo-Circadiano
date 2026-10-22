@@ -1,39 +1,82 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-plan',
   standalone: true,
+  imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="pagina">
-      <h1>Mi plan del día</h1>
-      <div class="timeline">
-        <div class="hour">00</div><div class="hour">01</div><div class="hour">02</div><div class="hour">03</div>
-        <div class="hour">04</div><div class="hour">05</div><div class="hour">06</div><div class="hour">07</div>
-        <div class="hour">08</div><div class="hour">09</div><div class="hour">10</div><div class="hour">11</div>
-        <div class="hour">12</div><div class="hour">13</div><div class="hour">14</div><div class="hour">15</div>
-        <div class="hour">16</div><div class="hour">17</div><div class="hour">18</div><div class="hour">19</div>
-        <div class="hour">20</div><div class="hour">21</div><div class="hour">22</div><div class="hour">23</div>
+    <div class="min-h-screen bg-slate-900 text-white p-4 flex flex-col gap-4 font-sans max-w-md mx-auto w-full">
+      
+      <div class="mb-2">
+        <h1 class="text-2xl font-bold">Mi plan del día</h1>
+        <p class="text-sm text-slate-400">Turno en curso</p>
       </div>
-      <div class="blocks">
-        <div class="block sueno" [style.left.%]="0" [style.width.%]="8">Sueño</div>
-        <div class="block luz"   [style.left.%]="30" [style.width.%]="6">Luz</div>
-        <div class="block siesta" [style.left.%]="40" [style.width.%]="4">Siesta</div>
-        <div class="block pico"  [style.left.%]="55" [style.width.%]="5">Pico</div>
-        <div class="block corte" [style.left.%]="75" [style.width.%]="2">Corte cafeína</div>
+
+      <div class="grid grid-cols-3 gap-3">
+        <div class="bg-slate-800 p-3 rounded-2xl flex flex-col justify-center">
+          <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mb-1">Luz natural</span>
+          <span class="text-xl font-bold text-emerald-400">06:30</span>
+        </div>
+        <div class="bg-slate-800 p-3 rounded-2xl flex flex-col justify-center">
+          <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mb-1">Café hasta</span>
+          <span class="text-xl font-bold text-amber-400">14:30</span>
+        </div>
+        <div class="bg-slate-800 p-3 rounded-2xl flex flex-col justify-center">
+          <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mb-1">Próx. pico</span>
+          <span class="text-xl font-bold text-indigo-400">10:15</span>
+        </div>
       </div>
-    </section>
-  `,
-  styles: [`
-    .timeline { display:grid; grid-template-columns: repeat(24,1fr); font-size:10px; }
-    .blocks { position:relative; height:40px; }
-    .block { position:absolute; top:0; height:100%; opacity:.6; }
-    .sueno { background:#4A90E2; }
-    .luz { background:#F5A623; }
-    .siesta { background:#7ED321; }
-    .pico { background:#BD10E0; }
-    .corte { background:#D0021B; }
-  `]
+
+      <div class="bg-slate-800 p-4 rounded-2xl mt-2">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-sm font-semibold">Tu energía en las próximas horas</h3>
+          <span class="text-xs text-slate-500">24 h</span>
+        </div>
+        
+        <div class="flex items-end justify-between h-24 gap-[2px]">
+          @for (b of barras; track b.hora) {
+            <div
+              class="w-full rounded-t-sm transition-all duration-300"
+              [ngClass]="{
+                'bg-red-500': b.hora === horaActual(),
+                'bg-indigo-500': b.esPico,
+                'bg-slate-700': !b.esPico && b.hora !== horaActual()
+              }"
+              [style.height.%]="b.valor"
+              title="{{b.hora}}h"
+            ></div>
+          }
+        </div>
+        <div class="flex justify-between text-[11px] text-slate-400 mt-3 font-medium">
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span> Ahora</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-indigo-500"></span> Pico</span>
+        </div>
+      </div>
+
+      @if (mostrarValle()) {
+        <div class="bg-red-950/40 border border-red-900/50 p-4 rounded-2xl flex gap-4 items-center mt-2">
+          <div class="w-10 h-10 rounded-full bg-red-900/80 flex-shrink-0"></div>
+          <div>
+            <h3 class="font-bold text-white mb-1 text-sm">Valle circadiano</h3>
+            <p class="text-xs text-slate-300 leading-tight">Evita decisiones críticas entre 15:00 y 16:30.</p>
+          </div>
+        </div>
+      }
+    </div>
+  `
 })
-export class PlanComponent {}
+export class PlanComponent {
+  horas = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+  horaActual = signal(new Date().getHours());
+  mostrarValle = signal(true);
+
+  barras = Array.from({ length: 24 }, (_, i) => ({
+    hora: i,
+    valor: 20 + Math.round(Math.abs(Math.sin(i / 3)) * 80),
+    esPico: i === 10
+  }));
+}
+
 

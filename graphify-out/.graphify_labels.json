@@ -11,7 +11,6 @@
   "10": "@nx/jest",
   "11": "eslint.config.mjs",
   "12": "engines",
-  "13": "constantes.ts",
   "14": "domain/project.json",
   "15": "compilerOptions",
   "16": "compilerOptions",
