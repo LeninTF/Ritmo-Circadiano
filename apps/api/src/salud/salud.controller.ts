@@ -7,13 +7,14 @@ import {
   DiskHealthIndicator,
 } from '@nestjs/terminus';
 import { SkipThrottle } from '@nestjs/throttler';
+import { Publica } from '../modulos/plataforma/auth/publica.decorator';
 import { PrismaHealthIndicator } from './prisma.health';
-import { Publica } from '../common/decorators/publica.decorator';
 
 const LIMITE_HEAP_BYTES = 512 * 1024 * 1024;
 
 @ApiTags('salud')
 @SkipThrottle()
+@Publica()
 @Controller('health')
 export class SaludController {
   constructor(

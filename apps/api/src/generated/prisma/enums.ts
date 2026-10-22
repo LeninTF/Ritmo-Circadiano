@@ -9,6 +9,24 @@
 * 🟢 You can import this file directly.
 */
 
+export const Rol = {
+  trabajador: 'trabajador',
+  jefe_operaciones: 'jefe_operaciones',
+  despachador: 'despachador',
+  administrador: 'administrador'
+} as const
+
+export type Rol = (typeof Rol)[keyof typeof Rol]
+
+
+export const EstadoUsuario = {
+  activo: 'activo',
+  retirado: 'retirado'
+} as const
+
+export type EstadoUsuario = (typeof EstadoUsuario)[keyof typeof EstadoUsuario]
+
+
 export const EstadoConfirmacion = {
   pendiente: 'pendiente',
   confirmado: 'confirmado',

@@ -9,6 +9,8 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/ParametroSistema'
+export type * from './models/Area'
+export type * from './models/Usuario'
 export type * from './models/Ruta'
 export type * from './models/TurnoLaboral'
 export type * from './models/ExcesoJornadaAuditoria'
