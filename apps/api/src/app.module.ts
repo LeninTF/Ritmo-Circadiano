@@ -8,6 +8,7 @@ import { validarEntorno } from './config/entorno';
 import { CafeinaModule } from './modulos/cafeina/cafeina.module';
 import { CircadianoModule } from './modulos/circadiano/circadiano.module';
 import { NotificacionesModule } from './modulos/notificaciones/notificaciones.module';
+import { IndicadoresModule } from './modulos/indicadores/indicadores.module';
 import { OperacionesModule } from './modulos/operaciones/operaciones.module';
 import { PlataformaModule } from './modulos/plataforma/plataforma.module';
 import { TrabajadorModule } from './modulos/trabajador/trabajador.module';
@@ -28,6 +29,7 @@ import { SaludModule } from './salud/salud.module';
     CafeinaModule,
     NotificacionesModule,
     TrabajadorModule,
+    IndicadoresModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

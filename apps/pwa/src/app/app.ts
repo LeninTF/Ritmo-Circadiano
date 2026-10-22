@@ -44,6 +44,9 @@ export class App implements OnInit, OnDestroy {
     { ruta: '/plan', texto: 'Plan' },
     { ruta: '/turnos', texto: 'Turnos' },
     { ruta: '/cafeina', texto: 'Cafeína' },
+    { ruta: '/plan', texto: 'Hoy' },
+    { ruta: '/cafeina', texto: 'Cafeína' },
+    { ruta: '/aptitud', texto: 'Pre-salida' },
     { ruta: '/diario', texto: 'Diario' },
     { ruta: '/plataforma', texto: 'Plataforma / Perfil' },
   ];
