@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
+import { appRoutes } from './app.routes';
 
 describe('App', () => {
   beforeEach(async () => {
@@ -16,11 +17,16 @@ describe('App', () => {
     await fixture.whenStable();
     const navegacion = fixture.nativeElement.querySelector('nav');
     const enlaces = navegacion.querySelectorAll('a');
-    expect(enlaces.length).toBe(5);
+    expect(enlaces.length).toBe(6);
     expect(navegacion.getAttribute('aria-label')).toBe('Navegación principal');
     expect(Array.from(enlaces, (enlace: Element) => enlace.getAttribute('href'))).toEqual([
-      '/plan', '/turnos', '/cafeina', '/diario', '/plataforma',
+      '/plan', '/turnos', '/cafeina', '/aptitud', '/diario', '/plataforma',
     ]);
+  });
+
+  it('mantiene accesibles por URL turnos e indicadores', () => {
+    const rutas = appRoutes.map((r) => r.path);
+    expect(rutas).toEqual(expect.arrayContaining(['turnos', 'indicadores', 'aptitud']));
   });
 
   it('conserva router-outlet y ofrece un control de tema etiquetado', async () => {
@@ -42,6 +48,5 @@ describe('App', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.getAttribute('data-tema')).toBe('claro');
   });
-
 
 });
