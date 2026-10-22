@@ -7,4 +7,9 @@ module.exports = {
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: '../../coverage/apps/api',
+  testMatch: ['<rootDir>/src/**/*.spec.ts'],
+  moduleNameMapper: {
+    '^@circadiano/contracts$': '<rootDir>/../../libs/contracts/src/index.ts',
+    '^@circadiano/domain$': '<rootDir>/../../libs/domain/src/index.ts',
+  },
 };
