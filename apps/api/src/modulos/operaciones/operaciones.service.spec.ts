@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { TURNO_ASIGNADO } from '@circadiano/contracts';
 import { OperacionesService } from './operaciones.service';
@@ -118,6 +118,131 @@ describe('OperacionesService', () => {
       });
       expect(res).toEqual(creado);
       expect(mockPrismaService.excesoJornadaAuditoria.create).toHaveBeenCalled();
+    });
+  });
+
+  describe('confirmarTurno (RF05, ERD05)', () => {
+    const turnoMock = {
+      id: 't-1',
+      idUsuario: 'u-1',
+      idRuta: 'r-1',
+      fecha: new Date('2026-10-20'),
+      inicioProgramado: new Date('2026-10-20T08:00:00Z'),
+      finProgramado: new Date('2026-10-20T12:00:00Z'),
+      horasConduccion: 4,
+      esNocturno: false,
+      estadoConfirmacion: 'pendiente',
+      horaInicioReal: null,
+      horaFinReal: null,
+    };
+
+    it('debe confirmar un turno exitosamente', async () => {
+      mockPrismaService.turnoLaboral.findUnique.mockResolvedValue(turnoMock);
+      const actualizado = { ...turnoMock, estadoConfirmacion: 'confirmado' };
+      mockPrismaService.turnoLaboral.update.mockResolvedValue(actualizado);
+
+      const res = await service.confirmarTurno('t-1', 'u-1', { estadoConfirmacion: 'confirmado' });
+      expect(res.estadoConfirmacion).toBe('confirmado');
+      expect(mockPrismaService.turnoLaboral.update).toHaveBeenCalled();
+    });
+
+    it('debe corregir un turno exitosamente y emitir TURNO_ASIGNADO', async () => {
+      mockPrismaService.turnoLaboral.findUnique.mockResolvedValue(turnoMock);
+      const actualizado = {
+        ...turnoMock,
+        estadoConfirmacion: 'corregido',
+        horaInicioReal: new Date('2026-10-20T08:30:00Z'),
+        horaFinReal: new Date('2026-10-20T12:30:00Z'),
+      };
+      mockPrismaService.turnoLaboral.update.mockResolvedValue(actualizado);
+
+      const res = await service.confirmarTurno('t-1', 'u-1', {
+        estadoConfirmacion: 'corregido',
+        horaInicioReal: '2026-10-20T08:30:00Z',
+        horaFinReal: '2026-10-20T12:30:00Z',
+      });
+
+      expect(res.estadoConfirmacion).toBe('corregido');
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        TURNO_ASIGNADO,
+        expect.objectContaining({ idTurno: 't-1', idUsuario: 'u-1' }),
+      );
+    });
+
+    it('debe lanzar NotFoundException si el turno no existe', async () => {
+      mockPrismaService.turnoLaboral.findUnique.mockResolvedValue(null);
+      await expect(
+        service.confirmarTurno('t-notfound', 'u-1', { estadoConfirmacion: 'confirmado' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('debe lanzar ForbiddenException si el usuario autenticado no es el dueño del turno', async () => {
+      mockPrismaService.turnoLaboral.findUnique.mockResolvedValue(turnoMock);
+      await expect(
+        service.confirmarTurno('t-1', 'u-other', { estadoConfirmacion: 'confirmado' }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('debe lanzar BadRequestException si faltan horas reales al corregir', async () => {
+      mockPrismaService.turnoLaboral.findUnique.mockResolvedValue(turnoMock);
+      await expect(
+        service.confirmarTurno('t-1', 'u-1', { estadoConfirmacion: 'corregido' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('debe lanzar BadRequestException si la hora de fin real es anterior o igual a la de inicio real', async () => {
+      mockPrismaService.turnoLaboral.findUnique.mockResolvedValue(turnoMock);
+      await expect(
+        service.confirmarTurno('t-1', 'u-1', {
+          estadoConfirmacion: 'corregido',
+          horaInicioReal: '2026-10-20T12:00:00Z',
+          horaFinReal: '2026-10-20T10:00:00Z',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('debe lanzar BadRequestException al intentar volver a estado pendiente', async () => {
+      mockPrismaService.turnoLaboral.findUnique.mockResolvedValue(turnoMock);
+      await expect(
+        service.confirmarTurno('t-1', 'u-1', { estadoConfirmacion: 'pendiente' as any }),
+      ).rejects.toThrow(BadRequestException);
+      expect(mockPrismaService.turnoLaboral.update).not.toHaveBeenCalled();
+    });
+
+    it('debe retornar el turno sin actualizar ni emitir evento si ya está confirmado (idempotencia)', async () => {
+      const turnoYaConfirmado = {
+        ...turnoMock,
+        estadoConfirmacion: 'confirmado',
+        horaInicioReal: new Date('2026-10-20T08:00:00Z'),
+        horaFinReal: new Date('2026-10-20T12:00:00Z'),
+      };
+      mockPrismaService.turnoLaboral.findUnique.mockResolvedValue(turnoYaConfirmado);
+
+      const res = await service.confirmarTurno('t-1', 'u-1', { estadoConfirmacion: 'confirmado' });
+
+      expect(res).toEqual(turnoYaConfirmado);
+      expect(mockPrismaService.turnoLaboral.update).not.toHaveBeenCalled();
+      expect(mockEventEmitter.emit).not.toHaveBeenCalled();
+    });
+
+    it('debe retornar el turno sin actualizar ni emitir evento si ya está corregido con los mismos datos (idempotencia)', async () => {
+      const turnoYaCorregido = {
+        ...turnoMock,
+        estadoConfirmacion: 'corregido',
+        horaInicioReal: new Date('2026-10-20T08:30:00.000Z'),
+        horaFinReal: new Date('2026-10-20T12:30:00.000Z'),
+      };
+      mockPrismaService.turnoLaboral.findUnique.mockResolvedValue(turnoYaCorregido);
+
+      const res = await service.confirmarTurno('t-1', 'u-1', {
+        estadoConfirmacion: 'corregido',
+        horaInicioReal: '2026-10-20T08:30:00.000Z',
+        horaFinReal: '2026-10-20T12:30:00.000Z',
+      });
+
+      expect(res).toEqual(turnoYaCorregido);
+      expect(mockPrismaService.turnoLaboral.update).not.toHaveBeenCalled();
+      expect(mockEventEmitter.emit).not.toHaveBeenCalled();
     });
   });
 
