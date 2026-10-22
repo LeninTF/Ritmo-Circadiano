@@ -1,1 +1,61 @@
 // Slice I2 · tablas: ruta, turno_laboral (+ vistas v_ind_*)
+
+/// Ruta de viaje interprovincial (p. ej. Lima – Nasca).
+model Ruta {
+  id              String   @id @default(uuid()) @db.Uuid
+  origen          String   @db.VarChar(120)
+  destino         String   @db.VarChar(120)
+  distanciaKm     Decimal  @map("distancia_km") @db.Decimal(7, 2)
+  duracionEstimadaH Decimal @map("duracion_estimada_h") @db.Decimal(4, 2)
+  activa          Boolean  @default(true)
+
+  turnos TurnoLaboral[]
+
+  @@map("ruta")
+}
+
+/// Estado de confirmacion del turno (ERD05).
+enum EstadoConfirmacion {
+  pendiente
+  confirmado
+  corregido
+
+  @@map("estado_confirmacion")
+}
+
+/// Turno asignado a un trabajador en una ruta y fecha (RF04, RN01, ERD05).
+model TurnoLaboral {
+  id                  String              @id @default(uuid()) @db.Uuid
+  idUsuario           String              @map("id_usuario") @db.Uuid
+  idRuta              String              @map("id_ruta") @db.Uuid
+  fecha               DateTime            @db.Date
+  inicioProgramado    DateTime            @map("inicio_programado") @db.Timestamptz()
+  finProgramado       DateTime            @map("fin_programado") @db.Timestamptz()
+  horasConduccion     Decimal             @map("horas_conduccion") @db.Decimal(4, 2)
+  esNocturno          Boolean             @map("es_nocturno")
+  estadoConfirmacion  EstadoConfirmacion  @default(pendiente) @map("estado_confirmacion")
+  horaInicioReal      DateTime?           @map("hora_inicio_real") @db.Timestamptz()
+  horaFinReal         DateTime?           @map("hora_fin_real") @db.Timestamptz()
+  creadoEn            DateTime            @default(now()) @map("creado_en") @db.Timestamptz()
+  actualizadoEn       DateTime            @updatedAt @map("actualizado_en") @db.Timestamptz()
+
+  ruta Ruta @relation(fields: [idRuta], references: [id])
+  excesosAuditoria    ExcesoJornadaAuditoria[]
+
+  @@map("turno_laboral")
+}
+
+/// Auditoría de excesos de jornada laboral aprobados (RF14).
+model ExcesoJornadaAuditoria {
+  id              String       @id @default(uuid()) @db.Uuid
+  idTurno         String?      @map("id_turno") @db.Uuid
+  idUsuario       String       @map("id_usuario") @db.Uuid
+  fecha           DateTime     @db.Date
+  horasConduccion Decimal      @map("horas_conduccion") @db.Decimal(4, 2)
+  motivoExceso    String       @map("motivo_exceso") @db.Text
+  creadoEn        DateTime     @default(now()) @map("creado_en") @db.Timestamptz()
+
+  turno           TurnoLaboral? @relation(fields: [idTurno], references: [id], onDelete: SetNull)
+
+  @@map("exceso_jornada_auditoria")
+}
