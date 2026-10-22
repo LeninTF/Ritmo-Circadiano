@@ -27,6 +27,10 @@ export interface LoginDto {
   clave: string;
 }
 
+export interface RefrescarTokenDto {
+  refreshToken: string;
+}
+
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
