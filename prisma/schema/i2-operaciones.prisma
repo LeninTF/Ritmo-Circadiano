@@ -40,6 +40,22 @@ model TurnoLaboral {
   actualizadoEn       DateTime            @updatedAt @map("actualizado_en") @db.Timestamptz()
 
   ruta Ruta @relation(fields: [idRuta], references: [id])
+  excesosAuditoria    ExcesoJornadaAuditoria[]
 
   @@map("turno_laboral")
+}
+
+/// Auditoría de excesos de jornada laboral aprobados (RF14).
+model ExcesoJornadaAuditoria {
+  id              String       @id @default(uuid()) @db.Uuid
+  idTurno         String?      @map("id_turno") @db.Uuid
+  idUsuario       String       @map("id_usuario") @db.Uuid
+  fecha           DateTime     @db.Date
+  horasConduccion Decimal      @map("horas_conduccion") @db.Decimal(4, 2)
+  motivoExceso    String       @map("motivo_exceso") @db.Text
+  creadoEn        DateTime     @default(now()) @map("creado_en") @db.Timestamptz()
+
+  turno           TurnoLaboral? @relation(fields: [idTurno], references: [id], onDelete: SetNull)
+
+  @@map("exceso_jornada_auditoria")
 }
