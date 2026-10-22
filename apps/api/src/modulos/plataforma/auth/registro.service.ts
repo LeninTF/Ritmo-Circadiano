@@ -95,10 +95,21 @@ export class RegistroService {
     return `${PREFIJO_PARTICIPANTE}${String(mayor + 1).padStart(DIGITOS_MINIMOS, '0')}`;
   }
 
+  /**
+   * Nombre de la restriccion que fallo, o null si no es un duplicado. Con el
+   * adaptador de pg (Prisma 7) viene en driverAdapterError y no en meta.target.
+   */
   private objetivoDuplicado(error: unknown): string | null {
-    const e = error as { code?: string; meta?: { target?: unknown } };
+    const e = error as {
+      code?: string;
+      meta?: {
+        target?: unknown;
+        driverAdapterError?: { cause?: { constraint?: { index?: string } } };
+      };
+    };
     if (e?.code !== ERROR_UNICO_PRISMA) return null;
-    const objetivo = e.meta?.target;
+    const objetivo =
+      e.meta?.target ?? e.meta?.driverAdapterError?.cause?.constraint?.index;
     return Array.isArray(objetivo) ? objetivo.join(',') : String(objetivo ?? '');
   }
 }

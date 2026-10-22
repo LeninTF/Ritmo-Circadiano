@@ -15,6 +15,8 @@ async function main(): Promise<void> {
       create: { clave: 'umbral_cafeina_mg', valor: '50' },
     });
 
+    await sembrarIdentidad(prisma);
+
     // Rutas iniciales de Transporte Cueva S.A.C. (Lima, Ica, Nasca, Lomas, Bella Unión, Acarí)
     const rutasIniciales = [
       {

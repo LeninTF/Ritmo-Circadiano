@@ -19,8 +19,12 @@ describe('RegistroService (RF01, CP-01)', () => {
     ...extra,
   });
 
-  const duplicado = (target: string[]) =>
-    Object.assign(new Error('duplicado'), { code: 'P2002', meta: { target } });
+  // Forma real del error con el adaptador de pg (comprobada contra Postgres 16).
+  const duplicado = (indice: string) =>
+    Object.assign(new Error('duplicado'), {
+      code: 'P2002',
+      meta: { driverAdapterError: { cause: { constraint: { index: indice } } } },
+    });
 
   beforeEach(() => {
     jest.resetAllMocks();
@@ -84,14 +88,27 @@ describe('RegistroService (RF01, CP-01)', () => {
   });
 
   it('correo repetido -> 409', async () => {
-    crear.mockRejectedValue(duplicado(['correo']));
+    crear.mockRejectedValue(duplicado('usuario_correo_key'));
     await expect(servicio.registrar(dto())).rejects.toBeInstanceOf(
       ConflictException,
     );
   });
 
+  it('tambien reconoce el duplicado con la forma antigua meta.target', async () => {
+    crear.mockRejectedValue(
+      Object.assign(new Error('duplicado'), { code: 'P2002', meta: { target: ['correo'] } }),
+    );
+    await expect(servicio.registrar(dto())).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('un error que no es de duplicado se propaga tal cual', async () => {
+    const fallo = new Error('conexion perdida');
+    crear.mockRejectedValue(fallo);
+    await expect(servicio.registrar(dto())).rejects.toBe(fallo);
+  });
+
   it('si otro registro toma el mismo codigo, reintenta con el siguiente', async () => {
-    crear.mockRejectedValueOnce(duplicado(['codigo_participante']));
+    crear.mockRejectedValueOnce(duplicado('usuario_codigo_participante_key'));
     buscarVarios
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{ codigoParticipante: 'P01' }]);
