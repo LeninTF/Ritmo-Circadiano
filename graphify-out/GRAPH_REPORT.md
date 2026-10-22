@@ -1,17 +1,17 @@
-# Graph Report - Ritmo-Circadiano  (2026-10-21)
+# Graph Report - Ritmo-Circadiano  (2026-10-22)
 
 ## Corpus Check
-- 129 files · ~64,628 words
+- 131 files · ~64,978 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 20 file(s) not represented in the graph (top: (none) 7, .prisma 6, .scss 2)
 
 ## Summary
-- 1529 nodes · 1815 edges · 99 communities (67 shown, 32 thin omitted)
+- 1524 nodes · 1815 edges · 98 communities (67 shown, 31 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 20 edges (avg confidence: 0.89)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `9bc44e83`
+- Built from commit: `311cd0d9`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -50,7 +50,7 @@
 - Typecheck Target Config
 - PWA TypeScript Strictness
 - Prisma Generate Target
-- semaforo-aptitud.component.ts
+- api/src/main.ts
 - Serve Build Dependencies
 - PWA Project Config
 - API Project Config
@@ -77,8 +77,7 @@
 - devDependencies
 - package.json
 - Constraints
-- modulos/indicadores/indicadores.service.ts
-- CrearTurnoDto
+- .obtenerPanel
 - @angular/core
 - CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)
 - Prisma__TurnoLaboralClient
@@ -120,25 +119,25 @@
 6. `TurnoLaboralDelegate` - 18 edges
 7. `compilerOptions` - 18 edges
 8. `PrismaService` - 17 edges
-9. `OperacionesService` - 16 edges
-10. `CrearTurnoDto` - 16 edges
+9. `CrearTurnoDto` - 16 edges
+10. `OperacionesService` - 16 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `1. Arquitectura y SOLID` --references--> `PrismaService`  [INFERRED]
-  CLAUDE.md → apps/api/src/prisma/prisma.service.ts
 - `9. Convenciones de nomenclatura` --references--> `CrearTurnoDto`  [INFERRED]
   CLAUDE.md → apps/api/src/modulos/operaciones/dto/crear-turno.dto.ts
+- `1. Arquitectura y SOLID` --references--> `PrismaService`  [INFERRED]
+  CLAUDE.md → apps/api/src/prisma/prisma.service.ts
 - `9. Convenciones de nomenclatura` --references--> `TurnosService`  [INFERRED]
   CLAUDE.md → apps/pwa/src/app/paginas/turnos/turnos.service.ts
-- `9. Convenciones de nomenclatura` --references--> `ColorSemaforo`  [INFERRED]
-  CLAUDE.md → libs/contracts/src/semaforo.ts
 - `Fase 2 — Componentes compartidos (dueño I4)` --references--> `ColorSemaforo`  [INFERRED]
   tasks/plan.md → libs/contracts/src/semaforo.ts
+- `Fase 2 — Componentes compartidos` --references--> `ColorSemaforo`  [INFERRED]
+  tasks/todo.md → libs/contracts/src/semaforo.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (99 total, 32 thin omitted)
+## Communities (98 total, 31 thin omitted)
 
 ### Community 0 - "prismaNamespace.ts"
 Cohesion: 0.02
@@ -206,7 +205,7 @@ Nodes (14): AnyNull, DbNull, Decimal, ExcesoJornadaAuditoriaScalarFieldEnum, Jso
 
 ### Community 23 - "app.module.ts"
 Cohesion: 0.12
-Nodes (8): CafeinaModule, CircadianoModule, IndicadoresModule, OperacionesModule, PlataformaModule, TrabajadorModule, PrismaModule, @nestjs/config
+Nodes (8): CafeinaModule, CircadianoModule, IndicadoresModule, OperacionesModule, PlataformaModule, TrabajadorModule, PrismaModule, @nestjs/schedule
 
 ### Community 24 - "API App TypeScript Config"
 Cohesion: 0.15
@@ -243,6 +242,10 @@ Nodes (16): angularCompilerOptions, enableI18nLegacyMessageIdFormat, strictInjec
 ### Community 33 - "Prisma Generate Target"
 Cohesion: 0.29
 Nodes (7): command, cache, executor, inputs, options, outputs, prisma-generate
+
+### Community 34 - "api/src/main.ts"
+Cohesion: 0.33
+Nodes (3): AppModule, helmet, @nestjs/core
 
 ### Community 35 - "Serve Build Dependencies"
 Cohesion: 0.29
@@ -301,12 +304,12 @@ Cohesion: 0.25
 Nodes (7): compilerOptions, esModuleInterop, extends, files, include, ../../tsconfig.base.json, references
 
 ### Community 55 - "OperacionesService"
-Cohesion: 0.10
-Nodes (4): OperacionesController, OperacionesService, detectarTurnoNocturno(), validarJornadaRN01()
+Cohesion: 0.07
+Nodes (8): ActualizarTurnoDto, CrearTurnoDto, OperacionesController, OperacionesService, detectarTurnoNocturno(), validarJornadaRN01(), @nestjs/platform-express, @nestjs/swagger
 
 ### Community 56 - "salud.controller.ts"
 Cohesion: 0.12
-Nodes (7): IS_PUBLIC_KEY, Publica(), PrismaHealthIndicator, SaludController, SaludModule, @nestjs/terminus, @nestjs/throttler
+Nodes (8): IS_PUBLIC_KEY, Publica(), PrismaHealthIndicator, SaludController, SaludModule, @nestjs/common, @nestjs/terminus, @nestjs/throttler
 
 ### Community 57 - "Environment Validation"
 Cohesion: 0.25
@@ -317,8 +320,8 @@ Cohesion: 0.18
 Nodes (11): ajv, picomatch, js-yaml, undici, overrides, @angular-devkit/core@19.0.1, @nestjs/swagger, nx (+3 more)
 
 ### Community 59 - "@nestjs/common"
-Cohesion: 0.20
-Nodes (6): AppModule, Roles(), ROLES_KEY, RolesGuard, @nestjs/common, @nestjs/core
+Cohesion: 0.17
+Nodes (5): Roles(), ROLES_KEY, RolesGuard, IndicadoresController, IndicadoresService
 
 ### Community 60 - "devDependencies"
 Cohesion: 0.04
@@ -326,19 +329,15 @@ Nodes (49): devDependencies, @angular/build, @angular/cli, @angular/compiler-cli
 
 ### Community 61 - "package.json"
 Cohesion: 0.04
-Nodes (52): license, name, private, version, @angular/build, @angular/cli, @angular/compiler, @angular/compiler-cli (+44 more)
+Nodes (49): license, name, private, version, @angular/build, @angular/cli, @angular/compiler, @angular/compiler-cli (+41 more)
 
 ### Community 62 - "Constraints"
 Cohesion: 0.25
 Nodes (7): Constraints, Enforced with numbers, Exceptions, Exceptions, Floor (always enforced, blocks immediately), Measured, not yet enforced, Not set up (and why)
 
-### Community 63 - "modulos/indicadores/indicadores.service.ts"
-Cohesion: 0.11
-Nodes (3): IndicadoresController, IndicadoresService, RespuestaAgregada
-
-### Community 64 - "CrearTurnoDto"
-Cohesion: 0.17
-Nodes (4): ActualizarTurnoDto, CrearTurnoDto, @nestjs/platform-express, @nestjs/swagger
+### Community 63 - ".obtenerPanel"
+Cohesion: 0.15
+Nodes (3): 6. Privacidad y seguridad (obligatorio · Ley N.° 29733), RespuestaAgregada, assertKAnonymity()
 
 ### Community 65 - "@angular/core"
 Cohesion: 0.29
@@ -346,15 +345,15 @@ Nodes (6): IndicadoresService, PanelIndicadoresResponse, @angular/common, @angul
 
 ### Community 66 - "CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)"
 Cohesion: 0.05
-Nodes (29): Prisma__RutaClient, 0. Carga de contexto bajo demanda (no precargar), 11. Protocolo MCP de Notion (estado vivo), 12. CONSTRAINTS.md (límites duros), 13. graphify, 14. Sistema de diseño (fuente: Figma "Gestor Circadiano — Prototipo PWA"), 2. Stack, 3. Comandos (+21 more)
+Nodes (29): Prisma__RutaClient, ESTADOS, SemaforoAptitudComponent, 0. Carga de contexto bajo demanda (no precargar), 11. Protocolo MCP de Notion (estado vivo), 12. CONSTRAINTS.md (límites duros), 13. graphify, 14. Sistema de diseño (fuente: Figma "Gestor Circadiano — Prototipo PWA") (+21 more)
 
 ### Community 68 - "app.routes.ts"
 Cohesion: 0.30
 Nodes (6): App, appConfig, appRoutes, @angular/platform-browser, @angular/router, @angular/service-worker
 
 ### Community 69 - "operaciones.service.ts"
-Cohesion: 0.12
-Nodes (8): PrismaService, 1. Arquitectura y SOLID, ErrorApiDto, Rol, TURNO_ASIGNADO, TurnoAsignadoEvento, @nestjs/event-emitter, @nestjs/testing
+Cohesion: 0.14
+Nodes (10): PrismaService, 1. Arquitectura y SOLID, ErrorApiDto, Rol, TURNO_ASIGNADO, TurnoAsignadoEvento, @nestjs/config, @nestjs/event-emitter (+2 more)
 
 ### Community 70 - "compilerOptions"
 Cohesion: 0.18
@@ -409,24 +408,24 @@ Cohesion: 0.40
 Nodes (5): development, production, buildTarget, buildTarget, configurations
 
 ## Knowledge Gaps
-- **58 isolated node(s):** `../../tsconfig.base.json`, `../../tsconfig.base.json`, `./tsconfig.json`, `./tsconfig.json`, `../../tsconfig.base.json` (+53 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1155 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **32 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **58 isolated node(s):** `../../tsconfig.base.json`, `./tsconfig.json`, `./tsconfig.json`, `../../tsconfig.base.json`, `./tsconfig.json` (+53 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1151 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **31 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `@prisma/client` connect `client.ts` to `prismaNamespace.ts`, `TurnoLaboral.ts`, `ExcesoJornadaAuditoria.ts`, `Ruta.ts`, `ParametroSistema.ts`, `commonInputTypes.ts`, `prismaNamespaceBrowser.ts`, `package.json`?**
-  _High betweenness centrality (0.214) - this node is a cross-community bridge._
-- **What connects `../../tsconfig.base.json`, `../../tsconfig.base.json`, `./tsconfig.json` to the rest of the system?**
+  _High betweenness centrality (0.228) - this node is a cross-community bridge._
+- **What connects `../../tsconfig.base.json`, `./tsconfig.json`, `./tsconfig.json` to the rest of the system?**
   _58 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `prismaNamespace.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.017241379310344827 - nodes in this community are weakly interconnected._
 - **Why does `devDependencies` connect `devDependencies` to `package.json`?**
-  _High betweenness centrality (0.045) - this node is a cross-community bridge._
+  _High betweenness centrality (0.052) - this node is a cross-community bridge._
 - **Should `TurnoLaboral.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.02040816326530612 - nodes in this community are weakly interconnected._
-- **Why does `@angular/core` connect `@angular/core` to `diario.component.ts`, `plan.component.ts`, `semaforo-aptitud.component.ts`, `plataforma.component.ts`, `app.routes.ts`, `chip.component.spec.ts`, `tarjeta.component.spec.ts`, `micro-tarjeta.component.spec.ts`, `package.json`, `aptitud.component.ts`, `cafeina.component.ts`?**
-  _High betweenness centrality (0.041) - this node is a cross-community bridge._
+- **Why does `@angular/core` connect `@angular/core` to `diario.component.ts`, `plan.component.ts`, `CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)`, `plataforma.component.ts`, `app.routes.ts`, `chip.component.spec.ts`, `tarjeta.component.spec.ts`, `micro-tarjeta.component.spec.ts`, `package.json`, `aptitud.component.ts`, `cafeina.component.ts`?**
+  _High betweenness centrality (0.044) - this node is a cross-community bridge._
 - **Should `ExcesoJornadaAuditoria.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.024390243902439025 - nodes in this community are weakly interconnected._
