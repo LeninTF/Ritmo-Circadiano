@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../apps/api/src/generated/prisma/client';
+import { sembrarIdentidad } from './seeds/identidad';
 
 async function main(): Promise<void> {
   const prisma = new PrismaClient({

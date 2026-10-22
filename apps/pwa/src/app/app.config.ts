@@ -8,7 +8,8 @@ import { provideHttpClient, withFetch } from '@angular/common/http';
 import { appRoutes } from './app.routes';
 import { provideServiceWorker } from '@angular/service-worker';
 
-export const appConfig: ApplicationConfig = {\n  providers: [
+export const appConfig: ApplicationConfig = {
+  providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(appRoutes),
     provideHttpClient(withFetch()),

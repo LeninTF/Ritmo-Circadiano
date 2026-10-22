@@ -5,11 +5,12 @@ import { PrismaService } from '../../prisma/prisma.service';
 describe('IndicadoresService (CP-13 k-anonymity)', () => {
   let service: IndicadoresService;
 
-  const mockPrismaService: any = {
-    turnoLaboral: {
-      findMany: jest.fn(),
-    },
+  const mockPrismaService = {
+    $queryRawUnsafe: jest.fn(),
   };
+
+  const usuarios = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({ id_usuario: `user-${i + 1}` }));
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -30,36 +31,33 @@ describe('IndicadoresService (CP-13 k-anonymity)', () => {
 
   describe('obtenerPanel (RF13)', () => {
     it('debe retornar { suficiente: false } cuando n < 5 (CP-13a)', async () => {
-      // 3 conductores únicos (< 5)
-      mockPrismaService.turnoLaboral.findMany.mockResolvedValue([
-        { idUsuario: 'user-1', horasConduccion: 4, esNocturno: false },
-        { idUsuario: 'user-2', horasConduccion: 5, esNocturno: true },
-        { idUsuario: 'user-3', horasConduccion: 3, esNocturno: false },
-      ]);
+      mockPrismaService.$queryRawUnsafe.mockResolvedValueOnce(usuarios(3));
 
       const resultado = await service.obtenerPanel('2026-10-01', '2026-10-07');
+
       expect(resultado).toEqual({ suficiente: false });
+      // Con n < 5 no se consulta ninguna vista de indicadores
+      expect(mockPrismaService.$queryRawUnsafe).toHaveBeenCalledTimes(1);
     });
 
     it('debe retornar { suficiente: true, datos: ... } cuando n >= 5 (CP-13b)', async () => {
-      // 5 conductores únicos (>= 5)
-      mockPrismaService.turnoLaboral.findMany.mockResolvedValue([
-        { idUsuario: 'user-1', horasConduccion: 4, esNocturno: false },
-        { idUsuario: 'user-2', horasConduccion: 5, esNocturno: true },
-        { idUsuario: 'user-3', horasConduccion: 3, esNocturno: false },
-        { idUsuario: 'user-4', horasConduccion: 4, esNocturno: true },
-        { idUsuario: 'user-5', horasConduccion: 4, esNocturno: false },
-        { idUsuario: 'user-1', horasConduccion: 2, esNocturno: false }, // duplicado usuario 1
-      ]);
+      mockPrismaService.$queryRawUnsafe
+        .mockResolvedValueOnce(usuarios(5))
+        .mockResolvedValueOnce([{ prom_descanso: '9.5' }])
+        .mockResolvedValueOnce([{ turnos_nocturnos: '2', prom_horas: '3.666' }])
+        .mockResolvedValueOnce([{ total: '6', completados: '3' }]);
 
       const resultado = await service.obtenerPanel('2026-10-01', '2026-10-07');
+
       expect(resultado).toEqual({
         suficiente: true,
         datos: {
           conductoresUnicos: 5,
           totalTurnos: 6,
           promedioHorasConduccion: 3.67,
+          promedioHorasDescanso: 9.5,
           turnosNocturnos: 2,
+          porcentajeAdherencia: 50,
         },
       });
     });
