@@ -56,7 +56,11 @@ export const ModelName = {
   Usuario: 'Usuario',
   Ruta: 'Ruta',
   TurnoLaboral: 'TurnoLaboral',
-  ExcesoJornadaAuditoria: 'ExcesoJornadaAuditoria'
+  ExcesoJornadaAuditoria: 'ExcesoJornadaAuditoria',
+  Bebida: 'Bebida',
+  IngestaCafeina: 'IngestaCafeina',
+  SuscripcionPush: 'SuscripcionPush',
+  Notificacion: 'Notificacion'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -154,6 +158,55 @@ export const ExcesoJornadaAuditoriaScalarFieldEnum = {
 } as const
 
 export type ExcesoJornadaAuditoriaScalarFieldEnum = (typeof ExcesoJornadaAuditoriaScalarFieldEnum)[keyof typeof ExcesoJornadaAuditoriaScalarFieldEnum]
+
+
+export const BebidaScalarFieldEnum = {
+  id_bebida: 'id_bebida',
+  nombre: 'nombre',
+  cafeina_mg: 'cafeina_mg',
+  volumen_ml: 'volumen_ml'
+} as const
+
+export type BebidaScalarFieldEnum = (typeof BebidaScalarFieldEnum)[keyof typeof BebidaScalarFieldEnum]
+
+
+export const IngestaCafeinaScalarFieldEnum = {
+  id_ingesta: 'id_ingesta',
+  id_usuario: 'id_usuario',
+  id_bebida: 'id_bebida',
+  cafeina_mg: 'cafeina_mg',
+  fecha_hora: 'fecha_hora',
+  residual_estimado_mg: 'residual_estimado_mg',
+  client_id: 'client_id'
+} as const
+
+export type IngestaCafeinaScalarFieldEnum = (typeof IngestaCafeinaScalarFieldEnum)[keyof typeof IngestaCafeinaScalarFieldEnum]
+
+
+export const SuscripcionPushScalarFieldEnum = {
+  id_suscripcion: 'id_suscripcion',
+  id_usuario: 'id_usuario',
+  endpoint: 'endpoint',
+  clave_p256dh: 'clave_p256dh',
+  clave_auth: 'clave_auth',
+  fecha_alta: 'fecha_alta'
+} as const
+
+export type SuscripcionPushScalarFieldEnum = (typeof SuscripcionPushScalarFieldEnum)[keyof typeof SuscripcionPushScalarFieldEnum]
+
+
+export const NotificacionScalarFieldEnum = {
+  id_notificacion: 'id_notificacion',
+  id_usuario: 'id_usuario',
+  id_plan: 'id_plan',
+  tipo: 'tipo',
+  programada_para: 'programada_para',
+  enviada_en: 'enviada_en',
+  estado: 'estado',
+  abierta: 'abierta'
+} as const
+
+export type NotificacionScalarFieldEnum = (typeof NotificacionScalarFieldEnum)[keyof typeof NotificacionScalarFieldEnum]
 
 
 export const SortOrder = {

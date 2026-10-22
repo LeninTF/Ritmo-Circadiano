@@ -1,1 +1,50 @@
-// Slice I4 · tablas: bebida, ingesta_cafeina, notificacion, suscripcion_push
+// Slice I4 · cafeína, farmacocinética y notificaciones preventivas.
+
+model Bebida {
+  id_bebida   Int              @id @default(autoincrement())
+  nombre      String           @unique @db.VarChar(60)
+  cafeina_mg  Decimal          @db.Decimal(5, 1)
+  volumen_ml Int              @db.SmallInt
+  ingestas    IngestaCafeina[]
+
+  @@map("bebida")
+}
+
+model IngestaCafeina {
+  id_ingesta            Int       @id @default(autoincrement())
+  id_usuario            String    @db.Uuid
+  id_bebida             Int?
+  cafeina_mg            Decimal   @db.Decimal(5, 1)
+  fecha_hora            DateTime  @db.Timestamp(6)
+  residual_estimado_mg  Decimal   @db.Decimal(5, 1)
+  client_id             String    @unique @db.Uuid
+  bebida                Bebida?   @relation(fields: [id_bebida], references: [id_bebida], onDelete: Restrict)
+
+  @@index([id_usuario, fecha_hora])
+  @@map("ingesta_cafeina")
+}
+
+model SuscripcionPush {
+  id_suscripcion Int      @id @default(autoincrement())
+  id_usuario     String   @db.Uuid
+  endpoint       String   @unique @db.Text
+  clave_p256dh   String   @db.VarChar(120)
+  clave_auth     String   @db.VarChar(60)
+  fecha_alta     DateTime @default(now()) @db.Timestamp(6)
+
+  @@map("suscripcion_push")
+}
+
+model Notificacion {
+  id_notificacion Int       @id @default(autoincrement())
+  id_usuario      String    @db.Uuid
+  id_plan         Int?
+  tipo            String    @db.VarChar(20)
+  programada_para DateTime  @db.Timestamp(6)
+  enviada_en      DateTime? @db.Timestamp(6)
+  estado          String    @default("pendiente") @db.VarChar(12)
+  abierta         Boolean   @default(false)
+
+  @@index([estado, programada_para])
+  @@map("notificacion")
+}
