@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Query,
+  Headers,
   UploadedFile,
   UseInterceptors,
   BadRequestException,
@@ -41,6 +42,26 @@ export class OperacionesController {
     return this.operacionesService.listarTurnos({ idUsuario, fecha });
   }
 
+  @Get('turnos/me')
+  @ApiOperation({ summary: 'Obtener los turnos laborales del usuario autenticado actual con rango de fechas opcional (desde, hasta)' })
+  @ApiQuery({ name: 'desde', required: false, description: 'Fecha de inicio del rango (YYYY-MM-DD)' })
+  @ApiQuery({ name: 'hasta', required: false, description: 'Fecha de fin del rango (YYYY-MM-DD)' })
+  @ApiQuery({ name: 'idUsuario', required: false, description: 'ID de usuario (fallback para pruebas o desarrollo)' })
+  @ApiResponse({ status: 200, description: 'Lista de turnos propios obtenida exitosamente.' })
+  @ApiResponse({ status: 400, description: 'Usuario no identificado o parámetros inválidos.' })
+  async obtenerTurnosMe(
+    @Query('desde') desde?: string,
+    @Query('hasta') hasta?: string,
+    @Query('idUsuario') idUsuarioQuery?: string,
+    @Headers('x-usuario-id') headerIdUsuario?: string,
+  ) {
+    const idUsuario = idUsuarioQuery || headerIdUsuario;
+    if (!idUsuario) {
+      throw new BadRequestException('Se requiere identificar al usuario (parámetro idUsuario o cabecera x-usuario-id).');
+    }
+    return this.operacionesService.listarTurnosMe(idUsuario, desde, hasta);
+  }
+
   @Get('turnos/:id')
   @ApiOperation({ summary: 'Obtener un turno laboral por ID' })
   @ApiResponse({ status: 200, description: 'Turno encontrado.' })
@@ -50,17 +71,19 @@ export class OperacionesController {
   }
 
   @Post('turnos')
-  @ApiOperation({ summary: 'Registrar un nuevo turno laboral (RF04)' })
+  @ApiOperation({ summary: 'Registrar un nuevo turno laboral (RF04, RF14)' })
   @ApiResponse({ status: 201, description: 'Turno creado exitosamente.' })
   @ApiResponse({ status: 400, description: 'Datos inválidos o ruta no existente.' })
+  @ApiResponse({ status: 409, description: 'Conflicto por exceso de jornada laboral sin confirmación (RF14)' })
   async crearTurno(@Body() dto: CrearTurnoDto) {
     return this.operacionesService.crearTurno(dto);
   }
 
   @Patch('turnos/:id')
-  @ApiOperation({ summary: 'Actualizar un turno laboral existente' })
+  @ApiOperation({ summary: 'Actualizar un turno laboral existente (RF04, RF14)' })
   @ApiResponse({ status: 200, description: 'Turno actualizado correctamente.' })
   @ApiResponse({ status: 404, description: 'Turno no encontrado.' })
+  @ApiResponse({ status: 409, description: 'Conflicto por exceso de jornada laboral sin confirmación (RF14)' })
   async actualizarTurno(@Param('id') id: string, @Body() dto: ActualizarTurnoDto) {
     return this.operacionesService.actualizarTurno(id, dto);
   }
