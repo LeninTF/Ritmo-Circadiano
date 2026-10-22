@@ -19,7 +19,8 @@ La API usa `apps/api/Dockerfile`. Al arrancar corre `prisma migrate deploy` y `p
    - `DATABASE_URL`: la cadena del paso 1.
    - `CORS_ORIGIN`: la URL exacta de la PWA del paso 3 (sin `/` final). Puede dejarse vacia hasta tenerla y editarla despues.
    - `VAPID_PUBLIC_KEY` y `VAPID_PRIVATE_KEY`: generarlas una vez con `npx web-push generate-vapid-keys`.
-   - `JWT_SECRET` lo genera Render solo.
+   - `JWT_SECRET`: con Blueprint lo genera Render solo; en el servicio manual hay que crearla: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` (minimo 32 caracteres).
+   - `JWT_EXPIRA`: `8h` (solo en el servicio manual).
 3. **PWA.** En Cloudflare Pages (o Netlify), conectar el repo y la rama `develop`:
    - Comando de build: `sed -i "s#apiUrl: ''#apiUrl: '$API_URL'#" apps/pwa/src/environments/environment.production.ts && npm ci && npx nx build pwa --configuration=production`
    - Directorio de salida: `dist/apps/pwa/browser`
