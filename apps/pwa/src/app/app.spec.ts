@@ -17,18 +17,11 @@ describe('App', () => {
     await fixture.whenStable();
     const navegacion = fixture.nativeElement.querySelector('nav');
     const enlaces = navegacion.querySelectorAll('a');
-    expect(enlaces.length).toBe(5);
+    expect(enlaces.length).toBe(6);
     expect(navegacion.getAttribute('aria-label')).toBe('Navegación principal');
     expect(Array.from(enlaces, (enlace: Element) => enlace.getAttribute('href'))).toEqual([
-      '/plan', '/turnos', '/cafeina', '/diario', '/plataforma',
+      '/plan', '/turnos', '/cafeina', '/aptitud', '/diario', '/plataforma',
     ]);
-  it('muestra las cuatro pestañas del Figma', async () => {
-    const fixture = TestBed.createComponent(App);
-    await fixture.whenStable();
-    const textos = Array.from<HTMLElement>(
-      fixture.nativeElement.querySelectorAll('nav a'),
-    ).map((a) => a.textContent?.trim());
-    expect(textos).toEqual(['Hoy', 'Cafeína', 'Pre-salida', 'Diario']);
   });
 
   it('mantiene accesibles por URL turnos e indicadores', () => {
@@ -55,6 +48,5 @@ describe('App', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.getAttribute('data-tema')).toBe('claro');
   });
-
 
 });

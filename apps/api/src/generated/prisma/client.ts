@@ -45,6 +45,16 @@ export { Prisma }
  */
 export type ParametroSistema = Prisma.ParametroSistemaModel
 /**
+ * Model Area
+ * Areas de la empresa (Tabla 5 del informe). La sede no esta definida aun.
+ */
+export type Area = Prisma.AreaModel
+/**
+ * Model Usuario
+ * Participante o usuario del sistema. Se identifica por codigo_participante (P01-P17).
+ */
+export type Usuario = Prisma.UsuarioModel
+/**
  * Model Ruta
  * Ruta de viaje interprovincial (p. ej. Lima – Nasca).
  */

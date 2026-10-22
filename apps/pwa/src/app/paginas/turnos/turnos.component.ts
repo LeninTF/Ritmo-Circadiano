@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { TurnosService } from './turnos.service';
+import { TurnosService, Turno, Ruta, TurnoDto, ImportResult } from './turnos.service';
 import { OfflineStoreService } from './offline-store.service';
 
 @Component({
@@ -106,11 +106,11 @@ export class TurnosComponent implements OnInit {
   private readonly svc = inject(TurnosService);
   readonly offlineStore = inject(OfflineStoreService);
   private readonly fb = inject(FormBuilder);
-  rutas = signal<any[]>([]);
+  rutas = signal<Ruta[]>([]);
   usr = signal<string>('00000000-0000-0000-0000-000000000001');
   imp = signal(false);
   arch = signal<File | null>(null);
-  resImp = signal<any>(null);
+  resImp = signal<ImportResult | null>(null);
   mod = signal(false);
   editando = signal(false);
   tId = signal<string | null>(null);
@@ -118,8 +118,8 @@ export class TurnosComponent implements OnInit {
   err = signal<string | null>(null);
   base = signal(new Date());
   fini = ''; ffin = '';
-  dias = signal<any[]>([]);
-  map = new Map<string, any[]>();
+  dias = signal<{ nombre: string; fecha: string }[]>([]);
+  map = new Map<string, Turno[]>();
   form: FormGroup = this.fb.group({
     idUsuario: ['', Validators.required],
     idRuta: ['', Validators.required],
@@ -165,7 +165,7 @@ export class TurnosComponent implements OnInit {
       error: () => this.svc.listarTurnos(this.usr()).subscribe((t) => this.ag(t)),
     });
   }
-  ag(ts: any[]): void {
+  ag(ts: Turno[]): void {
     this.map.clear();
     for (const d of this.dias()) this.map.set(d.fecha, []);
     for (const t of ts) {
@@ -173,10 +173,10 @@ export class TurnosComponent implements OnInit {
       if (this.map.has(f)) this.map.get(f)?.push(t);
     }
   }
-  fileSel(e: any): void { this.arch.set(e.target.files[0] || null); }
+  fileSel(e: Event): void { this.arch.set((e.target as HTMLInputElement).files?.[0] ?? null); }
   importar(): void {
     const f = this.arch();
-    if (f) this.svc.importarTurnos(f).subscribe({ next: (r) => { this.resImp.set(r); this.cargar(); }, error: (e) => this.resImp.set({ error: e.error?.message }) });
+    if (f) this.svc.importarTurnos(f).subscribe({ next: (r) => { this.resImp.set(r); this.cargar(); }, error: (e: { error?: { message?: string } }) => this.resImp.set({ error: e.error?.message }) });
   }
   abrirModalCrear(): void {
     this.editando.set(false);
@@ -186,7 +186,7 @@ export class TurnosComponent implements OnInit {
     this.form.reset({ idUsuario: this.usr(), idRuta: '', fecha: new Date().toISOString().split('T')[0], horasConduccion: 4, esNocturno: false, confirmarExceso: false, motivoExceso: '' });
     this.mod.set(true);
   }
-  editar(t: any): void {
+  editar(t: Turno): void {
     this.editando.set(true);
     this.tId.set(t.id);
     this.conf.set(false);
@@ -196,12 +196,13 @@ export class TurnosComponent implements OnInit {
   }
   guardar(): void {
     if (this.form.invalid) return;
-    const v = this.form.value;
-    const dto = { ...v, horasConduccion: Number(v.horasConduccion), inicioProgramado: new Date(v.inicioProgramado).toISOString(), finProgramado: new Date(v.finProgramado).toISOString() };
-    const obs = this.editando() ? this.svc.actualizarTurno(this.tId()!, dto) : this.svc.crearTurno(dto);
+    const v = this.form.value as TurnoDto & { inicioProgramado: string; finProgramado: string };
+    const dto: TurnoDto = { ...v, horasConduccion: Number(v.horasConduccion), inicioProgramado: new Date(v.inicioProgramado).toISOString(), finProgramado: new Date(v.finProgramado).toISOString() };
+    const tId = this.tId();
+    const obs = (this.editando() && tId) ? this.svc.actualizarTurno(tId, dto) : this.svc.crearTurno(dto);
     obs.subscribe({
       next: () => { this.mod.set(false); this.cargar(); },
-      error: (e) => {
+      error: (e: { status: number; error?: { message?: string } }) => {
         if (e.status === 409) { this.conf.set(true); this.err.set(e.error?.message || 'Exceso de jornada (RF14)'); }
         else { this.err.set(e.error?.message || 'Error'); }
       }

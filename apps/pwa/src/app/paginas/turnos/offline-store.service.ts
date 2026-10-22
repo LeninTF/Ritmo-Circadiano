@@ -11,7 +11,7 @@ export class OfflineStoreService {
     window.addEventListener('offline', () => this.isOnline.set(false));
   }
 
-  setItem(key: string, value: any): void {
+  setItem(key: string, value: unknown): void {
     try {
       const payload = {
         data: value,

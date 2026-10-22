@@ -599,10 +599,6 @@ export type EnumEstadoConfirmacionFieldUpdateOperationsInput = {
   set?: $Enums.EstadoConfirmacion
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type TurnoLaboralCreateNestedOneWithoutExcesosAuditoriaInput = {
   create?: Prisma.XOR<Prisma.TurnoLaboralCreateWithoutExcesosAuditoriaInput, Prisma.TurnoLaboralUncheckedCreateWithoutExcesosAuditoriaInput>
   connectOrCreate?: Prisma.TurnoLaboralCreateOrConnectWithoutExcesosAuditoriaInput

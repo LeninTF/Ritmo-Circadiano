@@ -52,6 +52,8 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   ParametroSistema: 'ParametroSistema',
+  Area: 'Area',
+  Usuario: 'Usuario',
   Ruta: 'Ruta',
   TurnoLaboral: 'TurnoLaboral',
   ExcesoJornadaAuditoria: 'ExcesoJornadaAuditoria'
@@ -79,6 +81,35 @@ export const ParametroSistemaScalarFieldEnum = {
 } as const
 
 export type ParametroSistemaScalarFieldEnum = (typeof ParametroSistemaScalarFieldEnum)[keyof typeof ParametroSistemaScalarFieldEnum]
+
+
+export const AreaScalarFieldEnum = {
+  id: 'id',
+  nombre: 'nombre',
+  sede: 'sede'
+} as const
+
+export type AreaScalarFieldEnum = (typeof AreaScalarFieldEnum)[keyof typeof AreaScalarFieldEnum]
+
+
+export const UsuarioScalarFieldEnum = {
+  id: 'id',
+  idArea: 'idArea',
+  codigoParticipante: 'codigoParticipante',
+  rol: 'rol',
+  cargo: 'cargo',
+  correo: 'correo',
+  hashClave: 'hashClave',
+  rangoEdad: 'rangoEdad',
+  sexo: 'sexo',
+  consentimiento: 'consentimiento',
+  fechaConsentimiento: 'fechaConsentimiento',
+  estado: 'estado',
+  semividaH: 'semividaH',
+  fuma: 'fuma'
+} as const
+
+export type UsuarioScalarFieldEnum = (typeof UsuarioScalarFieldEnum)[keyof typeof UsuarioScalarFieldEnum]
 
 
 export const RutaScalarFieldEnum = {
