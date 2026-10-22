@@ -1,0 +1,24 @@
+# Blueprint de Render para el staging del piloto (Infrastructure as Code).
+# Los valores marcados sync:false se escriben a mano en el panel de Render; NO van al repo.
+services:
+  - type: web
+    name: circadiano-api-staging
+    runtime: docker
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    branch: develop
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL # cadena de conexion de Neon o Supabase (con sslmode=require)
+        sync: false
+      - key: CORS_ORIGIN # URL exacta de la PWA, sin barra final
+        sync: false
+      - key: JWT_SECRET # Render genera un valor aleatorio largo
+        generateValue: true
+      - key: JWT_EXPIRA
+        value: 8h
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
