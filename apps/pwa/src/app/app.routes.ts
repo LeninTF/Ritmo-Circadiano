@@ -17,6 +17,13 @@ export const appRoutes: Route[] = [
       ),
   },
   {
+    path: 'indicadores',
+    loadComponent: () =>
+      import('./paginas/indicadores/indicadores.component').then(
+        (m) => m.IndicadoresComponent,
+      ),
+  },
+  {
     path: 'plan',
     loadComponent: () =>
       import('./paginas/plan/plan.component').then((m) => m.PlanComponent),
@@ -26,6 +33,13 @@ export const appRoutes: Route[] = [
     loadComponent: () =>
       import('./paginas/cafeina/cafeina.component').then(
         (m) => m.CafeinaComponent,
+      ),
+  },
+  {
+    path: 'aptitud',
+    loadComponent: () =>
+      import('./paginas/aptitud/aptitud.component').then(
+        (m) => m.AptitudComponent,
       ),
   },
   {
