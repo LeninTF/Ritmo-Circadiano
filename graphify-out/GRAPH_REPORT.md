@@ -1,22 +1,22 @@
-# Graph Report - Ritmo-Circadiano  (2026-10-16)
+# Graph Report - Ritmo-Circadiano  (2026-10-20)
 
 ## Corpus Check
-- 74 files · ~27,226 words
+- 89 files · ~32,525 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 19 file(s) not represented in the graph (top: (none) 7, .prisma 6, .scss 2)
 
 ## Summary
-- 658 nodes · 732 edges · 55 communities (44 shown, 11 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 5 edges (avg confidence: 0.91)
+- 754 nodes · 959 edges · 56 communities (45 shown, 11 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 12 edges (avg confidence: 0.91)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `235d62fa`
+- Built from commit: `b452b045`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)
+- services/circadiano.service.ts
 - Constraints
 - package.json
 - devDependencies
@@ -37,11 +37,11 @@
 - domain/tsconfig.lib.json
 - compilerOptions
 - contracts/tsconfig.lib.json
-- app.module.ts
+- CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)
 - compilerOptions
 - development
 - targets
-- entorno.ts
+- app.module.ts
 - pwa/tsconfig.app.json
 - compilerOptions
 - copy-workspace-modules
@@ -67,37 +67,40 @@
 - environment.production.ts
 - jest-preset-angular
 - api/tsconfig.json
+- circadiano.ts
 
 ## God Nodes (most connected - your core abstractions)
-1. `compilerOptions` - 18 edges
-2. `CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)` - 15 edges
-3. `@nestjs/common` - 13 edges
-4. `targets` - 9 edges
-5. `PrismaService` - 9 edges
-6. `compilerOptions` - 9 edges
-7. `compilerOptions` - 9 edges
-8. `@angular/core` - 9 edges
-9. `compilerOptions` - 8 edges
-10. `serve` - 7 edges
+1. `@nestjs/common` - 18 edges
+2. `compilerOptions` - 18 edges
+3. `CircadianoService` - 15 edges
+4. `CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)` - 15 edges
+5. `@angular/core` - 12 edges
+6. `PrismaService` - 11 edges
+7. `PlanDiarioDto` - 11 edges
+8. `targets` - 9 edges
+9. `CategoriaCronotipo` - 9 edges
+10. `compilerOptions` - 9 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `1. Arquitectura y SOLID` --references--> `PrismaService`  [INFERRED]
   CLAUDE.md → apps/api/src/prisma/prisma.service.ts
-- `9. Convenciones de nomenclatura` --references--> `ColorSemaforo`  [INFERRED]
-  CLAUDE.md → libs/contracts/src/semaforo.ts
-- `10. Flujo Git y validación pre-PR` --references--> `main()`  [INFERRED]
-  CLAUDE.md → prisma/seed.ts
-- `RangoRmeq` --references--> `CategoriaCronotipo`  [EXTRACTED]
-  libs/domain/src/constantes.ts → libs/contracts/src/cronotipo.ts
+- `4. Vertical slices (dueños de código)` --references--> `PlanDiarioDto`  [INFERRED]
+  CLAUDE.md → libs/contracts/src/plan.ts
+- `9. Convenciones de nomenclatura` --references--> `derivarRecordatorios()`  [INFERRED]
+  CLAUDE.md → libs/domain/src/circadiano.ts
+- `4. Vertical slices (dueños de código)` --references--> `OfflineStore`  [INFERRED]
+  CLAUDE.md → apps/pwa/src/app/services/offline.store.ts
+- `9. Convenciones de nomenclatura` --references--> `PlanDiarioDto`  [INFERRED]
+  CLAUDE.md → libs/contracts/src/plan.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (55 total, 11 thin omitted)
+## Communities (56 total, 11 thin omitted)
 
-### Community 0 - "CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)"
-Cohesion: 0.07
-Nodes (21): 0. Carga de contexto bajo demanda (no precargar), 10. Flujo Git y validación pre-PR, 11. Protocolo MCP de Notion (estado vivo), 12. CONSTRAINTS.md (límites duros), 13. graphify, 2. Stack, 3. Comandos, 4. Vertical slices (dueños de código) (+13 more)
+### Community 0 - "services/circadiano.service.ts"
+Cohesion: 0.06
+Nodes (20): CircadianoController, OnTurnoAsignadoHandler, CircadianoService, PrismaModule, 9. Convenciones de nomenclatura, CategoriaCronotipo, ErrorApiDto, GenerarPlanDto (+12 more)
 
 ### Community 1 - "Constraints"
 Cohesion: 0.29
@@ -105,11 +108,11 @@ Nodes (6): Constraints, Enforced with numbers, Exceptions, Floor (always enforce
 
 ### Community 3 - "package.json"
 Cohesion: 0.04
-Nodes (54): license, name, private, version, @angular/build, @angular/cli, @angular/common, @angular/compiler (+46 more)
+Nodes (53): license, name, private, version, @angular/build, @angular/cli, @angular/common, @angular/compiler (+45 more)
 
 ### Community 4 - "devDependencies"
 Cohesion: 0.04
-Nodes (47): devDependencies, @angular/build, @angular/cli, @angular/compiler-cli, @angular-devkit/core, @angular-devkit/schematics, angular-eslint, @angular/language-service (+39 more)
+Nodes (48): devDependencies, @angular/build, @angular/cli, @angular/compiler-cli, @angular-devkit/core, @angular-devkit/schematics, angular-eslint, @angular/language-service (+40 more)
 
 ### Community 5 - "dependencies"
 Cohesion: 0.07
@@ -124,8 +127,8 @@ Cohesion: 0.06
 Nodes (31): analytics, cache, dependsOn, inputs, dependsOn, ci, codeCoverage, ci (+23 more)
 
 ### Community 8 - "@angular/core"
-Cohesion: 0.11
-Nodes (12): App, appConfig, appRoutes, CafeinaComponent, DiarioComponent, PlanComponent, PlataformaComponent, TurnosComponent (+4 more)
+Cohesion: 0.08
+Nodes (15): App, appConfig, appRoutes, CafeinaComponent, DiarioComponent, PlanComponent, PlataformaComponent, TurnosComponent (+7 more)
 
 ### Community 9 - "scripts"
 Cohesion: 0.33
@@ -133,7 +136,7 @@ Nodes (6): scripts, check:coverage-domain, check:lint, check:secrets, check:type
 
 ### Community 13 - "constantes.ts"
 Cohesion: 0.13
-Nodes (23): CategoriaCronotipo, CATEGORIA_RMEQ_SIN_RESPUESTA, CONDUCCION_MAX_ACUMULADA_H, CONDUCCION_MAX_DIURNA_H, CONDUCCION_MAX_NOCTURNA_H, CONDUCCION_VENTANA_H, CORTE_CAFEINA_ANTES_DORMIR_H, HORA_FIN_NOCTURNO (+15 more)
+Nodes (26): RmeqComponent, CATEGORIA_RMEQ_SIN_RESPUESTA, CONDUCCION_MAX_ACUMULADA_H, CONDUCCION_MAX_DIURNA_H, CONDUCCION_MAX_NOCTURNA_H, CONDUCCION_VENTANA_H, CORTE_CAFEINA_ANTES_DORMIR_H, HORA_FIN_NOCTURNO (+18 more)
 
 ### Community 14 - "domain/project.json"
 Cohesion: 0.11
@@ -167,9 +170,9 @@ Nodes (8): compilerOptions, module, moduleResolution, outDir, types, extends, in
 Cohesion: 0.25
 Nodes (7): compilerOptions, declaration, outDir, types, extends, include, ./tsconfig.json
 
-### Community 23 - "app.module.ts"
-Cohesion: 0.05
-Nodes (22): AppModule, CafeinaModule, CircadianoModule, OperacionesModule, PlataformaModule, TrabajadorModule, PrismaModule, PrismaService (+14 more)
+### Community 23 - "CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)"
+Cohesion: 0.06
+Nodes (20): PrismaService, PrismaHealthIndicator, SaludController, 0. Carga de contexto bajo demanda (no precargar), 10. Flujo Git y validación pre-PR, 11. Protocolo MCP de Notion (estado vivo), 12. CONSTRAINTS.md (límites duros), 13. graphify (+12 more)
 
 ### Community 24 - "compilerOptions"
 Cohesion: 0.15
@@ -183,9 +186,9 @@ Nodes (10): development, buildTarget, extractLicenses, optimization, sourceMap, 
 Cohesion: 0.25
 Nodes (8): configurations, defaultConfiguration, executor, outputs, executor, targets, build, lint
 
-### Community 27 - "entorno.ts"
-Cohesion: 0.25
-Nodes (4): Entorno, validarEntorno(), class-transformer, class-validator
+### Community 27 - "app.module.ts"
+Cohesion: 0.07
+Nodes (16): AppModule, Entorno, validarEntorno(), CafeinaModule, CircadianoModule, OperacionesModule, PlataformaModule, TrabajadorModule (+8 more)
 
 ### Community 28 - "pwa/tsconfig.app.json"
 Cohesion: 0.25
@@ -271,25 +274,29 @@ Nodes (3): assetGroups, index, $schema
 Cohesion: 0.25
 Nodes (7): compilerOptions, esModuleInterop, extends, files, include, ../../tsconfig.base.json, references
 
+### Community 55 - "circadiano.ts"
+Cohesion: 0.08
+Nodes (28): CircadianoDexie, OfflineStore, PlanStore, 4. Vertical slices (dueños de código), VentanaTemporal, addH(), addMin(), ajustarPorCronotipo() (+20 more)
+
 ## Knowledge Gaps
-- **61 isolated node(s):** `./tsconfig.json`, `../../tsconfig.base.json`, `./tsconfig.json`, `./tsconfig.json`, `../../tsconfig.base.json` (+56 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 447 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **60 isolated node(s):** `./tsconfig.json`, `../../tsconfig.base.json`, `./tsconfig.json`, `./tsconfig.json`, `../../tsconfig.base.json` (+55 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 474 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **11 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)` connect `CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)` to `app.module.ts`?**
-  _High betweenness centrality (0.067) - this node is a cross-community bridge._
-- **What connects `./tsconfig.json`, `../../tsconfig.base.json`, `./tsconfig.json` to the rest of the system?**
-  _61 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)` be split into smaller, more focused modules?**
-  _Cohesion score 0.07142857142857142 - nodes in this community are weakly interconnected._
 - **Why does `devDependencies` connect `devDependencies` to `package.json`?**
-  _High betweenness centrality (0.062) - this node is a cross-community bridge._
+  _High betweenness centrality (0.064) - this node is a cross-community bridge._
+- **What connects `./tsconfig.json`, `../../tsconfig.base.json`, `./tsconfig.json` to the rest of the system?**
+  _60 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `services/circadiano.service.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.058445353594389245 - nodes in this community are weakly interconnected._
+- **Why does `@nestjs/common` connect `services/circadiano.service.ts` to `package.json`, `app.module.ts`, `CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)`?**
+  _High betweenness centrality (0.058) - this node is a cross-community bridge._
 - **Should `package.json` be split into smaller, more focused modules?**
-  _Cohesion score 0.03636363636363636 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.037037037037037035 - nodes in this community are weakly interconnected._
+- **Why does `@angular/core` connect `@angular/core` to `package.json`, `constantes.ts`, `circadiano.ts`?**
+  _High betweenness centrality (0.058) - this node is a cross-community bridge._
 - **Should `devDependencies` be split into smaller, more focused modules?**
-  _Cohesion score 0.0425531914893617 - nodes in this community are weakly interconnected._
-- **Should `dependencies` be split into smaller, more focused modules?**
-  _Cohesion score 0.07142857142857142 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.041666666666666664 - nodes in this community are weakly interconnected._

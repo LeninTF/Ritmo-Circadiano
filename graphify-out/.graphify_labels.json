@@ -1,5 +1,4 @@
 {
-  "0": "CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)",
   "1": "Constraints",
   "2": "avance01.md",
   "3": "package.json",
@@ -22,11 +21,9 @@
   "20": "compilerOptions",
   "21": "contracts/tsconfig.lib.json",
   "22": "jest.config.cts",
-  "23": "app.module.ts",
   "24": "compilerOptions",
   "25": "development",
   "26": "targets",
-  "27": "entorno.ts",
   "28": "pwa/tsconfig.app.json",
   "29": "compilerOptions",
   "30": "copy-workspace-modules",

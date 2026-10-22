@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { RespuestasRmeq, clasificarCronotipoDesdeRespuestas, sumarRespuestasRmeq } from '@circadiano/domain';
 import { CategoriaCronotipo } from '@circadiano/contracts';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-rmeq',
