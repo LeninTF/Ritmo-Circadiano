@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SwPush } from '@angular/service-worker';
-import { calcularHoraCorte, residual, UMBRAL_CAFEINA_MG_DEFECTO, SEMIVIDA_H_DEFECTO } from '@circadiano/domain';
+import { calcularHoraCorte, IngestaCafeina, residual, UMBRAL_CAFEINA_MG_DEFECTO, SEMIVIDA_H_DEFECTO } from '@circadiano/domain';
 
 interface IngestaItem {
   client_id: string;
@@ -209,7 +209,7 @@ export class CafeinaComponent implements OnInit {
   residualEstimadoBedtime = signal<number>(0);
   horaCorteCalculada = signal<string>('20:30');
 
-  constructor(private swPush: SwPush) {}
+  private readonly swPush = inject(SwPush);
 
   ngOnInit(): void {
     window.addEventListener('online', () => this.onlineStatus.set(true));
@@ -217,7 +217,7 @@ export class CafeinaComponent implements OnInit {
 
     const ua = navigator.userAgent;
     const isIos = /iphone|ipad|ipod/i.test(ua);
-    const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || ('standalone' in navigator && (navigator as any).standalone);
+    const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || ('standalone' in navigator && (navigator as unknown as { standalone: boolean }).standalone);
     if (isIos && !isInStandaloneMode) {
       this.mostrarBannerIos.set(true);
     }
@@ -271,23 +271,27 @@ export class CafeinaComponent implements OnInit {
     const ingestas = this.listaIngestas();
     const bedtime = new Date();
     bedtime.setHours(23, 0, 0, 0);
+    const bedtimeH = bedtime.getTime() / 3600000;
 
-    let totalResidual = 0;
-    for (const ing of ingestas) {
-      const tIngesta = new Date(ing.fecha_hora);
-      const horasTranscurridas = (bedtime.getTime() - tIngesta.getTime()) / 3600000;
-      if (horasTranscurridas > 0) {
-        const res = residual(ing.miligramos, horasTranscurridas, this.semividaH);
-        totalResidual += res;
-      }
-    }
+    // Convertir IngestaItem[] a IngestaCafeina[] para la librería de dominio
+    const ingestasDominio: IngestaCafeina[] = ingestas.map(ing => ({
+      dosisMg: ing.miligramos,
+      hora: new Date(ing.fecha_hora).getTime() / 3600000
+    }));
 
+    const totalResidual = residual(ingestasDominio, bedtimeH, this.semividaH);
     this.residualEstimadoBedtime.set(totalResidual);
 
     try {
-      const corteDate = calcularHoraCorte(bedtime, this.umbralCafeina, this.semividaH);
-      const hh = String(corteDate.getHours()).padStart(2, '0');
-      const mm = String(corteDate.getMinutes()).padStart(2, '0');
+      const dosisTipica = 95; // mg de una dosis estándar (café pasado)
+      const corteTimestamp = calcularHoraCorte(dosisTipica, bedtimeH, ingestasDominio, this.semividaH, this.umbralCafeina);
+      if (corteTimestamp === null) {
+        this.horaCorteCalculada.set('20:30');
+        return;
+      }
+      const corteDate = new Date(corteTimestamp * 3600000);
+      const hh = String(corteDate.getUTCHours()).padStart(2, '0');
+      const mm = String(corteDate.getUTCMinutes()).padStart(2, '0');
       this.horaCorteCalculada.set(`${hh}:${mm}`);
     } catch {
       this.horaCorteCalculada.set('20:30');
@@ -300,13 +304,17 @@ export class CafeinaComponent implements OnInit {
       if (guardado) {
         this.listaIngestas.set(JSON.parse(guardado));
       }
-    } catch {}
+    } catch {
+      // Error al leer del localStorage; se continúa con lista vacía
+    }
   }
 
   guardarIngestasLocales(): void {
     try {
       localStorage.setItem('circadiano_ingestas_cafeina', JSON.stringify(this.listaIngestas()));
-    } catch {}
+    } catch {
+      // Error al escribir en localStorage; se ignora silenciosamente
+    }
   }
 
   formatFecha(isoStr: string): string {
@@ -333,7 +341,7 @@ export class CafeinaComponent implements OnInit {
             clave_p256dh: sub.toJSON().keys?.['p256dh'] ?? '',
             clave_auth: sub.toJSON().keys?.['auth'] ?? ''
           })
-        }).catch(() => {});
+        }).catch(() => { /* fallo de red al registrar suscripción push; se ignora */ });
         alert('¡Suscripción Web Push activada correctamente!');
       })
       .catch(err => {
