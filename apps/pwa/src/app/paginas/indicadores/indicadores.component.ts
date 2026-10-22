@@ -16,12 +16,12 @@ import { IndicadoresService, PanelIndicadoresResponse } from './indicadores.serv
 
       <div style="background:var(--color-acento-fondo);padding:1rem;border-radius:0.5rem;margin-bottom:1.5rem;display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap;">
         <div>
-          <label style="display:block;font-size:0.85rem;margin-bottom:0.25rem;">Fecha Desde:</label>
-          <input type="date" [value]="desde()" (input)="desde.set($any($event.target).value)" style="padding:0.35rem;border-radius:0.25rem;border:1px solid var(--color-borde);" />
+          <label for="filtro-desde" style="display:block;font-size:0.85rem;margin-bottom:0.25rem;">Fecha Desde:</label>
+          <input id="filtro-desde" type="date" [value]="desde()" (input)="desde.set($any($event.target).value)" style="padding:0.35rem;border-radius:0.25rem;border:1px solid var(--color-borde);" />
         </div>
         <div>
-          <label style="display:block;font-size:0.85rem;margin-bottom:0.25rem;">Fecha Hasta:</label>
-          <input type="date" [value]="hasta()" (input)="hasta.set($any($event.target).value)" style="padding:0.35rem;border-radius:0.25rem;border:1px solid var(--color-borde);" />
+          <label for="filtro-hasta" style="display:block;font-size:0.85rem;margin-bottom:0.25rem;">Fecha Hasta:</label>
+          <input id="filtro-hasta" type="date" [value]="hasta()" (input)="hasta.set($any($event.target).value)" style="padding:0.35rem;border-radius:0.25rem;border:1px solid var(--color-borde);" />
         </div>
         <div>
           <button class="btn" (click)="cargarPanel()">Filtrar Indicadores</button>

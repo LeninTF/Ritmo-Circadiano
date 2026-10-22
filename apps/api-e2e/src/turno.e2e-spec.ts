@@ -16,9 +16,7 @@ describe('Turnos e2e (Transporte Cueva S.A.C.)', () => {
 
   const mockPrismaService: any = {
     ruta: {
-      findUnique: jest.fn().mockImplementation(({ where }) => {
-        return Promise.resolve({ id: validRutaId, nombre: 'Lima - Ica', activa: true });
-      }),
+      findUnique: jest.fn().mockResolvedValue({ id: validRutaId, nombre: 'Lima - Ica', activa: true }),
       findMany: jest.fn().mockResolvedValue([{ id: validRutaId, nombre: 'Lima - Ica', activa: true }]),
     },
     turnoLaboral: {

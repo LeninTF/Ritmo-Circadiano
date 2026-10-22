@@ -40,8 +40,8 @@ import { OfflineStoreService } from './offline-store.service';
           <button (click)="sem(1)">Siguiente ›</button>
         </div>
         <div>
-          <label>UUID: </label>
-          <input [value]="usr()" (input)="usr.set($any($event.target).value)" />
+          <label for="turnos-uuid">UUID: </label>
+          <input id="turnos-uuid" [value]="usr()" (input)="usr.set($any($event.target).value)" />
           <button (click)="cargar()" style="margin-left:0.5rem;">Filtrar</button>
         </div>
       </div>
@@ -70,18 +70,18 @@ import { OfflineStoreService } from './offline-store.service';
           <div style="background:var(--color-fondo);padding:1.5rem;border-radius:0.5rem;width:400px;max-height:90vh;overflow-y:auto;">
             <h2>{{ editando() ? 'Editar' : 'Nuevo' }} Turno</h2>
             <form [formGroup]="form" (ngSubmit)="guardar()">
-              <div style="margin-bottom:0.5rem;"><label>ID Usuario:</label><input formControlName="idUsuario" style="width:100%;" /></div>
+              <div style="margin-bottom:0.5rem;"><label for="turno-id-usuario">ID Usuario:</label><input id="turno-id-usuario" formControlName="idUsuario" style="width:100%;" /></div>
               <div style="margin-bottom:0.5rem;">
-                <label>Ruta:</label>
-                <select formControlName="idRuta" style="width:100%;">
+                <label for="turno-ruta">Ruta:</label>
+                <select id="turno-ruta" formControlName="idRuta" style="width:100%;">
                   <option value="">Seleccione</option>
                   @for (r of rutas(); track r.id) { <option [value]="r.id">{{ r.origen }} - {{ r.destino }}</option> }
                 </select>
               </div>
-              <div style="margin-bottom:0.5rem;"><label>Fecha:</label><input type="date" formControlName="fecha" style="width:100%;" /></div>
-              <div style="margin-bottom:0.5rem;"><label>Inicio:</label><input type="datetime-local" formControlName="inicioProgramado" style="width:100%;" /></div>
-              <div style="margin-bottom:0.5rem;"><label>Fin:</label><input type="datetime-local" formControlName="finProgramado" style="width:100%;" /></div>
-              <div style="margin-bottom:0.5rem;"><label>Horas:</label><input type="number" step="0.5" formControlName="horasConduccion" style="width:100%;" /></div>
+              <div style="margin-bottom:0.5rem;"><label for="turno-fecha">Fecha:</label><input id="turno-fecha" type="date" formControlName="fecha" style="width:100%;" /></div>
+              <div style="margin-bottom:0.5rem;"><label for="turno-inicio">Inicio:</label><input id="turno-inicio" type="datetime-local" formControlName="inicioProgramado" style="width:100%;" /></div>
+              <div style="margin-bottom:0.5rem;"><label for="turno-fin">Fin:</label><input id="turno-fin" type="datetime-local" formControlName="finProgramado" style="width:100%;" /></div>
+              <div style="margin-bottom:0.5rem;"><label for="turno-horas">Horas:</label><input id="turno-horas" type="number" step="0.5" formControlName="horasConduccion" style="width:100%;" /></div>
               <div style="margin-bottom:0.5rem;"><label><input type="checkbox" formControlName="esNocturno" /> Nocturno</label></div>
               @if (conf()) {
                 <div style="background:#fef3c7;color:#92400e;padding:0.5rem;margin-bottom:0.5rem;">
