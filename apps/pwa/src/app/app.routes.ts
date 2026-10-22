@@ -29,6 +29,11 @@ export const appRoutes: Route[] = [
       import('./paginas/plan/plan.component').then((m) => m.PlanComponent),
   },
   {
+    path: 'plan/:idTurno',
+    loadComponent: () =>
+      import('./paginas/plan/plan.component').then((m) => m.PlanComponent),
+  },
+  {
     path: 'cafeina',
     loadComponent: () =>
       import('./paginas/cafeina/cafeina.component').then(
