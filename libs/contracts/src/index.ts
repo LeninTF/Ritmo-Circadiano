@@ -4,3 +4,4 @@ export * from './respuesta-agregada';
 export * from './rol';
 export * from './semaforo';
 export * from './turno-asignado.evento';
+export * from './registro-sueno.dto';
