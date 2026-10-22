@@ -26,6 +26,9 @@
       ],
       "@circadiano/domain": [
         "./libs/domain/src/index.ts"
+      ],
+      "api/*": [
+        "./apps/api/src/*"
       ]
     }
   },
