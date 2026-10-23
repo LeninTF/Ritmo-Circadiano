@@ -1,0 +1,126 @@
+<section class="pagina">
+  <!-- Stepper -->
+  <nav class="stepper" aria-label="Pasos de la autoevaluación">
+    @for (paso of pasos(); track paso.id) {
+      <button
+        type="button"
+        class="paso"
+        [class.activo]="pasoActual() === paso.id"
+        [class.completado]="paso.completado"
+        [disabled]="!puedeAvanzarAPaso(paso.id)"
+        (click)="irAPaso(paso.id)"
+        [attr.aria-current]="pasoActual() === paso.id ? 'step' : null"
+      >
+        <span class="numero">{{ indicePaso(paso.id) + 1 }}</span>
+        <span class="texto">{{ paso.titulo }}</span>
+      </button>
+    }
+  </nav>
+
+  <!-- Aviso fijo RN11 -->
+  <p class="aviso-rn11" role="note">
+    Herramienta preventiva de apoyo. No reemplaza la evaluación médica ni autoriza la salida.
+  </p>
+
+  <!-- Paso 1: Datos (se obtienen del registro de sueño) -->
+  @if (pasoActual() === 'datos') {
+    <app-tarjeta>
+      <h2>Datos de sueño (últimas 24 h)</h2>
+      @if (cargandoDatos()) {
+        <p class="cargando">Cargando información de sueño…</p>
+      } @else if (horasSueno24h() !== null) {
+        <dl class="datos-sueno">
+          <dt>Horas de sueño acumuladas</dt>
+          <dd class="valor">{{ horasSueno24h() }} h</dd>
+          <dt>Fuente</dt>
+          <dd class="fuente">Registro de sueño automático</dd>
+        </dl>
+        <button class="boton" (click)="siguientePaso()">Continuar</button>
+      } @else {
+        <p class="error" role="alert">
+          No hay datos de sueño disponibles para las últimas 24 h.
+          Registra tu sueño en la pestaña «Diario» antes de continuar.
+        </p>
+      }
+    </app-tarjeta>
+  }
+
+  <!-- Paso 2: Autorreporte (somnolencia + consentimiento) -->
+  @if (pasoActual() === 'autorreporte') {
+    <app-tarjeta>
+      <h2>Nivel de somnolencia</h2>
+      <p class="ayuda">¿Qué tan somnoliento te sientes ahora? (Escala 1–5)</p>
+
+      <form [formGroup]="formulario" (ngSubmit)="enviarAutoevaluacion()">
+        <div class="slider-contenedor" role="group" aria-labelledby="label-somnolencia">
+          <label id="label-somnolencia" for="somnolencia" class="sr-only">Nivel de somnolencia</label>
+          <input
+            type="range"
+            id="somnolencia"
+            formControlName="somnolencia"
+            min="1"
+            max="5"
+            step="1"
+            class="slider"
+            aria-valuemin="1"
+            aria-valuemax="5"
+            [attr.aria-valuenow]="formulario.value.somnolencia"
+          >
+          <div class="slider-etiquetas">
+            @for (nivel of nivelesSomnolencia; track nivel.valor) {
+              <span [class.activo]="formulario.value.somnolencia === nivel.valor">{{ nivel.etiqueta }}</span>
+            }
+          </div>
+        </div>
+
+        @if (formulario.get('somnolencia')?.invalid && formulario.get('somnolencia')?.touched) {
+          <p class="error" role="alert">Selecciona un nivel de somnolencia (1 a 5).</p>
+        }
+
+        <div class="casilla">
+          <input
+            type="checkbox"
+            id="compartido"
+            formControlName="compartido"
+          >
+          <label for="compartido">
+            <strong>Compartir con el despachador</strong>
+            <span class="ayuda">Solo se mostrará el color del semáforo (verde / ámbar / rojo). No se comparten horas de sueño ni nivel de somnolencia.</span>
+          </label>
+        </div>
+
+        <button class="boton" type="submit" [disabled]="enviando() || formulario.invalid">
+          {{ enviando() ? 'Evaluando…' : 'Evaluar aptitud' }}
+        </button>
+
+        @if (errorEnvio()) {
+          <p class="error" role="alert">{{ errorEnvio() }}</p>
+        }
+      </form>
+    </app-tarjeta>
+  }
+
+  <!-- Paso 3: Resultado (semáforo) -->
+  @if (pasoActual() === 'resultado') {
+    <app-tarjeta [heroe]="true">
+      <h2>Resultado de la autoevaluación</h2>
+      @if (resultadoColor(); as color) {
+        <app-semaforo-aptitud [color]="color" />
+        @if (motivos().length) {
+          <dl class="motivos">
+            <dt>Motivos:</dt>
+            @for (m of motivos(); track m) {
+              <dd>{{ traducirMotivo(m) }}</dd>
+            }
+          </dl>
+        }
+        <p class="aviso-rn11" role="note">
+          Herramienta preventiva de apoyo. No reemplaza la evaluación médica ni autoriza la salida.
+        </p>
+        <button class="boton boton--secundario" (click)="reiniciar()">Nueva evaluación</button>
+      } @else {
+        <p class="cargando">Calculando resultado…</p>
+      }
+    </app-tarjeta>
+  }
+</section>
