@@ -4,6 +4,8 @@ import { AreasController } from './areas/areas.controller';
 import { AreasService } from './areas/areas.service';
 import { AuditInterceptor } from './auditoria/audit.interceptor';
 import { AuthModule } from './auth/auth.module';
+import { ExportacionController } from './exportacion/exportacion.controller';
+import { ExportacionService } from './exportacion/exportacion.service';
 import { ParametrosController } from './parametros/parametros.controller';
 import { ParametrosService } from './parametros/parametros.service';
 import { CuentaController } from './usuarios/cuenta.controller';
@@ -17,11 +19,13 @@ import { UsuariosService } from './usuarios/usuarios.service';
     CuentaController,
     UsuariosAdminController,
     ParametrosController,
+    ExportacionController,
   ],
   providers: [
     AreasService,
     UsuariosService,
     ParametrosService,
+    ExportacionService,
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
   ],
   exports: [AuthModule],

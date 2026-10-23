@@ -1,6 +1,7 @@
 export * from './auth';
 export * from './cronotipo';
 export * from './error-api.dto';
+export * from './exportacion';
 export * from './paginacion';
 export * from './parametro-sistema.dto';
 export * from './respuesta-agregada';
