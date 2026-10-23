@@ -1,0 +1,11 @@
+{
+  // Publica la PWA como sitio estatico en Cloudflare (Workers con Git).
+  // "name" debe ser igual al nombre del proyecto en el panel de Cloudflare.
+  "name": "ritmo-circadiano-pwa",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist/apps/pwa/browser",
+    // Sin esto, recargar /consentimiento daria 404: Angular resuelve las rutas en el navegador.
+    "not_found_handling": "single-page-application"
+  }
+}
