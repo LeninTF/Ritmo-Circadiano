@@ -46,6 +46,14 @@ export const appRoutes: Route[] = [
       ),
   },
   {
+    path: 'admin/parametros',
+    canActivate: [rolGuard('administrador')],
+    loadComponent: () =>
+      import('./paginas/admin-parametros/admin-parametros.component').then(
+        (m) => m.AdminParametrosComponent,
+      ),
+  },
+  {
     path: 'plan',
     canActivate: [autenticadoGuard],
     loadComponent: () =>
