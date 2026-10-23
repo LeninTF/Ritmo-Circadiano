@@ -21,10 +21,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ZAP baseline
+        env:
+          OBJETIVO: ${{ inputs.objetivo }} # por env, nunca interpolado en el script (inyeccion)
         run: |
           mkdir -p reporte && chmod 777 reporte
           docker run --rm -v "$PWD/reporte:/zap/wrk:rw" ghcr.io/zaproxy/zaproxy:stable \
-            zap-baseline.py -t "${{ inputs.objetivo }}" -m 2 -r zap.html -J zap.json -I
+            zap-baseline.py -t "$OBJETIVO" -m 2 -r zap.html -J zap.json -I
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: zap-reporte
