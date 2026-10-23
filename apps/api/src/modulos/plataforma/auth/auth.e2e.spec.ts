@@ -3,7 +3,7 @@ import { Controller, Get, INestApplication } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
-import { TerminusModule } from '@nestjs/terminus';
+import { DiskHealthIndicator, MemoryHealthIndicator, TerminusModule } from '@nestjs/terminus';
 import request from 'supertest';
 import type { Rol, UsuarioJwtPayload } from '@circadiano/contracts';
 import { PrismaHealthIndicator } from '../../../salud/prisma.health';
@@ -46,6 +46,9 @@ describe('Guards globales (e2e)', () => {
           provide: PrismaHealthIndicator,
           useValue: { comprobar: (k: string) => ({ [k]: { status: 'up' } }) },
         },
+        // El heap y el disco del runner de CI varian: el test solo verifica que /health sea publica.
+        { provide: MemoryHealthIndicator, useValue: { checkHeap: (k: string) => ({ [k]: { status: 'up' } }) } },
+        { provide: DiskHealthIndicator, useValue: { checkStorage: (k: string) => ({ [k]: { status: 'up' } }) } },
       ],
     }).compile();
     app = modulo.createNestApplication();
