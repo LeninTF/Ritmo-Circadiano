@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { Controller, Get, INestApplication } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule, JwtService } from '@nestjs/jwt';
@@ -12,7 +13,8 @@ import { Roles } from './roles.decorator';
 import { RolesGuard } from './roles.guard';
 import { UsuarioActual } from './usuario-actual.decorator';
 
-const SECRETO = 'secreto-de-prueba-con-32-caracteres!!';
+// Generados en ejecución: un literal de alta entropía dispara el escáner de secretos.
+const SECRETO = randomBytes(32).toString('hex');
 
 @Controller('prueba')
 class PruebaController {
@@ -67,7 +69,7 @@ describe('Guards globales (e2e)', () => {
   });
 
   it('token con firma ajena -> 401', async () => {
-    const ajeno = await new JwtService({ secret: 'otro-secreto-distinto-de-32-caracteres' }).signAsync({
+    const ajeno = await new JwtService({ secret: randomBytes(32).toString('hex') }).signAsync({
       sub: 'u1',
       rol: 'jefe_operaciones',
     });
