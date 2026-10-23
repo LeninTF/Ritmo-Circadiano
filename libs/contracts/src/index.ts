@@ -3,10 +3,12 @@ export * from './cronotipo';
 export * from './error-api.dto';
 export * from './exportacion';
 export * from './paginacion';
+export * from './parametro-sistema.dto';
 export * from './respuesta-agregada';
 export * from './rol';
 export * from './semaforo';
 export * from './turno-asignado.evento';
+export * from './usuario-eliminado.evento';
 export * from './cafeina.dto';
 export * from './notificacion.dto';
 

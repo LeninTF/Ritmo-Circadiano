@@ -12,6 +12,26 @@ export interface UsuarioDto {
   fuma: boolean;
 }
 
+export const ESTADOS_USUARIO = ['activo', 'retirado'] as const;
+export type EstadoUsuario = (typeof ESTADOS_USUARIO)[number];
+
+/** Vista del administrador: sin correo ni datos de salud. */
+export interface UsuarioAdminDto {
+  id: string;
+  codigoParticipante: string;
+  rol: Rol;
+  estado: EstadoUsuario;
+  idArea: string;
+  cargo: string | null;
+}
+
+export interface ActualizarUsuarioAdminDto {
+  rol?: Rol;
+  estado?: EstadoUsuario;
+  idArea?: string;
+  cargo?: string;
+}
+
 export interface RegistroDto {
   correo: string;
   clave: string;

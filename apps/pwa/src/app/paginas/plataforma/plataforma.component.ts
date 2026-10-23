@@ -31,6 +31,7 @@ import { environment } from '../../../environments/environment';
         <div class="acciones">
           <a class="boton boton--fuerte" routerLink="/plan">Ir a mi plan de hoy</a>
           @if (sesion.rol() === 'administrador') {
+            <a class="boton" routerLink="/admin/parametros">Parámetros del sistema</a>
             <button class="boton" type="button" (click)="exportar()">Exportar indicadores (CSV)</button>
             @if (avisoExportacion()) {
               <p class="aviso" role="status">{{ avisoExportacion() }}</p>
