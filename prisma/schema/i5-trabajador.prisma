@@ -29,3 +29,41 @@ model RegistroSueno {
   @@unique([idUsuario, fecha])
   @@map("registro_sueno")
 }
+
+/// Semaforo RN09 persistido. El color no es un diagnostico ni autoriza la salida.
+enum ColorAptitud {
+  verde
+  ambar
+  rojo
+
+  @@map("color_aptitud")
+}
+
+/// ERD04: autoevaluacion de aptitud pre-salida (RF12, RN09, RN10).
+///
+/// NOTA DE INTEGRACION:
+/// `id_usuario` referencia de forma logica a `usuario(id)` (slice I1) e
+/// `id_turno` a `turno_laboral(id)` (slice I2). No se declaran relaciones
+/// Prisma porque exigirian campos inversos en modelos de otros slices.
+/// `registro_sueno` sigue el mismo
+/// criterio. Las FK se formalizan cuando I1 e I2 expongan esas relaciones.
+///
+/// `compartido` es independiente del color: el calculo no exige consentimiento
+/// y el valor por defecto es false (sin divulgacion automatica, RN10).
+/// No se guardan sintomas ni otro detalle clinico: el despachador solo podra
+/// leer `color` cuando `compartido = true`.
+model AptitudPresalida {
+  id            String       @id @default(uuid()) @db.Uuid
+  idUsuario     String       @map("id_usuario") @db.Uuid
+  idTurno       String       @map("id_turno") @db.Uuid
+  fechaHora     DateTime     @map("fecha_hora") @db.Timestamptz()
+  horasSueno24h Decimal @map("horas_sueno_24h") @db.Decimal(5, 3)
+  somnolencia   Int
+  color         ColorAptitud
+  compartido    Boolean      @default(false)
+  creadoEn      DateTime     @default(now()) @map("creado_en") @db.Timestamptz()
+
+  @@index([idUsuario, fechaHora])
+  @@index([idTurno])
+  @@map("aptitud_presalida")
+}
