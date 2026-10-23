@@ -1,0 +1,13 @@
+.git
+.github
+node_modules
+dist
+coverage
+.nx
+graphify-out
+contexto
+tasks
+.env
+.env.*
+!.env.example
+**/*.log

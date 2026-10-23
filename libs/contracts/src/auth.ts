@@ -42,3 +42,9 @@ export interface UsuarioJwtPayload {
   rol: Rol;
   codigoParticipante: string;
 }
+
+/** Area de la empresa para el formulario de registro (Tabla 5). */
+export interface AreaDto {
+  id: string;
+  nombre: string;
+}
