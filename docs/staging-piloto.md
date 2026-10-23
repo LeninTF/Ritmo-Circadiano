@@ -15,11 +15,12 @@ La API usa `apps/api/Dockerfile`. Al arrancar corre `prisma migrate deploy` y `p
 ## Pasos que requieren una persona (cuentas)
 
 1. **Base de datos.** Crear un proyecto en Neon o Supabase con PostgreSQL 16 y copiar la cadena de conexion (con `sslmode=require`).
-2. **API.** En Render: *New > Blueprint*, elegir este repo y la rama `develop` (lee `render.yaml`). Cuando lo pida, escribir:
+2. **API.** En Render: *New > Blueprint*, elegir este repo y la rama `develop` (lee `render.yaml`). **Render exige una tarjeta para aplicar un Blueprint**, aunque el plan sea gratuito. Si no se quiere dar tarjeta, crear el servicio a mano: *New > Web Service*, lenguaje Docker, Dockerfile `apps/api/Dockerfile`, contexto `.`, instancia *Free*, *Health Check Path* `/health`, y cargar a mano las mismas variables. Variables:
    - `DATABASE_URL`: la cadena del paso 1.
    - `CORS_ORIGIN`: la URL exacta de la PWA del paso 3 (sin `/` final). Puede dejarse vacia hasta tenerla y editarla despues.
    - `VAPID_PUBLIC_KEY` y `VAPID_PRIVATE_KEY`: generarlas una vez con `npx web-push generate-vapid-keys`.
-   - `JWT_SECRET` lo genera Render solo.
+   - `JWT_SECRET`: con Blueprint lo genera Render solo; en el servicio manual hay que crearla: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` (minimo 32 caracteres).
+   - `JWT_EXPIRA`: `8h` (solo en el servicio manual).
 3. **PWA.** En Cloudflare, *Workers & Pages > Create > Connect to Git* (hoy crea un proyecto de tipo Workers que sirve archivos estaticos). Repo `LeninTF/Ritmo-Circadiano`, rama de produccion `develop`:
    - Nombre del proyecto: `ritmo-circadiano-pwa`. **Debe coincidir con `name` de `wrangler.jsonc`**; si se elige otro, cambiar ese archivo.
    - Comando de build (con guarda: falla si falta `API_URL`): `test -n "$API_URL" && sed -i "s#apiUrl: ''#apiUrl: '$API_URL'#" apps/pwa/src/environments/environment.production.ts && npm ci && npx nx build pwa --configuration=production`

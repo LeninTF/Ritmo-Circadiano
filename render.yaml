@@ -4,6 +4,7 @@ services:
   - type: web
     name: circadiano-api-staging
     runtime: docker
+    plan: free # sin esto Render puede usar un plan de pago por defecto
     dockerfilePath: ./apps/api/Dockerfile
     dockerContext: .
     branch: develop
