@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { TURNO_ASIGNADO, TurnoAsignadoEvento } from '@circadiano/contracts';
+import { validarJornadaRN01, detectarTurnoNocturno, validarDescansoMinimo } from '@circadiano/domain';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '../../generated/prisma/client';
 import { CrearTurnoDto } from './dto/crear-turno.dto';
@@ -73,14 +74,12 @@ export class OperacionesService {
     idUsuario: string,
     fechaStr: string,
     horasConduccion: number,
+    esNocturno: boolean,
     confirmarExceso?: boolean,
     motivoExceso?: string,
     idTurnoExcluir?: string,
     idTurnoCreado?: string,
   ) {
-    const LIMITE_CONTINUO = 5.0;
-    const LIMITE_DIARIO = 10.0;
-
     const fechaDate = new Date(fechaStr);
 
     const turnosExistentes = await tx.turnoLaboral.findMany({
@@ -98,8 +97,16 @@ export class OperacionesService {
     );
     const horasTotalesDia = horasAcumuladasPrevias + horasConduccion;
 
-    const superaContinuo = horasConduccion > LIMITE_CONTINUO;
-    const superaDiario = horasTotalesDia > LIMITE_DIARIO;
+    const resultadoRN01 = validarJornadaRN01({
+      horasConduccion,
+      horasAcumuladasDia: horasTotalesDia,
+      esNocturno,
+    });
+
+    const superaContinuo = resultadoRN01.superaContinuo;
+    const superaDiario = resultadoRN01.superaDiario;
+    const LIMITE_CONTINUO = resultadoRN01.limiteContinuo;
+    const LIMITE_DIARIO = resultadoRN01.limiteDiario;
 
     if (superaContinuo || superaDiario) {
       if (!confirmarExceso) {
@@ -137,6 +144,8 @@ export class OperacionesService {
       throw new BadRequestException(`Ruta con ID ${dto.idRuta} no existe`);
     }
 
+    const esNocturnoCalculado = dto.esNocturno ?? detectarTurnoNocturno(dto.inicioProgramado, dto.finProgramado);
+
     const turno = await this.prisma.$transaction(async (tx) => {
       const nuevoTurno = await tx.turnoLaboral.create({
         data: {
@@ -146,7 +155,7 @@ export class OperacionesService {
           inicioProgramado: new Date(dto.inicioProgramado),
           finProgramado: new Date(dto.finProgramado),
           horasConduccion: dto.horasConduccion,
-          esNocturno: dto.esNocturno,
+          esNocturno: esNocturnoCalculado,
           estadoConfirmacion: dto.estadoConfirmacion ?? 'pendiente',
           horaInicioReal: dto.horaInicioReal ? new Date(dto.horaInicioReal) : null,
           horaFinReal: dto.horaFinReal ? new Date(dto.horaFinReal) : null,
@@ -159,6 +168,7 @@ export class OperacionesService {
         dto.idUsuario,
         dto.fecha,
         dto.horasConduccion,
+        esNocturnoCalculado,
         dto.confirmarExceso,
         dto.motivoExceso,
         undefined,
@@ -196,12 +206,16 @@ export class OperacionesService {
       const idUsuarioFinal = dto.idUsuario ?? turnoActual.idUsuario;
       const fechaFinalStr = dto.fecha ?? turnoActual.fecha.toISOString().split('T')[0];
       const horasConduccionFinal = dto.horasConduccion !== undefined ? dto.horasConduccion : Number(turnoActual.horasConduccion);
+      const inicioProgFinal = dto.inicioProgramado ?? turnoActual.inicioProgramado.toISOString();
+      const finProgFinal = dto.finProgramado ?? turnoActual.finProgramado.toISOString();
+      const esNocturnoFinal = dto.esNocturno ?? turnoActual.esNocturno ?? detectarTurnoNocturno(inicioProgFinal, finProgFinal);
 
       await this.validarYRegistrarExcesoJornadaTx(
         tx,
         idUsuarioFinal,
         fechaFinalStr,
         horasConduccionFinal,
+        esNocturnoFinal,
         dto.confirmarExceso,
         dto.motivoExceso,
         id,

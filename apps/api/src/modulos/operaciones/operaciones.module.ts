@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { OperacionesController } from './operaciones.controller';
 import { OperacionesService } from './operaciones.service';
+import { UsuarioEliminadoOperacionesListener } from './usuario-eliminado.listener';
 import { PrismaModule } from '../../prisma/prisma.module';
 
 @Module({
   imports: [PrismaModule],
   controllers: [OperacionesController],
-  providers: [OperacionesService],
+  providers: [OperacionesService, UsuarioEliminadoOperacionesListener],
   exports: [OperacionesService],
 })
 export class OperacionesModule {}

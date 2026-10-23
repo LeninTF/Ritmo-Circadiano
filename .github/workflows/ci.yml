@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  actions: read # nx-set-shas consulta la ultima ejecucion exitosa del workflow
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -28,6 +29,12 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      # Cache local de Nx: reutiliza resultados de tareas entre ejecuciones de la misma rama.
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: .nx/cache
+          key: nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+          restore-keys: nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
       - uses: nrwl/nx-set-shas@e602fada7ad5987b0f7b1905e7a99ea1c661514c # v5
       - run: npx nx affected -t lint typecheck test build
       - name: Cobertura de libs/domain (>= 70 %)
