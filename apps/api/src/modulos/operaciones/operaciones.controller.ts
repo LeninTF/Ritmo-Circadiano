@@ -17,6 +17,11 @@ import { ApiOperation, ApiQuery, ApiResponse, ApiTags, ApiConsumes } from '@nest
 import { OperacionesService } from './operaciones.service';
 import { CrearTurnoDto } from './dto/crear-turno.dto';
 import { ActualizarTurnoDto } from './dto/actualizar-turno.dto';
+import { Auditable } from '../plataforma/auth';
+
+// RN01: solo se audita cuando el exceso de jornada se confirma explicitamente.
+const esExcesoConfirmado = (solicitud: { body?: { confirmarExceso?: unknown } }) =>
+  solicitud.body?.confirmarExceso === true;
 
 @ApiTags('Operaciones y Turnos (RF04)')
 @Controller('operaciones')
@@ -71,6 +76,7 @@ export class OperacionesController {
   }
 
   @Post('turnos')
+  @Auditable('turno_forzado', esExcesoConfirmado)
   @ApiOperation({ summary: 'Registrar un nuevo turno laboral (RF04, RF14)' })
   @ApiResponse({ status: 201, description: 'Turno creado exitosamente.' })
   @ApiResponse({ status: 400, description: 'Datos inválidos o ruta no existente.' })
@@ -80,6 +86,7 @@ export class OperacionesController {
   }
 
   @Patch('turnos/:id')
+  @Auditable('turno_forzado', esExcesoConfirmado)
   @ApiOperation({ summary: 'Actualizar un turno laboral existente (RF04, RF14)' })
   @ApiResponse({ status: 200, description: 'Turno actualizado correctamente.' })
   @ApiResponse({ status: 404, description: 'Turno no encontrado.' })

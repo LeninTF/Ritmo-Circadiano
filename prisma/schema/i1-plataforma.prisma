@@ -57,3 +57,17 @@ model Usuario {
 
   @@map("usuario")
 }
+
+/// ERD03: acciones sensibles (login, exportacion, turno forzado, borrado).
+/// Sin FK a usuario: la fila sobrevive al borrado del participante (solo queda el UUID).
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  idUsuario String?  @map("id_usuario") @db.Uuid
+  accion    String   @db.VarChar(60)
+  recurso   String   @db.VarChar(255)
+  ip        String?  @db.VarChar(45)
+  fecha     DateTime @default(now()) @db.Timestamptz()
+
+  @@index([fecha])
+  @@map("audit_log")
+}

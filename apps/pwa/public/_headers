@@ -1,0 +1,9 @@
+# Cabeceras de seguridad que Cloudflare aplica a los archivos estaticos (RNF04).
+# shortcut: connect-src fija la API de staging; al pasar a produccion agregar su URL (tarjeta 14).
+# style-src necesita 'unsafe-inline': Angular inserta los estilos de componentes en <style>.
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(self)
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://ritmo-circadiano.onrender.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'
