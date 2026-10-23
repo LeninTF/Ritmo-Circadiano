@@ -8,6 +8,7 @@ export * from './respuesta-agregada';
 export * from './rol';
 export * from './semaforo';
 export * from './turno-asignado.evento';
+export * from './diario.dto';
 export * from './usuario-eliminado.evento';
 export * from './cafeina.dto';
 export * from './notificacion.dto';
