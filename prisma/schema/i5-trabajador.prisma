@@ -1,1 +1,31 @@
 // Slice I5 · tablas: registro_sueno, aptitud_presalida (+ campos de confirmacion en turno_laboral)
+
+/// Registro diario de sueno del trabajador (RF11, RF12, ERD06).
+/// Sincronizado offline mediante OutboxService con idempotencia por client_id.
+///
+/// NOTA DE INTEGRACION:
+/// La referencia logica es `id_usuario -> usuario(id)`.
+/// Dado que el modelo `Usuario` pertenece al slice I1 (i1-plataforma.prisma),
+/// y conforme a las reglas de colaboracion que prohiben modificar schemas
+/// ajenos (lo que requeriria agregar el campo inverso en el modelo Usuario de I1),
+/// se define `idUsuario` como campo escalar UUID con restriccion de unicidad
+/// compuesta @@unique([idUsuario, fecha]).
+/// La relacion foranea Prisma podra formalizarse cuando I1 exponga la relacion.
+model RegistroSueno {
+  id               String   @id @default(uuid()) @db.Uuid
+  idUsuario        String   @map("id_usuario") @db.Uuid
+  fecha            DateTime @db.Date
+  horaAcostarse    DateTime @map("hora_acostarse") @db.Timestamptz()
+  horaDespertar    DateTime @map("hora_despertar") @db.Timestamptz()
+  latenciaMin      Int      @default(0) @map("latencia_min")
+  despertares      Int      @default(0) @map("despertares")
+  calidadPercibida Int      @map("calidad_percibida")
+  fatigaPercibida  Int      @map("fatiga_percibida")
+  esDiaLaboral     Boolean  @default(true) @map("es_dia_laboral")
+  luzMatutinaMin   Int      @default(0) @map("luz_matutina_min")
+  clientId         String   @unique @map("client_id") @db.Uuid
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@unique([idUsuario, fecha])
+  @@map("registro_sueno")
+}

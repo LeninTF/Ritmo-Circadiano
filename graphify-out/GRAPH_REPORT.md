@@ -1,17 +1,17 @@
 # Graph Report - Ritmo-Circadiano  (2026-10-23)
 
 ## Corpus Check
-- 187 files · ~82,352 words
+- 189 files · ~83,476 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 23 file(s) not represented in the graph (top: (none) 10, .prisma 6, .scss 2)
 
 ## Summary
-- 1949 nodes · 2823 edges · 112 communities (83 shown, 29 thin omitted)
+- 1952 nodes · 2829 edges · 114 communities (84 shown, 30 thin omitted)
 - Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 53 edges (avg confidence: 0.89)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `0dcf8166`
+- Built from commit: `8b2f0ee6`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -43,7 +43,7 @@
 - compilerOptions
 - development
 - api-e2e/project.json
-- client.ts
+- seed.ts
 - TurnosComponent
 - compilerOptions
 - copy-workspace-modules
@@ -57,32 +57,33 @@
 - targets
 - compilerOptions
 - prune-lockfile
-- webpack.config.js
+- registro-sueno-contrato.spec.ts
 - dotenv
 - options
 - api-e2e/tsconfig.json
 - options
 - production
-- enums.ts
+- browser.ts
 - ngsw-config.json
 - AuthService
 - environment.production.ts
 - jest-preset-angular
 - api/tsconfig.json
-- OperacionesService
-- auth.e2e.spec.ts
-- notificaciones.service.ts
+- CrearTurnoDto
+- CafeinaController
+- EncolarNotificacionDto
 - overrides
+- .obtenerPanel
 - devDependencies
 - package.json
 - Constraints
-- contracts/src/index.ts
+- cafeina.service.ts
 - audit.interceptor.ts
 - @angular/common
-- auth.controller.ts
+- auth.e2e.spec.ts
 - Prisma__TurnoLaboralClient
-- app.routes.ts
-- @nestjs/common
+- cafeina.ts
+- PrismaService
 - compilerOptions
 - app.routes.ts
 - paginas-auth.spec.ts
@@ -102,24 +103,26 @@
 - test
 - registro.component.ts
 - configurations
-- AuthService
+- auth.interceptor.ts
 - client.ts
 - SaludController
-- Plan: Sistema de diseño del Figma en la PWA
+- TurnosService
 - Staging del piloto
 - Entorno
-- auth.interceptor.ts
+- sesion.service.ts
 - PrismaClient
 - class.ts
 - App
 - contracts/src/index.ts
-- @nestjs/swagger
-- plataforma.module.ts
-- RolesGuard
+- UsuarioDto
+- auth.module.ts
+- CafeinaComponent
 - optimization
 - README.md
-- JwtAuthGuard
+- operaciones.service.ts
 - enums.ts
+- chip.component.spec.ts
+- domain/src/index.ts
 
 ## God Nodes (most connected - your core abstractions)
 1. `@nestjs/common` - 48 edges
@@ -148,7 +151,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (112 total, 29 thin omitted)
+## Communities (114 total, 30 thin omitted)
 
 ### Community 0 - "prismaNamespace.ts"
 Cohesion: 0.02
@@ -191,8 +194,8 @@ Cohesion: 0.33
 Nodes (6): scripts, check:coverage-domain, check:lint, check:secrets, check:types, db:setup
 
 ### Community 13 - "constantes.ts"
-Cohesion: 0.06
-Nodes (43): CafeinaComponent, CategoriaCronotipo, calcularHoraCorte(), IngestaCafeina, residual(), resolverSemivida(), SemividaCafeina, UsuarioCafeina (+35 more)
+Cohesion: 0.13
+Nodes (26): CategoriaCronotipo, CATEGORIA_RMEQ_SIN_RESPUESTA, CONDUCCION_MAX_ACUMULADA_H, CONDUCCION_MAX_DIURNA_H, CONDUCCION_MAX_NOCTURNA_H, CONDUCCION_VENTANA_H, CORTE_CAFEINA_ANTES_DORMIR_H, HORA_FIN_NOCTURNO (+18 more)
 
 ### Community 14 - "domain/project.json"
 Cohesion: 0.11
@@ -215,8 +218,8 @@ Cohesion: 0.10
 Nodes (20): AnyNull, AreaScalarFieldEnum, BebidaScalarFieldEnum, DbNull, Decimal, ExcesoJornadaAuditoriaScalarFieldEnum, IngestaCafeinaScalarFieldEnum, JsonNull (+12 more)
 
 ### Community 23 - "app.module.ts"
-Cohesion: 0.11
-Nodes (9): AppModule, CircadianoModule, IndicadoresModule, NotificacionesModule, OperacionesModule, TrabajadorModule, PrismaModule, helmet (+1 more)
+Cohesion: 0.10
+Nodes (11): AppModule, CircadianoModule, IndicadoresModule, NotificacionesModule, TrabajadorModule, PrismaHealthIndicator, SaludModule, helmet (+3 more)
 
 ### Community 24 - "compilerOptions"
 Cohesion: 0.15
@@ -230,7 +233,7 @@ Nodes (10): development, buildTarget, extractLicenses, optimization, sourceMap, 
 Cohesion: 0.15
 Nodes (12): executor, options, outputs, implicitDependencies, name, jestConfig, passWithNoTests, projectType (+4 more)
 
-### Community 27 - "client.ts"
+### Community 27 - "seed.ts"
 Cohesion: 0.48
 Nodes (5): PrismaClient, main(), AREAS, sembrarIdentidad(), @prisma/adapter-pg
 
@@ -255,8 +258,8 @@ Cohesion: 0.29
 Nodes (7): command, cache, executor, inputs, options, outputs, prisma-generate
 
 ### Community 34 - "@nestjs/common"
-Cohesion: 0.15
-Nodes (6): Roles(), ROLES_KEY, RolesGuard, IndicadoresController, TURNO_ASIGNADO, supertest
+Cohesion: 0.13
+Nodes (8): IS_PUBLIC_KEY, Roles(), ROLES_KEY, RolesGuard, IndicadoresService, PrismaModule, RespuestaAgregada, @nestjs/common
 
 ### Community 35 - "serve"
 Cohesion: 0.29
@@ -282,8 +285,8 @@ Nodes (8): compilerOptions, module, moduleResolution, outDir, types, extends, in
 Cohesion: 0.40
 Nodes (5): cache, dependsOn, executor, outputs, prune-lockfile
 
-### Community 41 - "webpack.config.js"
-Cohesion: 0.40
+### Community 41 - "registro-sueno-contrato.spec.ts"
+Cohesion: 0.25
 Nodes (3): { join }, { NxAppWebpackPlugin }, @nx/webpack
 
 ### Community 44 - "options"
@@ -302,7 +305,7 @@ Nodes (6): options, assets, browser, inlineStyleLanguage, outputPath, styles
 Cohesion: 0.33
 Nodes (6): production, budgets, buildTarget, fileReplacements, outputHashing, serviceWorker
 
-### Community 48 - "enums.ts"
+### Community 48 - "browser.ts"
 Cohesion: 0.17
 Nodes (11): Area, Bebida, $Enums, ExcesoJornadaAuditoria, IngestaCafeina, Notificacion, ParametroSistema, Ruta (+3 more)
 
@@ -312,23 +315,19 @@ Nodes (3): assetGroups, index, $schema
 
 ### Community 50 - "AuthService"
 Cohesion: 0.07
-Nodes (6): AuthController, AuthService, LoginDto, RefrescarTokenDto, RegistroDto, AuthTokens
+Nodes (5): AuthController, AuthService, LoginDto, RefrescarTokenDto, RegistroDto
 
 ### Community 54 - "api/tsconfig.json"
 Cohesion: 0.25
 Nodes (7): compilerOptions, esModuleInterop, extends, files, include, ../../tsconfig.base.json, references
 
-### Community 55 - "OperacionesService"
+### Community 55 - "CrearTurnoDto"
 Cohesion: 0.07
-Nodes (6): ActualizarTurnoDto, CrearTurnoDto, OperacionesController, OperacionesService, TurnoAsignadoEvento, detectarTurnoNocturno()
+Nodes (6): CrearTurnoDto, OperacionesController, OperacionesService, detectarTurnoNocturno(), validarDescansoMinimo(), validarJornadaRN01()
 
-### Community 56 - "auth.e2e.spec.ts"
-Cohesion: 0.23
-Nodes (6): PruebaController, Roles(), PrismaHealthIndicator, SaludModule, @nestjs/terminus, @nestjs/throttler
-
-### Community 57 - "notificaciones.service.ts"
-Cohesion: 0.09
-Nodes (5): NotificacionesController, NotificacionesService, CrearSuscripcionPushDto, EncolarNotificacionDto, NotificacionRespuestaDto
+### Community 57 - "EncolarNotificacionDto"
+Cohesion: 0.10
+Nodes (4): NotificacionesController, CrearSuscripcionPushDto, EncolarNotificacionDto, NotificacionRespuestaDto
 
 ### Community 58 - "overrides"
 Cohesion: 0.15
@@ -340,47 +339,47 @@ Nodes (55): devDependencies, ajv, @angular/build, @angular/cli, @angular/compile
 
 ### Community 61 - "package.json"
 Cohesion: 0.04
-Nodes (55): license, name, private, version, ajv, @angular/build, @angular/cli, @angular/compiler (+47 more)
+Nodes (56): license, name, private, version, ajv, @angular/build, @angular/cli, @angular/compiler (+48 more)
 
 ### Community 62 - "Constraints"
 Cohesion: 0.25
 Nodes (7): Constraints, Enforced with numbers, Exceptions, Exceptions, Floor (always enforced, blocks immediately), Measured, not yet enforced, Not set up (and why)
 
-### Community 63 - "contracts/src/index.ts"
-Cohesion: 0.09
-Nodes (9): BebidasController, CafeinaController, CafeinaModule, CafeinaService, 1. Arquitectura y SOLID, BebidaDto, CrearIngestaCafeinaDto, IngestaCafeinaRespuestaDto (+1 more)
+### Community 63 - "cafeina.service.ts"
+Cohesion: 0.14
+Nodes (8): BebidasController, CafeinaModule, CafeinaService, 1. Arquitectura y SOLID, BebidaDto, CrearIngestaCafeinaDto, IngestaCafeinaRespuestaDto, ResidualCafeinaRespuestaDto
 
 ### Community 64 - "audit.interceptor.ts"
-Cohesion: 0.17
-Nodes (7): AuditInterceptor, Rutas, Auditable, OpcionesAuditoria, tokens, @nestjs/core, @nestjs/jwt
+Cohesion: 0.20
+Nodes (4): AuditInterceptor, Rutas, Auditable, OpcionesAuditoria
 
 ### Community 65 - "@angular/common"
+Cohesion: 0.25
+Nodes (4): IndicadoresComponent, IndicadoresService, PanelIndicadoresResponse, @angular/common
+
+### Community 66 - "auth.e2e.spec.ts"
 Cohesion: 0.12
-Nodes (9): IngestaItem, IndicadoresComponent, IndicadoresService, PanelIndicadoresResponse, OfflineStoreService, @angular/common, @angular/forms, @angular/service-worker (+1 more)
+Nodes (16): tokens, PruebaController, SECRETO, RefrescoPayload, JwtAuthGuard, Roles(), ROLES_PERMITIDOS, RolesGuard (+8 more)
 
-### Community 66 - "auth.controller.ts"
-Cohesion: 0.22
-Nodes (6): ES_PUBLICA, Publica(), SolicitudAutenticada, UsuarioActual, UsuarioJwtPayload, CODIGOS_ERROR
-
-### Community 68 - "app.routes.ts"
+### Community 68 - "cafeina.ts"
 Cohesion: 0.28
-Nodes (5): appConfig, PreferenciaTema, appRoutes, Tema, @angular/platform-browser
+Nodes (12): IngestaItem, calcularHoraCorte(), IngestaCafeina, residual(), resolverSemivida(), SemividaCafeina, UsuarioCafeina, validarDosis() (+4 more)
 
-### Community 69 - "@nestjs/common"
-Cohesion: 0.12
-Nodes (12): IS_PUBLIC_KEY, IndicadoresService, RefrescoPayload, SECRETO, PrismaService, RespuestaAgregada, @nestjs/common, @nestjs/config (+4 more)
+### Community 69 - "PrismaService"
+Cohesion: 0.13
+Nodes (11): NotificacionesService, SECRETO, PrismaService, RegistroDto, argon2, @nestjs/config, @nestjs/event-emitter, @nestjs/schedule (+3 more)
 
 ### Community 70 - "compilerOptions"
 Cohesion: 0.18
 Nodes (10): compilerOptions, module, moduleResolution, outDir, target, types, extends, files (+2 more)
 
 ### Community 71 - "app.routes.ts"
-Cohesion: 0.28
-Nodes (8): autenticadoGuard(), rolGuard(), estado, ruta, ESTILOS_FORMULARIO, consentimientoGuard(), FlujoRegistroService, @angular/router
+Cohesion: 0.15
+Nodes (13): appConfig, PreferenciaTema, appRoutes, Tema, autenticadoGuard(), rolGuard(), estado, ruta (+5 more)
 
 ### Community 72 - "paginas-auth.spec.ts"
-Cohesion: 0.19
-Nodes (5): ConsentimientoComponent, IngresarComponent, escribir(), obtener(), crearJwtPrueba()
+Cohesion: 0.15
+Nodes (5): ConsentimientoComponent, IngresarComponent, escribir(), obtener(), RegistroComponent
 
 ### Community 73 - "domain/tsconfig.lib.json"
 Cohesion: 0.22
@@ -420,7 +419,7 @@ Nodes (6): Alcance, Criterios de éxito, Límites, Objetivo, Preguntas abiertas,
 
 ### Community 84 - "@angular/core"
 Cohesion: 0.11
-Nodes (7): ChipComponent, AnfitrionComponent, MicroTarjetaComponent, AptitudComponent, DiarioComponent, PlanComponent, @angular/core
+Nodes (6): MicroTarjetaComponent, AptitudComponent, DiarioComponent, PlanComponent, OfflineStoreService, @angular/core
 
 ### Community 85 - "PrismaClientBaseOptions"
 Cohesion: 0.67
@@ -431,18 +430,22 @@ Cohesion: 0.33
 Nodes (6): jestConfig, tsConfig, test, executor, options, outputs
 
 ### Community 87 - "registro.component.ts"
-Cohesion: 0.14
-Nodes (7): CARGOS, MENSAJES, RANGOS_EDAD, RegistroComponent, SEXOS, AnfitrionComponent, TarjetaComponent
+Cohesion: 0.18
+Nodes (8): ESTILOS_FORMULARIO, CARGOS, MENSAJES, RANGOS_EDAD, SEXOS, AnfitrionComponent, TarjetaComponent, @angular/forms
 
 ### Community 88 - "configurations"
 Cohesion: 0.40
 Nodes (5): development, production, buildTarget, buildTarget, configurations
 
+### Community 89 - "auth.interceptor.ts"
+Cohesion: 0.13
+Nodes (10): authInterceptor(), conToken(), esDeLaApi(), esPublica(), RUTAS_PUBLICAS, AuthService, environment, AreaDto (+2 more)
+
 ### Community 90 - "client.ts"
 Cohesion: 0.14
 Nodes (11): Area, Bebida, $Enums, ExcesoJornadaAuditoria, IngestaCafeina, Notificacion, ParametroSistema, Ruta (+3 more)
 
-### Community 95 - "Plan: Sistema de diseño del Figma en la PWA"
+### Community 95 - "TurnosService"
 Cohesion: 0.06
 Nodes (17): ESTADOS, SemaforoAptitudComponent, TurnosService, 9. Convenciones de nomenclatura, ColorSemaforo, Contexto, Dependencias, Fase 1 — Fundamentos (+9 more)
 
@@ -450,9 +453,9 @@ Nodes (17): ESTADOS, SemaforoAptitudComponent, TurnosService, 9. Convenciones de
 Cohesion: 0.29
 Nodes (6): Pasos que requieren una persona (cuentas), Pendiente conocido, Resumen, Rollback, Staging del piloto, Verificacion (despues del despliegue)
 
-### Community 98 - "auth.interceptor.ts"
-Cohesion: 0.14
-Nodes (12): authInterceptor(), conToken(), esDeLaApi(), esPublica(), RUTAS_PUBLICAS, decodificarJwt(), estaVigente(), PayloadJwt (+4 more)
+### Community 98 - "sesion.service.ts"
+Cohesion: 0.21
+Nodes (6): decodificarJwt(), estaVigente(), PayloadJwt, SesionService, TokensGuardados, crearJwtPrueba()
 
 ### Community 99 - "PrismaClient"
 Cohesion: 0.05
@@ -463,44 +466,48 @@ Cohesion: 0.20
 Nodes (5): config, decodeBase64AsWasm(), LogOptions, PrismaClientConstructor, @prisma/client
 
 ### Community 102 - "contracts/src/index.ts"
+Cohesion: 0.16
+Nodes (9): ES_PUBLICA, Publica(), LoginDto, RefrescarTokenDto, ErrorApiDto, Paginado, ROLES, class-validator (+1 more)
+
+### Community 104 - "auth.module.ts"
 Cohesion: 0.13
-Nodes (9): RegistroService, ROLES_PERMITIDOS, RegistroDto, UsuarioDto, ErrorApiDto, Paginado, Rol, ROLES (+1 more)
-
-### Community 103 - "@nestjs/swagger"
-Cohesion: 0.20
-Nodes (9): SEGUNDOS_POR_UNIDAD, segundosDeExpira(), BASE, validarEntorno(), LoginDto, RefrescarTokenDto, class-transformer, class-validator (+1 more)
-
-### Community 104 - "plataforma.module.ts"
-Cohesion: 0.19
-Nodes (4): AreasController, AreasService, AuthModule, PlataformaModule
+Nodes (9): SEGUNDOS_POR_UNIDAD, segundosDeExpira(), BASE, validarEntorno(), AreasController, AreasService, AuthModule, PlataformaModule (+1 more)
 
 ### Community 108 - "optimization"
 Cohesion: 0.33
 Nodes (6): fonts, scripts, styles, optimization, inlineCritical, minify
 
+### Community 110 - "operaciones.service.ts"
+Cohesion: 0.27
+Nodes (4): ActualizarTurnoDto, OperacionesModule, TURNO_ASIGNADO, TurnoAsignadoEvento
+
 ### Community 111 - "enums.ts"
 Cohesion: 0.50
 Nodes (3): EstadoConfirmacion, EstadoUsuario, Rol
 
+### Community 113 - "domain/src/index.ts"
+Cohesion: 0.33
+Nodes (3): Ruta, EstadoConfirmacion, TurnoLaboral
+
 ## Knowledge Gaps
 - **64 isolated node(s):** `../../tsconfig.base.json`, `./tsconfig.json`, `./tsconfig.json`, `../../tsconfig.base.json`, `./tsconfig.json` (+59 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1338 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **29 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **30 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `@prisma/client` connect `class.ts` to `prismaNamespace.ts`, `TurnoLaboral.ts`, `ExcesoJornadaAuditoria.ts`, `Ruta.ts`, `ParametroSistema.ts`, `commonInputTypes.ts`, `prismaNamespaceBrowser.ts`, `client.ts`, `package.json`?**
-  _High betweenness centrality (0.264) - this node is a cross-community bridge._
+  _High betweenness centrality (0.266) - this node is a cross-community bridge._
 - **What connects `../../tsconfig.base.json`, `./tsconfig.json`, `./tsconfig.json` to the rest of the system?**
   _64 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `prismaNamespace.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.015625 - nodes in this community are weakly interconnected._
-- **Why does `@angular/core` connect `@angular/core` to `@angular/common`, `auth.interceptor.ts`, `app.routes.ts`, `app.routes.ts`, `paginas-auth.spec.ts`, `registro.component.ts`, `package.json`, `Plan: Sistema de diseño del Figma en la PWA`?**
-  _High betweenness centrality (0.067) - this node is a cross-community bridge._
+- **Why does `@angular/core` connect `@angular/core` to `@angular/common`, `sesion.service.ts`, `cafeina.ts`, `app.routes.ts`, `paginas-auth.spec.ts`, `chip.component.spec.ts`, `registro.component.ts`, `auth.interceptor.ts`, `package.json`, `TurnosService`?**
+  _High betweenness centrality (0.063) - this node is a cross-community bridge._
 - **Should `TurnoLaboral.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.020618556701030927 - nodes in this community are weakly interconnected._
-- **Why does `@nestjs/common` connect `@nestjs/common` to `audit.interceptor.ts`, `@nestjs/common`, `auth.controller.ts`, `contracts/src/index.ts`, `plataforma.module.ts`, `RolesGuard`, `app.module.ts`, `OperacionesService`, `auth.e2e.spec.ts`, `package.json`, `contracts/src/index.ts`?**
-  _High betweenness centrality (0.049) - this node is a cross-community bridge._
+- **Why does `@nestjs/common` connect `@nestjs/common` to `audit.interceptor.ts`, `auth.e2e.spec.ts`, `PrismaService`, `contracts/src/index.ts`, `auth.module.ts`, `operaciones.service.ts`, `app.module.ts`, `package.json`, `cafeina.service.ts`?**
+  _High betweenness centrality (0.052) - this node is a cross-community bridge._
 - **Should `ExcesoJornadaAuditoria.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.024691358024691357 - nodes in this community are weakly interconnected._
