@@ -38,9 +38,20 @@ const config = JSON.parse(
 ) as NgswConfig;
 
 function patternMatches(pattern: string, url: string): boolean {
-  const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*");
-  const regex = new RegExp("^" + escaped + "$");
-  return regex.test(url);
+  // Glob con "*" sin RegExp dinamica (evita ReDoS y el hallazgo de semgrep).
+  const partes = pattern.split("*");
+  if (partes.length === 1) return pattern === url;
+  const primero = partes.shift() ?? "";
+  const ultimo = partes.pop() ?? "";
+  const fin = url.length - ultimo.length;
+  if (!url.startsWith(primero) || fin < primero.length || !url.endsWith(ultimo)) return false;
+  let pos = primero.length;
+  for (const parte of partes) {
+    const i = url.indexOf(parte, pos);
+    if (i < 0 || i + parte.length > fin) return false;
+    pos = i + parte.length;
+  }
+  return true;
 }
 
 describe("ngsw-config", () => {
