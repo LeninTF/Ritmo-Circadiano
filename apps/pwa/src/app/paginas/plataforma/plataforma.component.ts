@@ -27,6 +27,9 @@ import { SesionService } from '../../auth/sesion.service';
         </p>
         <div class="acciones">
           <a class="boton boton--fuerte" routerLink="/plan">Ir a mi plan de hoy</a>
+          @if (sesion.rol() === 'administrador') {
+            <a class="boton" routerLink="/admin/parametros">Parámetros del sistema</a>
+          }
           <button class="boton" type="button" (click)="salir()">Cerrar sesión</button>
         </div>
       } @else {

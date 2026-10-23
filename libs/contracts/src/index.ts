@@ -2,6 +2,7 @@ export * from './auth';
 export * from './cronotipo';
 export * from './error-api.dto';
 export * from './paginacion';
+export * from './parametro-sistema.dto';
 export * from './respuesta-agregada';
 export * from './rol';
 export * from './semaforo';

@@ -4,16 +4,24 @@ import { AreasController } from './areas/areas.controller';
 import { AreasService } from './areas/areas.service';
 import { AuditInterceptor } from './auditoria/audit.interceptor';
 import { AuthModule } from './auth/auth.module';
+import { ParametrosController } from './parametros/parametros.controller';
+import { ParametrosService } from './parametros/parametros.service';
 import { CuentaController } from './usuarios/cuenta.controller';
 import { UsuariosAdminController } from './usuarios/usuarios-admin.controller';
 import { UsuariosService } from './usuarios/usuarios.service';
 
 @Module({
   imports: [AuthModule],
-  controllers: [AreasController, CuentaController, UsuariosAdminController],
+  controllers: [
+    AreasController,
+    CuentaController,
+    UsuariosAdminController,
+    ParametrosController,
+  ],
   providers: [
     AreasService,
     UsuariosService,
+    ParametrosService,
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
   ],
   exports: [AuthModule],
