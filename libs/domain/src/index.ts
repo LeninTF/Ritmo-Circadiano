@@ -3,4 +3,4 @@ export * from './ruta';
 export * from './turno-laboral';
 export * from './k-anonymity';
 export * from './rn01';
-
+export * from './aptitud';
