@@ -24,16 +24,19 @@ async function arrancar(): Promise<void> {
     }),
   );
 
-  const documento = new DocumentBuilder()
-    .setTitle('Gestor Web Circadiano')
-    .setVersion('0.0.0')
-    .addBearerAuth()
-    .build();
-  SwaggerModule.setup(
-    'docs',
-    app,
-    SwaggerModule.createDocument(app, documento),
-  );
+  // Cerrado por defecto: en produccion /docs y /docs-json revelarian toda la superficie de la API.
+  if (process.env['SWAGGER_HABILITADO'] === 'true') {
+    const documento = new DocumentBuilder()
+      .setTitle('Gestor Web Circadiano')
+      .setVersion('0.0.0')
+      .addBearerAuth()
+      .build();
+    SwaggerModule.setup(
+      'docs',
+      app,
+      SwaggerModule.createDocument(app, documento),
+    );
+  }
 
   const puerto = Number(process.env['PORT'] ?? 3000);
   await app.listen(puerto);
