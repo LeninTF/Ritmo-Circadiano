@@ -4,5 +4,6 @@ export * from './error-api.dto';
 export * from './paginacion';
 export * from './respuesta-agregada';
 export * from './rol';
+export * from './aptitud';
 export * from './semaforo';
 export * from './turno-asignado.evento';
