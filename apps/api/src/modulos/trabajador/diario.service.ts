@@ -10,13 +10,13 @@ import { CrearActualizarDiarioDto, DiarioRespuestaDto } from '@circadiano/contra
  * Define el contrato de persistencia para desacoplar la lógica de aplicación de Prisma.
  */
 export interface IDiarioRepository {
-  upsert(idUsuario: string, fecha: string, datos: Partial<DiarioRespuestaDto>): Promise<DiarioRespuestaDto>;
+  upsert(idUsuario: string, fecha: string, datos: CrearActualizarDiarioDto): Promise<DiarioRespuestaDto>;
   consultar(idUsuario: string, desde: Date, hasta: Date): Promise<DiarioRespuestaDto[]>;
 }
 export const DIARIO_REPOSITORY = Symbol('DIARIO_REPOSITORY');
 @Injectable()
 export class DiarioService {
-  // El repositorio será inyectado mediante un token cuando la implementación de Prisma esté disponible.
+  // TrabajadorModule inyecta PrismaDiarioRepository; los tests, un repositorio falso.
  constructor(
   @Inject(DIARIO_REPOSITORY)
   private readonly repository: IDiarioRepository,
