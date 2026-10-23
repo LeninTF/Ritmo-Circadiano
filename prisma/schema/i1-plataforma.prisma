@@ -53,7 +53,52 @@ model Usuario {
   semividaH           Decimal       @default(5) @map("semivida_h") @db.Decimal(3, 1)
   fuma                Boolean       @default(false)
 
-  area Area @relation(fields: [idArea], references: [id])
+  area         Area         @relation(fields: [idArea], references: [id])
+  evaluaciones Evaluacion[]
 
   @@map("usuario")
+}
+
+/// Aplicacion de un instrumento (PSQI, ESE-VP, ficha) en el pretest o postest (Figura 9).
+/// Cascada: DELETE /me borra las evaluaciones del participante (Ley 29733).
+model Evaluacion {
+  id              String               @id @default(uuid()) @db.Uuid
+  idUsuario       String               @map("id_usuario") @db.Uuid
+  fase            String               @db.VarChar(8)
+  instrumento     String               @db.VarChar(10)
+  fechaAplicacion DateTime             @map("fecha_aplicacion") @db.Date
+  puntajeTotal    Decimal?             @map("puntaje_total") @db.Decimal(5, 2)
+  respuestas      Json?
+  usuario         Usuario              @relation(fields: [idUsuario], references: [id], onDelete: Cascade)
+  resultados      ResultadoIndicador[]
+
+  @@index([idUsuario, fase])
+  @@map("evaluacion")
+}
+
+/// Valor de un indicador del estudio; codigo_indicador en CODIGOS_INDICADOR (libs/contracts).
+model ResultadoIndicador {
+  id              String     @id @default(uuid()) @db.Uuid
+  idEvaluacion    String     @map("id_evaluacion") @db.Uuid
+  codigoIndicador String     @map("codigo_indicador") @db.VarChar(10)
+  valor           Decimal    @db.Decimal(7, 2)
+  unidad          String?    @db.VarChar(12)
+  evaluacion      Evaluacion @relation(fields: [idEvaluacion], references: [id], onDelete: Cascade)
+
+  @@unique([idEvaluacion, codigoIndicador])
+  @@map("resultado_indicador")
+}
+
+/// ERD03: acciones sensibles (login, exportacion, turno forzado, borrado).
+/// Sin FK a usuario: la fila sobrevive al borrado del participante (solo queda el UUID).
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  idUsuario String?  @map("id_usuario") @db.Uuid
+  accion    String   @db.VarChar(60)
+  recurso   String   @db.VarChar(255)
+  ip        String?  @db.VarChar(45)
+  fecha     DateTime @default(now()) @db.Timestamptz()
+
+  @@index([fecha])
+  @@map("audit_log")
 }

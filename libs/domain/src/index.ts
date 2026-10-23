@@ -4,4 +4,5 @@ export * from './turno-laboral';
 export * from './cafeina';
 export * from './k-anonymity';
 export * from './rn01';
-
+export * from './privacidad';
+export * from './aptitud';
