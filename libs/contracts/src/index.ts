@@ -6,6 +6,7 @@ export * from './paginacion';
 export * from './parametro-sistema.dto';
 export * from './respuesta-agregada';
 export * from './rol';
+export * from './aptitud';
 export * from './semaforo';
 export * from './sync-handler';
 export * from './sync-lote.dto';
