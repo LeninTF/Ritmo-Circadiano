@@ -1,15 +1,24 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from '../../prisma/prisma.module';
-import { CircadianoController } from './controllers/circadiano.controller';
-import { CircadianoService } from './services/circadiano.service';
-import { EventEmitterModule } from '@nestjs/event-emitter';
-import { OnTurnoAsignadoHandler } from './listeners/on-turno-asignado.handler';
+import { CafeinaModule } from '../cafeina/cafeina.module';
+import { OperacionesModule } from '../operaciones/operaciones.module';
+import { PlataformaModule } from '../plataforma/plataforma.module';
+import { CircadianoController } from './circadiano.controller';
+import { CronotipoService } from './cronotipo.service';
+import { PlanesService } from './planes.service';
+import { TurnoAsignadoListener } from './turno-asignado.listener';
+import { UbicacionService } from './ubicacion.service';
+import { UsuarioEliminadoCircadianoListener } from './usuario-eliminado.listener';
 
 @Module({
-  imports: [PrismaModule, EventEmitterModule],
+  imports: [OperacionesModule, CafeinaModule, PlataformaModule],
   controllers: [CircadianoController],
-  providers: [CircadianoService, OnTurnoAsignadoHandler],
-  exports: [CircadianoService],
+  providers: [
+    PlanesService,
+    UbicacionService,
+    CronotipoService,
+    TurnoAsignadoListener,
+    UsuarioEliminadoCircadianoListener,
+  ],
+  exports: [PlanesService],
 })
 export class CircadianoModule {}
-
