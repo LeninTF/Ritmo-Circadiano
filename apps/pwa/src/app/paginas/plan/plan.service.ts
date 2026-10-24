@@ -1,14 +1,10 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import {
-  SEDES_EMPRESA,
-  type CategoriaCronotipo,
-  type EventoSolarDto,
-  type PlanDiarioDto,
-} from '@circadiano/contracts';
+import type { CategoriaCronotipo, EventoSolarDto, PlanDiarioDto } from '@circadiano/contracts';
 import {
   CATEGORIA_RMEQ_SIN_RESPUESTA,
+  SEDES_EMPRESA,
   SEMIVIDA_H_DEFECTO,
   UMBRAL_CAFEINA_MG_DEFECTO,
   VERSION_ALGORITMO_PLAN,

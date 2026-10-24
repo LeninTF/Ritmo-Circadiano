@@ -68,19 +68,9 @@ export interface EventoSolarDto {
   atardecer: string;
 }
 
-export const ZONA_HORARIA_EMPRESA = 'America/Lima';
-
+/** Sede de la empresa para el respaldo manual de ubicacion (RF06). La lista vive en libs/domain. */
 export interface SedeEmpresa {
   nombre: string;
   lat: number;
   lng: number;
 }
-
-/** Sedes para el respaldo manual cuando no hay permiso de ubicacion (RF06). Ica es la sede por defecto. */
-export const SEDES_EMPRESA: readonly SedeEmpresa[] = [
-  { nombre: 'Ica', lat: -14.0689, lng: -75.7222 },
-  { nombre: 'Nasca', lat: -14.8292, lng: -74.9386 },
-  { nombre: 'Palpa', lat: -14.5336, lng: -75.1856 },
-  { nombre: 'Acarí', lat: -15.4311, lng: -74.6156 },
-  { nombre: 'Lima', lat: -12.0464, lng: -77.0428 },
-];

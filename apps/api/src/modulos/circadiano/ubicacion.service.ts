@@ -1,13 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import {
-  SEDES_EMPRESA,
-  ZONA_HORARIA_EMPRESA,
-  type CrearUbicacionDto,
-  type EventoSolarDto,
-  type SedeEmpresa,
-  type UbicacionDto,
-} from '@circadiano/contracts';
-import { calcularEventosSolares } from '@circadiano/domain';
+import type { CrearUbicacionDto, EventoSolarDto, SedeEmpresa, UbicacionDto } from '@circadiano/contracts';
+import { SEDES_EMPRESA, ZONA_HORARIA_EMPRESA, calcularEventosSolares } from '@circadiano/domain';
 import { PrismaService } from '../../prisma/prisma.service';
 
 const MS_DIA = 86_400_000;

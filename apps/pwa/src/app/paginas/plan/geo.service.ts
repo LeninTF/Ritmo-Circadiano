@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { SEDES_EMPRESA, type CrearUbicacionDto, type SedeEmpresa, type UbicacionDto } from '@circadiano/contracts';
+import type { CrearUbicacionDto, SedeEmpresa, UbicacionDto } from '@circadiano/contracts';
+import { SEDES_EMPRESA } from '@circadiano/domain';
 import { environment } from '../../../environments/environment';
 
 const TIEMPO_GPS_MS = 8000;

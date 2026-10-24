@@ -1,4 +1,16 @@
-import type { CategoriaCronotipo } from '@circadiano/contracts';
+import type { CategoriaCronotipo, SedeEmpresa } from '@circadiano/contracts';
+
+// RF06 · ubicacion. Aqui y no en contracts: la PWA no puede importar valores de ese barrel
+// porque algunos DTO traen decoradores de NestJS.
+export const ZONA_HORARIA_EMPRESA = 'America/Lima';
+/** Respaldo manual cuando no hay permiso de ubicacion. Ica es la sede por defecto. */
+export const SEDES_EMPRESA: readonly SedeEmpresa[] = [
+  { nombre: 'Ica', lat: -14.0689, lng: -75.7222 },
+  { nombre: 'Nasca', lat: -14.8292, lng: -74.9386 },
+  { nombre: 'Palpa', lat: -14.5336, lng: -75.1856 },
+  { nombre: 'Acarí', lat: -15.4311, lng: -74.6156 },
+  { nombre: 'Lima', lat: -12.0464, lng: -77.0428 },
+];
 
 // RN01 · conduccion continua
 export const CONDUCCION_MAX_NOCTURNA_H = 4;
