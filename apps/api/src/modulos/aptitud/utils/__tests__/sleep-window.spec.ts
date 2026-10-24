@@ -1,12 +1,12 @@
-import { calcularHorasSueñoPoremana } from '../sleep-window';
+import { calcularHorasSuenoEnVentana } from '../sleep-window';
 
-describe('calcularHorasSueñoPoremana', () => {
+describe('calcularHorasSuenoEnVentana', () => {
   const ventanaInicio = new Date('2024-01-01T00:00:00.000Z');
   const ventanaFin = new Date('2024-01-02T00:00:00.000Z');
 
   it('un período normal dentro de la ventana', () => {
     const periods = [{ inicio: '2024-01-01T02:00:00.000Z', fin: '2024-01-01T06:00:00.000Z' }];
-    expect(calcularHorasSueñoPoremana(periods, ventanaInicio, ventanaFin)).toBeCloseTo(4);
+    expect(calcularHorasSuenoEnVentana(periods, ventanaInicio, ventanaFin)).toBeCloseTo(4);
   });
 
   it('dos períodos independientes', () => {
@@ -14,7 +14,7 @@ describe('calcularHorasSueñoPoremana', () => {
       { inicio: '2024-01-01T02:00:00.000Z', fin: '2024-01-01T04:00:00.000Z' },
       { inicio: '2024-01-01T08:00:00.000Z', fin: '2024-01-01T10:00:00.000Z' },
     ];
-    expect(calcularHorasSueñoPoremana(periods, ventanaInicio, ventanaFin)).toBeCloseTo(4);
+    expect(calcularHorasSuenoEnVentana(periods, ventanaInicio, ventanaFin)).toBeCloseTo(4);
   });
 
   it('dos períodos superpuestos', () => {
@@ -23,7 +23,7 @@ describe('calcularHorasSueñoPoremana', () => {
       { inicio: '2024-01-01T04:00:00.000Z', fin: '2024-01-01T08:00:00.000Z' },
     ];
     // 6 horas sin duplicar
-    expect(calcularHorasSueñoPoremana(periods, ventanaInicio, ventanaFin)).toBeCloseTo(6);
+    expect(calcularHorasSuenoEnVentana(periods, ventanaInicio, ventanaFin)).toBeCloseTo(6);
   });
 
   it('dos períodos contiguos', () => {
@@ -31,41 +31,41 @@ describe('calcularHorasSueñoPoremana', () => {
       { inicio: '2024-01-01T02:00:00.000Z', fin: '2024-01-01T04:00:00.000Z' },
       { inicio: '2024-01-01T04:00:00.000Z', fin: '2024-01-01T06:00:00.000Z' },
     ];
-    expect(calcularHorasSueñoPoremana(periods, ventanaInicio, ventanaFin)).toBeCloseTo(4);
+    expect(calcularHorasSuenoEnVentana(periods, ventanaInicio, ventanaFin)).toBeCloseTo(4);
   });
 
   it('período que comienza antes de la ventana', () => {
     const periods = [{ inicio: '2023-12-31T22:00:00.000Z', fin: '2024-01-01T02:00:00.000Z' }];
-    expect(calcularHorasSueñoPoremana(periods, ventanaInicio, ventanaFin)).toBeCloseTo(2);
+    expect(calcularHorasSuenoEnVentana(periods, ventanaInicio, ventanaFin)).toBeCloseTo(2);
   });
 
   it('período que termina después de la ventana', () => {
     const periods = [{ inicio: '2024-01-01T22:00:00.000Z', fin: '2024-01-02T02:00:00.000Z' }];
-    expect(calcularHorasSueñoPoremana(periods, ventanaInicio, ventanaFin)).toBeCloseTo(2);
+    expect(calcularHorasSuenoEnVentana(periods, ventanaInicio, ventanaFin)).toBeCloseTo(2);
   });
 
   it('período que cubre toda la ventana', () => {
     const periods = [{ inicio: '2023-12-31T22:00:00.000Z', fin: '2024-01-02T02:00:00.000Z' }];
-    expect(calcularHorasSueñoPoremana(periods, ventanaInicio, ventanaFin)).toBeCloseTo(24);
+    expect(calcularHorasSuenoEnVentana(periods, ventanaInicio, ventanaFin)).toBeCloseTo(24);
   });
 
   it('períodos completamente fuera de la ventana', () => {
     const periods = [{ inicio: '2023-12-31T10:00:00.000Z', fin: '2023-12-31T12:00:00.000Z' }];
-    expect(calcularHorasSueñoPoremana(periods, ventanaInicio, ventanaFin)).toBe(0);
+    expect(calcularHorasSuenoEnVentana(periods, ventanaInicio, ventanaFin)).toBe(0);
   });
 
   it('arreglo vacío', () => {
-    expect(calcularHorasSueñoPoremana([], ventanaInicio, ventanaFin)).toBe(0);
+    expect(calcularHorasSuenoEnVentana([], ventanaInicio, ventanaFin)).toBe(0);
   });
 
   it('fechas inválidas', () => {
     const periods = [{ inicio: 'invalid', fin: '2024-01-01T04:00:00.000Z' }];
-    expect(() => calcularHorasSueñoPoremana(periods, ventanaInicio, ventanaFin)).toThrow();
+    expect(() => calcularHorasSuenoEnVentana(periods, ventanaInicio, ventanaFin)).toThrow();
   });
 
   it('inicio posterior o igual al fin', () => {
     const periods = [{ inicio: '2024-01-01T04:00:00.000Z', fin: '2024-01-01T04:00:00.000Z' }];
-    expect(() => calcularHorasSueñoPoremana(periods, ventanaInicio, ventanaFin)).toThrow();
+    expect(() => calcularHorasSuenoEnVentana(periods, ventanaInicio, ventanaFin)).toThrow();
   });
 
   it('intervalos que cruzan medianoche', () => {
@@ -80,12 +80,12 @@ describe('calcularHorasSueñoPoremana', () => {
   const fin = new Date('2024-01-02T12:00:00.000Z');
 
   expect(
-    calcularHorasSueñoPoremana(periods, inicio, fin),
+    calcularHorasSuenoEnVentana(periods, inicio, fin),
   ).toBeCloseTo(4);
 });
 it('rechaza una ventana con inicio inválido', () => {
   expect(() =>
-    calcularHorasSueñoPoremana(
+    calcularHorasSuenoEnVentana(
       [],
       new Date('fecha-invalida'),
       ventanaFin,
@@ -95,7 +95,7 @@ it('rechaza una ventana con inicio inválido', () => {
 
 it('rechaza una ventana con fin inválido', () => {
   expect(() =>
-    calcularHorasSueñoPoremana(
+    calcularHorasSuenoEnVentana(
       [],
       ventanaInicio,
       new Date('fecha-invalida'),
@@ -106,7 +106,7 @@ it('rechaza una ventana con fin inválido', () => {
   it('sin mutación de las entradas', () => {
     const periods = [{ inicio: '2024-01-01T02:00:00.000Z', fin: '2024-01-01T04:00:00.000Z' }];
     const copy = JSON.parse(JSON.stringify(periods));
-    calcularHorasSueñoPoremana(periods, ventanaInicio, ventanaFin);
+    calcularHorasSuenoEnVentana(periods, ventanaInicio, ventanaFin);
     expect(periods).toEqual(copy);
   });
 });

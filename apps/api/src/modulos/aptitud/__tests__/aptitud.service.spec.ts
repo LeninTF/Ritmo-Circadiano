@@ -1,232 +1,106 @@
-// ___tests__/aptitud.service.spec.ts
-import type { AptitudCalculator } from '../aptitud.calculator';
-import { AptitudService, RegistroSuenoRepository, TurnoRepository, AptitudRepository } from '../aptitud.service';
-import type { UsuarioJwtPayload } from '@circadiano/contracts';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import type { PrismaService } from '../../../prisma/prisma.service';
+import type { OperacionesService } from '../../operaciones/operaciones.service';
+import { AptitudService } from '../aptitud.service';
 
-const mockAptitudCalculator: jest.Mocked<AptitudCalculator> = {
-  calcular: jest.fn(),
-};
-const mockRegistroSuenoRepo: RegistroSuenoRepository = {
-  findByUserAndRange: jest.fn(),
-};
-const mockTurnoRepo: TurnoRepository = {
-  findById: jest.fn(),
-};
-const mockAptitudRepo: AptitudRepository = {
-  save: jest.fn(),
-  findCompartidos: jest.fn(),
-};
-
-const servicio = new AptitudService(
-  mockRegistroSuenoRepo,
-  mockTurnoRepo,
-  mockAptitudRepo,
-  mockAptitudCalculator,
-);
-
-describe('AptitudService.consultarDespacho', () => {
-  beforeEach(() => {
-  jest.clearAllMocks();
-  mockAptitudCalculator.calcular.mockReturnValue('verde');
-});
-
-  it('devuelve solo evaluaciones compartidas', async () => {
-    (mockAptitudRepo.findCompartidos as jest.Mock).mockResolvedValue([
-      { codigo: 'P01', color: 'verde', compartido: true },
-      { codigo: 'P02', color: 'rojo', compartido: false },
-      { codigo: 'P03', color: 'ambar', compartido: true },
-    ]);
-
-    const resultado = await servicio.consultarDespacho(
-      'P01',
-      new Date('2026-10-23T00:00:00Z'),
-    );
-
-    expect(resultado).toEqual([
-      { codigo: 'P01', color: 'verde' },
-      { codigo: 'P03', color: 'ambar' },
-    ]);
-  });
-
-  it('no divulga evaluaciones sin consentimiento', async () => {
-    (mockAptitudRepo.findCompartidos as jest.Mock).mockResolvedValue([
-      { codigo: 'P02', color: 'rojo', compartido: false },
-    ]);
-
-    const resultado = await servicio.consultarDespacho(
-      'P01',
-      new Date('2026-10-23T00:00:00Z'),
-    );
-
-    expect(resultado).toEqual([]);
-  });
-
-  it('rechaza fechas inválidas', async () => {
-    await expect(
-      servicio.consultarDespacho('P01', new Date('fecha-invalida')),
-    ).rejects.toThrow();
-
-    expect(mockAptitudRepo.findCompartidos).not.toHaveBeenCalled();
-  });
-
-  it('no expone campos adicionales', async () => {
-    (mockAptitudRepo.findCompartidos as jest.Mock).mockResolvedValue([
-      {
-        codigo: 'P01',
-        color: 'verde',
-        compartido: true,
-        idUsuario: 'u1',
-        horasSueno24h: 8,
-        somnolencia: 1,
-      },
-    ]);
-
-    const resultado = await servicio.consultarDespacho(
-      'P01',
-      new Date('2026-10-23T00:00:00Z'),
-    );
-
-    expect(resultado).toEqual([{ codigo: 'P01', color: 'verde' }]);
-  });
-  describe('AptitudService.crearAptitud', () => {
-  const usuario: UsuarioJwtPayload = {
-    sub: 'u1',
-    rol: 'trabajador',
-    codigoParticipante: 'P01',
+describe('AptitudService (RF12)', () => {
+  const prisma = {
+    registroSueno: { findMany: jest.fn() },
+    aptitudPresalida: { create: jest.fn(), findMany: jest.fn() },
+    usuario: { findUnique: jest.fn() },
   };
-
-  const turnoId = 't1';
+  const operaciones = { obtenerTurnoPorId: jest.fn() };
+  const servicio = new AptitudService(prisma as unknown as PrismaService, operaciones as unknown as OperacionesService);
+  const ahora = new Date('2026-10-24T12:00:00Z');
+  const sueno = (inicio: string, fin: string) => ({ horaAcostarse: new Date(inicio), horaDespertar: new Date(fin) });
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockAptitudCalculator.calcular.mockReturnValue('verde');
+    jest.resetAllMocks();
+    operaciones.obtenerTurnoPorId.mockResolvedValue({ id: 't-1', idUsuario: 'u-1' });
+    prisma.aptitudPresalida.create.mockResolvedValue({});
+  });
 
-    (mockTurnoRepo.findById as jest.Mock).mockResolvedValue({
-      id: turnoId,
-      idUsuario: usuario.sub,
+  describe('crearAptitud', () => {
+    it('8 h de sueño y somnolencia baja → verde; guarda horas recortadas a 24 h y compartido=false por defecto', async () => {
+      // Empieza antes de la ventana: solo cuentan 8 h dentro de [ahora-24h, ahora].
+      prisma.registroSueno.findMany.mockResolvedValue([sueno('2026-10-23T10:00:00Z', '2026-10-23T20:00:00Z')]);
+      const res = await servicio.crearAptitud('u-1', 't-1', { somnolencia: 2 }, ahora);
+
+      expect(res).toEqual({ color: 'verde' });
+      expect(prisma.registroSueno.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ idUsuario: 'u-1' }) }),
+      );
+      expect(prisma.aptitudPresalida.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ idUsuario: 'u-1', idTurno: 't-1', horasSueno24h: 8, color: 'verde', compartido: false }),
+      });
     });
 
-    const ahora = Date.now();
+    it.each([
+      ['6 h → ámbar', '2026-10-24T00:00:00Z', '2026-10-24T06:00:00Z', 2, 'ambar'],
+      ['4 h → rojo', '2026-10-24T02:00:00Z', '2026-10-24T06:00:00Z', 1, 'rojo'],
+      ['8 h pero somnolencia 4 → rojo', '2026-10-23T22:00:00Z', '2026-10-24T06:00:00Z', 4, 'rojo'],
+    ])('RN09: %s', async (_caso, inicio, fin, somnolencia, color) => {
+      prisma.registroSueno.findMany.mockResolvedValue([sueno(inicio, fin)]);
+      await expect(servicio.crearAptitud('u-1', 't-1', { somnolencia }, ahora)).resolves.toEqual({ color });
+    });
 
-    (mockRegistroSuenoRepo.findByUserAndRange as jest.Mock)
-      .mockResolvedValue([
-        {
-          inicio: new Date(ahora - 9 * 60 * 60 * 1000).toISOString(),
-          fin: new Date(ahora - 1 * 60 * 60 * 1000).toISOString(),
-        },
+    it('sin registros de sueño → rojo', async () => {
+      prisma.registroSueno.findMany.mockResolvedValue([]);
+      await expect(servicio.crearAptitud('u-1', 't-1', { somnolencia: 1 }, ahora)).resolves.toEqual({ color: 'rojo' });
+    });
+
+    it('solo comparte con consentimiento explícito', async () => {
+      prisma.registroSueno.findMany.mockResolvedValue([]);
+      await servicio.crearAptitud('u-1', 't-1', { somnolencia: 1, compartido: true }, ahora);
+      expect(prisma.aptitudPresalida.create.mock.calls[0][0].data.compartido).toBe(true);
+    });
+
+    it('turno ajeno → 403 sin guardar', async () => {
+      operaciones.obtenerTurnoPorId.mockResolvedValue({ id: 't-1', idUsuario: 'otro' });
+      await expect(servicio.crearAptitud('u-1', 't-1', { somnolencia: 1 }, ahora)).rejects.toThrow(ForbiddenException);
+      expect(prisma.aptitudPresalida.create).not.toHaveBeenCalled();
+    });
+
+    it('turno inexistente → propaga 404 de I2', async () => {
+      operaciones.obtenerTurnoPorId.mockRejectedValue(new NotFoundException());
+      await expect(servicio.crearAptitud('u-1', 't-x', { somnolencia: 1 }, ahora)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('consultarDespacho (RN10)', () => {
+    beforeEach(() => prisma.usuario.findUnique.mockResolvedValue({ id: 'u-1' }));
+
+    it('devuelve solo el color de la última evaluación compartida de cada turno del día en Lima', async () => {
+      prisma.aptitudPresalida.findMany.mockResolvedValue([
+        { color: 'verde', compartido: true },
+        { color: 'rojo', compartido: false },
       ]);
+      const res = await servicio.consultarDespacho('P01', '2026-10-24');
 
-    (mockAptitudRepo.save as jest.Mock).mockResolvedValue(undefined);
-  });
-
-  it('crea la evaluación de un trabajador con turno propio', async () => {
-    const resultado = await servicio.crearAptitud(
-      { somnolencia: 2 },
-      turnoId,
-      usuario,
-    );
-
-    expect(resultado).toEqual({ color: 'verde' });
-
-    expect(mockAptitudCalculator.calcular).toHaveBeenCalledWith(
-      expect.closeTo(8, 2),
-      2,
-    );
-
-    expect(mockAptitudRepo.save).toHaveBeenCalledWith(
-      expect.objectContaining({
-        idUsuario: usuario.sub,
-        idTurno: turnoId,
-        compartido: false,
-      }),
-    );
-  });
-
-  it('rechaza un turno perteneciente a otro trabajador', async () => {
-    (mockTurnoRepo.findById as jest.Mock).mockResolvedValue({
-      id: turnoId,
-      idUsuario: 'otro-usuario',
+      expect(res).toEqual({ evaluaciones: [{ codigo: 'P01', color: 'verde' }] });
+      expect(prisma.aptitudPresalida.findMany).toHaveBeenCalledWith({
+        where: {
+          idUsuario: 'u-1',
+          fechaHora: { gte: new Date('2026-10-24T05:00:00Z'), lt: new Date('2026-10-25T05:00:00Z') },
+        },
+        orderBy: { fechaHora: 'desc' },
+        distinct: ['idTurno'],
+        select: { color: true, compartido: true },
+      });
     });
 
-    await expect(
-      servicio.crearAptitud({ somnolencia: 2 }, turnoId, usuario),
-    ).rejects.toThrow();
+    it('participante inexistente → lista vacía', async () => {
+      prisma.usuario.findUnique.mockResolvedValue(null);
+      await expect(servicio.consultarDespacho('P99', '2026-10-24')).resolves.toEqual({ evaluaciones: [] });
+      expect(prisma.aptitudPresalida.findMany).not.toHaveBeenCalled();
+    });
 
-    expect(mockAptitudRepo.save).not.toHaveBeenCalled();
-    expect(mockAptitudCalculator.calcular).not.toHaveBeenCalled();
+    it.each([
+      ['P01', '24/10/2026'],
+      ['P01', ''],
+      ['', '2026-10-24'],
+    ])('codigo=%p fecha=%p → 400', async (codigo, fecha) => {
+      await expect(servicio.consultarDespacho(codigo, fecha)).rejects.toThrow(BadRequestException);
+    });
   });
-
-  it('rechaza una identidad ausente', async () => {
-    await expect(
-      servicio.crearAptitud(
-        { somnolencia: 2 },
-        turnoId,
-        null as unknown as UsuarioJwtPayload,
-      ),
-    ).rejects.toThrow();
-
-    expect(mockTurnoRepo.findById).not.toHaveBeenCalled();
-    expect(mockAptitudRepo.save).not.toHaveBeenCalled();
-  });
-
-  it('guarda compartido como false cuando se omite', async () => {
-    await servicio.crearAptitud(
-      { somnolencia: 2 },
-      turnoId,
-      usuario,
-    );
-
-    expect(mockAptitudRepo.save).toHaveBeenCalledWith(
-      expect.objectContaining({ compartido: false }),
-    );
-  });
-
-  it('guarda consentimiento explícito', async () => {
-    await servicio.crearAptitud(
-      { somnolencia: 2, compartido: true },
-      turnoId,
-      usuario,
-    );
-
-    expect(mockAptitudRepo.save).toHaveBeenCalledWith(
-      expect.objectContaining({ compartido: true }),
-    );
-  });
-
-  it.each([0, 6, 2.5, NaN, Infinity])(
-    'rechaza somnolencia inválida: %s',
-    async (somnolencia) => {
-      await expect(
-        servicio.crearAptitud(
-          { somnolencia },
-          turnoId,
-          usuario,
-        ),
-      ).rejects.toThrow();
-
-      expect(mockAptitudRepo.save).not.toHaveBeenCalled();
-    },
-  );
-
-  it('informa un error cuando falla la persistencia', async () => {
-    (mockAptitudRepo.save as jest.Mock).mockRejectedValue(
-      new Error('Fallo de BD'),
-    );
-
-    await expect(
-      servicio.crearAptitud({ somnolencia: 2 }, turnoId, usuario),
-    ).rejects.toThrow('Error al persistir la evaluación');
-  });
-
-  it('propaga fallos de lectura de registros de sueño', async () => {
-    (mockRegistroSuenoRepo.findByUserAndRange as jest.Mock)
-      .mockRejectedValue(new Error('Fallo de lectura'));
-
-    await expect(
-      servicio.crearAptitud({ somnolencia: 2 }, turnoId, usuario),
-    ).rejects.toThrow('Fallo de lectura');
-
-    expect(mockAptitudRepo.save).not.toHaveBeenCalled();
-  });
-});
 });

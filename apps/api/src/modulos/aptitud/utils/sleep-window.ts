@@ -9,7 +9,7 @@
  * @param windowEnd Momento en que termina la ventana de interés.
  * @returns Duración en horas (double). Se devuelve 0 si no hay sueño.
  */
-export function calcularHorasSueñoPoremana(
+export function calcularHorasSuenoEnVentana(
   sleepIntervals: Array<{ inicio: string; fin: string }>,
   windowStart: Date,
   windowEnd: Date,

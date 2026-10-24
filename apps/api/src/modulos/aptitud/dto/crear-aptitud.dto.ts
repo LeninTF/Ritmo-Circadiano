@@ -1,4 +1,5 @@
 import { IsInt, Min, Max, IsBoolean, IsOptional } from 'class-validator';
+import type { CrearAptitudRequest } from '@circadiano/contracts';
 
 /**
  * DTO para la autoevaluación de aptitud pre‑salida.
@@ -6,7 +7,7 @@ import { IsInt, Min, Max, IsBoolean, IsOptional } from 'class-validator';
  * `somnolencia` debe estar en la escala 1‑5.
  * `compartido` indica si el trabajador permite compartir la evaluación.
  */
-export class CrearAptitudDto {
+export class CrearAptitudDto implements CrearAptitudRequest {
   /**
    * Escala de somnolencia.
    * 1 → muy vigilante
