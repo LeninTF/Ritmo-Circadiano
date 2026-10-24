@@ -2,7 +2,12 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DiarioService, EstadoGuardadoDiario } from './diario.service';
-import { RegistroSuenoDto } from '@circadiano/contracts';
+
+/** YYYY-MM-DD en la zona del dispositivo (toISOString daria el dia UTC: en Peru, el siguiente desde las 19:00). */
+function hoyLocal(): string {
+  const ahora = new Date();
+  return new Date(ahora.getTime() - ahora.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+}
 
 @Component({
   selector: 'app-diario',
@@ -20,7 +25,7 @@ export class DiarioComponent {
   readonly estadoGuardado = signal<EstadoGuardadoDiario>('inicial');
 
   readonly form = this.fb.group({
-    fecha: [new Date().toISOString().split('T')[0], [Validators.required]],
+    fecha: [hoyLocal(), [Validators.required]],
     horaAcostarse: ['22:00', [Validators.required, Validators.pattern(/^([01]\d|2[0-3]):([0-5]\d)$/)]],
     horaDespertar: ['06:00', [Validators.required, Validators.pattern(/^([01]\d|2[0-3]):([0-5]\d)$/)]],
     latenciaMin: [15, [Validators.required, Validators.min(0), Validators.max(180)]],
@@ -41,7 +46,7 @@ export class DiarioComponent {
     return textos[val] || '';
   }
 
-  guardar(forzarError = false): void {
+  async guardar(): Promise<void> {
     if (this.form.invalid || this.guardando()) {
       this.form.markAllAsTouched();
       return;
@@ -51,33 +56,20 @@ export class DiarioComponent {
     this.estadoGuardado.set('guardando');
 
     const raw = this.form.getRawValue();
-    const dto: RegistroSuenoDto = {
-      clientId: crypto.randomUUID(),
-      fecha: raw.fecha,
-      horaAcostarse: raw.horaAcostarse,
-      horaDespertar: raw.horaDespertar,
-      latenciaMin: Number(raw.latenciaMin),
-      despertares: Number(raw.despertares),
-      calidadPercibida: Number(raw.calidadPercibida),
-      fatigaPercibida: Number(raw.fatigaPercibida),
-      esDiaLaboral: Boolean(raw.esDiaLaboral),
-      luzMatutinaMin: Number(raw.luzMatutinaMin),
-    };
-
-    this.diarioService.guardarDiario(dto, forzarError).subscribe({
-      next: (res) => {
-        this.guardando.set(false);
-        this.estadoGuardado.set(res.estado);
-      },
-      error: (err) => {
-        this.guardando.set(false);
-        const mensaje = err?.message || '';
-        if (mensaje.includes('Guardado persistente deshabilitado')) {
-          this.estadoGuardado.set('integracion_pendiente');
-        } else {
-          this.estadoGuardado.set('error');
-        }
-      },
-    });
+    try {
+      await this.diarioService.guardarDiario({
+        ...raw,
+        latenciaMin: Number(raw.latenciaMin),
+        despertares: Number(raw.despertares),
+        calidadPercibida: Number(raw.calidadPercibida),
+        fatigaPercibida: Number(raw.fatigaPercibida),
+        luzMatutinaMin: Number(raw.luzMatutinaMin),
+      });
+      this.estadoGuardado.set('en_cola');
+    } catch {
+      this.estadoGuardado.set('error');
+    } finally {
+      this.guardando.set(false);
+    }
   }
 }

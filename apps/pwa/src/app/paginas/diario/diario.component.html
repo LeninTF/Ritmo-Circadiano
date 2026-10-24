@@ -119,10 +119,10 @@
       </button>
     </div>
 
-    @if (estadoGuardado() === 'integracion_pendiente') {
-      <div class="estado-alerta error" role="alert" aria-live="assertive">
-        <span class="icono-estado" aria-hidden="true">🔒</span>
-        <span>Guardado persistente deshabilitado: el registro de sueño requiere la integración del servicio de autenticación y OutboxService.</span>
+    @if (estadoGuardado() === 'en_cola') {
+      <div class="estado-alerta exito" role="status" aria-live="polite">
+        <span class="icono-estado" aria-hidden="true">✅</span>
+        <span>Diario guardado en tu dispositivo. Se enviará al servidor cuando haya conexión.</span>
       </div>
     }
 

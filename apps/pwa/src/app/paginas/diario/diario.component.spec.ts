@@ -1,17 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DiarioComponent } from './diario.component';
 import { DiarioService } from './diario.service';
-import { of, throwError } from 'rxjs';
 
 describe('DiarioComponent', () => {
   let component: DiarioComponent;
   let fixture: ComponentFixture<DiarioComponent>;
-  let diarioServiceSpy: { guardarDiario: jest.Mock; obtenerDiario: jest.Mock };
+  let diarioServiceSpy: { guardarDiario: jest.Mock };
 
   beforeEach(async () => {
     diarioServiceSpy = {
-      guardarDiario: jest.fn().mockReturnValue(throwError(() => new Error('Guardado persistente deshabilitado: requiere la integración de autenticación y OutboxService.'))),
-      obtenerDiario: jest.fn().mockReturnValue(of(null)),
+      guardarDiario: jest.fn().mockResolvedValue('7f1c6a2e-0000-4000-8000-000000000001'),
     };
 
     await TestBed.configureTestingModule({
@@ -77,21 +75,33 @@ describe('DiarioComponent', () => {
     expect(component.form.valid).toBe(true);
   });
 
-  it('8. debe impedir que un valor arbitrario de localStorage permita guardar registros', () => {
-    localStorage.setItem('circadiano_usuario_actual', 'usuario_arbitrario_inseguro');
-    component.guardar();
-    expect(diarioServiceSpy.guardarDiario).toHaveBeenCalled();
-    expect(component.estadoGuardado()).toBe('integracion_pendiente');
-    localStorage.removeItem('circadiano_usuario_actual');
+  it('8. guarda en la cola offline con los valores del formulario y lo indica sin decir "sincronizado"', async () => {
+    component.form.patchValue({ fecha: '2026-10-21', horaAcostarse: '23:30', horaDespertar: '07:15' });
+    await component.guardar();
+    fixture.detectChanges();
+
+    expect(diarioServiceSpy.guardarDiario).toHaveBeenCalledWith(
+      expect.objectContaining({ fecha: '2026-10-21', horaAcostarse: '23:30', horaDespertar: '07:15', calidadPercibida: 4 }),
+    );
+    expect(component.estadoGuardado()).toBe('en_cola');
+    expect(component.guardando()).toBe(false);
+    const alerta = (fixture.nativeElement as HTMLElement).querySelector('.estado-alerta');
+    expect(alerta?.textContent).toContain('Se enviará al servidor cuando haya conexión');
   });
 
-  it('9 & 10. debe mostrar mensaje claro de que el guardado requiere integración de autenticación y OutboxService', () => {
-    component.guardar();
+  it('9 & 10. si no se puede encolar (sin sesión o error local) muestra error', async () => {
+    diarioServiceSpy.guardarDiario.mockRejectedValue(new Error('Sin sesion'));
+    await component.guardar();
     fixture.detectChanges();
-    expect(component.estadoGuardado()).toBe('integracion_pendiente');
-    const compiled = fixture.nativeElement as HTMLElement;
-    const alerta = compiled.querySelector('.estado-alerta');
-    expect(alerta?.textContent).toContain('Guardado persistente deshabilitado: el registro de sueño requiere la integración del servicio de autenticación y OutboxService.');
+
+    expect(component.estadoGuardado()).toBe('error');
+    expect((fixture.nativeElement as HTMLElement).querySelector('.estado-alerta.error')).toBeTruthy();
+  });
+
+  it('formulario inválido no llama al servicio', async () => {
+    component.form.get('horaDespertar')?.setValue('99:99');
+    await component.guardar();
+    expect(diarioServiceSpy.guardarDiario).not.toHaveBeenCalled();
   });
 
   it('11, 12, 13, 14 & 15. diseño móvil, DTOs y validaciones intactas', () => {
