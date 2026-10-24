@@ -1,9 +1,15 @@
 {
-  "name": "Gestor Circadiano",
+  "name": "Gestor Circadiano — Transporte Cueva",
   "short_name": "Circadiano",
+  "description": "Gestión de ritmos circadianos y descanso para trabajadores de Transporte Cueva S.A.C.",
+  "lang": "es-PE",
+  "dir": "ltr",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "scope": "./",
   "start_url": "./",
+  "theme_color": "#1d4ed8",
+  "background_color": "#f8fafc",
   "icons": [
     {
       "src": "icons/icon-72x72.png",

@@ -1,11 +1,35 @@
-<header class="cabecera">
-  <strong>Gestor Circadiano</strong>
-</header>
-<main>
-  <router-outlet />
-</main>
-<nav class="navegacion" aria-label="Secciones">
-  @for (enlace of enlaces; track enlace.ruta) {
-  <a [routerLink]="enlace.ruta" routerLinkActive="activo">{{ enlace.texto }}</a>
-  }
-</nav>
+<div class="shell">
+  <header class="cabecera">
+    <a class="marca" routerLink="/plan" aria-label="Gestor Circadiano, ir al plan">
+      <span class="marca__icono" aria-hidden="true">◒</span>
+      <span>Gestor Circadiano</span>
+    </a>
+    <button
+      class="boton-tema"
+      type="button"
+      (click)="cambiarTema()"
+      [attr.aria-label]="temaActual === 'oscuro' ? 'Activar modo claro' : 'Activar modo oscuro'"
+      [attr.title]="temaActual === 'oscuro' ? 'Activar modo claro' : 'Activar modo oscuro'"
+    >
+      <span aria-hidden="true">{{ temaActual === 'oscuro' ? '☀' : '☾' }}</span>
+      <span class="boton-tema__texto">{{ temaActual === 'oscuro' ? 'Modo claro' : 'Modo oscuro' }}</span>
+    </button>
+  </header>
+
+  <main id="contenido-principal" tabindex="-1">
+    <router-outlet />
+  </main>
+
+  <nav class="bottom-nav" aria-label="Navegación principal">
+    @for (enlace of enlaces; track enlace.ruta) {
+      <a
+        [routerLink]="enlace.ruta"
+        routerLinkActive="activo"
+        #estadoRuta="routerLinkActive"
+        [attr.aria-current]="estadoRuta.isActive ? 'page' : null"
+      >
+        <span class="bottom-nav__etiqueta">{{ enlace.texto }}</span>
+      </a>
+    }
+  </nav>
+</div>

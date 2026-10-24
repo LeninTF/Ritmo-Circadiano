@@ -57,3 +57,4 @@ export function validarEntorno(config: Record<string, unknown>): Entorno {
   }
   return entorno;
 }
+

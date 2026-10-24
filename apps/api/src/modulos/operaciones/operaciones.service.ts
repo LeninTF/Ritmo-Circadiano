@@ -1,11 +1,12 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { TURNO_ASIGNADO, TurnoAsignadoEvento } from '@circadiano/contracts';
-import { validarJornadaRN01, detectarTurnoNocturno, validarDescansoMinimo } from '@circadiano/domain';
+import { validarJornadaRN01, detectarTurnoNocturno } from '@circadiano/domain';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '../../generated/prisma/client';
 import { CrearTurnoDto } from './dto/crear-turno.dto';
 import { ActualizarTurnoDto } from './dto/actualizar-turno.dto';
+import { ConfirmarTurnoDto } from './dto/confirmar-turno.dto';
 
 @Injectable()
 export class OperacionesService {
@@ -247,6 +248,123 @@ export class OperacionesService {
     };
     this.eventEmitter.emit(TURNO_ASIGNADO, evento);
     this.eventEmitter.emit('turno.asignado', evento);
+
+    return turnoActualizado;
+  }
+
+  /**
+   * RF05 / ERD05 — Confirmar o corregir un turno laboral.
+   *
+   * Reglas:
+   * - Solo se aceptan los estados `confirmado` y `corregido`.
+   *   El valor `pendiente` existe en el enum compartido para otros módulos,
+   *   pero NO es una operación válida en este endpoint.
+   * - Idempotencia: si el turno ya tiene el mismo estado (y mismas horas reales
+   *   en caso de corrección), se retorna el turno sin actualizar ni emitir evento.
+   * - Al corregir se comparan las horas reales existentes con las solicitadas.
+   * - Se verifica propiedad del turno (idUsuario === idUsuarioAutenticado).
+   * - Dos solicitudes simultaneas: la segunda recibe 409 (bloqueo optimista por `actualizadoEn`).
+   */
+  async confirmarTurno(id: string, idUsuarioAutenticado: string, dto: ConfirmarTurnoDto) {
+    if (!idUsuarioAutenticado) {
+      throw new BadRequestException('ID de usuario autenticado requerido.');
+    }
+
+    const { estadoConfirmacion, horaInicioReal, horaFinReal } = dto;
+
+    // ── Guard: `pendiente` no es una operación válida para este endpoint ──
+    if (estadoConfirmacion === 'pendiente') {
+      throw new BadRequestException(
+        'El estado "pendiente" no es una operación válida para confirmar o corregir un turno.',
+      );
+    }
+
+    const turno = await this.prisma.turnoLaboral.findUnique({
+      where: { id },
+      include: { ruta: true },
+    });
+
+    if (!turno) {
+      throw new NotFoundException(`Turno con ID ${id} no encontrado.`);
+    }
+
+    // ── Verificación de propiedad ──
+    if (turno.idUsuario !== idUsuarioAutenticado) {
+      throw new ForbiddenException('No autorizado: este turno no pertenece al trabajador autenticado.');
+    }
+
+    // ── Validaciones para corrección ──
+    if (estadoConfirmacion === 'corregido') {
+      if (!horaInicioReal || !horaFinReal) {
+        throw new BadRequestException('Se requieren horaInicioReal y horaFinReal válidas para corregir el turno.');
+      }
+      const inicioRealDate = new Date(horaInicioReal);
+      const finRealDate = new Date(horaFinReal);
+      if (isNaN(inicioRealDate.getTime()) || isNaN(finRealDate.getTime())) {
+        throw new BadRequestException('Las fechas de hora real deben ser timestamps ISO válidos.');
+      }
+      if (finRealDate <= inicioRealDate) {
+        throw new BadRequestException('La hora de fin real debe ser posterior a la hora de inicio real.');
+      }
+    }
+
+    // ── Idempotencia: confirmación repetida ──
+    if (estadoConfirmacion === 'confirmado' && turno.estadoConfirmacion === 'confirmado') {
+      return turno;
+    }
+
+    // ── Idempotencia: corrección repetida con mismos datos ──
+    if (estadoConfirmacion === 'corregido' && turno.estadoConfirmacion === 'corregido') {
+      const inicioRealExistente = turno.horaInicioReal instanceof Date
+        ? turno.horaInicioReal.toISOString()
+        : turno.horaInicioReal ? String(turno.horaInicioReal) : null;
+      const finRealExistente = turno.horaFinReal instanceof Date
+        ? turno.horaFinReal.toISOString()
+        : turno.horaFinReal ? String(turno.horaFinReal) : null;
+
+      const inicioSolicitado = horaInicioReal ? new Date(horaInicioReal).toISOString() : null;
+      const finSolicitado = horaFinReal ? new Date(horaFinReal).toISOString() : null;
+
+      if (inicioRealExistente === inicioSolicitado && finRealExistente === finSolicitado) {
+        return turno;
+      }
+    }
+
+    // ── Actualización ──
+    const dataUpdate: Prisma.TurnoLaboralUpdateInput = {
+      estadoConfirmacion,
+      horaInicioReal: estadoConfirmacion === 'corregido'
+        ? new Date(horaInicioReal!)
+        : (estadoConfirmacion === 'confirmado' ? turno.inicioProgramado : undefined),
+      horaFinReal: estadoConfirmacion === 'corregido'
+        ? new Date(horaFinReal!)
+        : (estadoConfirmacion === 'confirmado' ? turno.finProgramado : undefined),
+    };
+
+    // Bloqueo optimista: si otra solicitud cambio el turno desde la lectura, Prisma lanza P2025.
+    let turnoActualizado: typeof turno;
+    try {
+      turnoActualizado = await this.prisma.turnoLaboral.update({
+        where: { id, actualizadoEn: turno.actualizadoEn },
+        data: dataUpdate,
+        include: { ruta: true },
+      });
+    } catch (error) {
+      if ((error as { code?: string }).code === 'P2025') {
+        throw new ConflictException('El turno cambió mientras se confirmaba. Vuelve a intentarlo.');
+      }
+      throw error;
+    }
+
+    // Si se ha corregido el turno, emitir TURNO_ASIGNADO para regenerar el plan circadiano (I3)
+    if (estadoConfirmacion === 'corregido') {
+      const evento: TurnoAsignadoEvento = {
+        idTurno: turnoActualizado.id,
+        idUsuario: turnoActualizado.idUsuario,
+        fecha: turnoActualizado.fecha instanceof Date ? turnoActualizado.fecha.toISOString().split('T')[0] : String(turnoActualizado.fecha).substring(0, 10),
+      };
+      this.eventEmitter.emit(TURNO_ASIGNADO, evento);
+    }
 
     return turnoActualizado;
   }
