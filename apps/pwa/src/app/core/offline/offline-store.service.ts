@@ -46,9 +46,9 @@ export class OfflineStoreService {
   }
 
   /* ---------- Plan ---------- */
+  /** Un plan por usuario y fecha: si ya existe se reemplaza (I3 regenera el plan). */
   async addPlan(plan: Omit<Plan, 'id' | 'usuario'>): Promise<number> {
-    const user = this.getUserId();
-    return this.tables.planes.put({ ...plan, usuario: user });
+    return this.upsertPorFecha(this.tables.planes, plan);
   }
   async getMyPlans(): Promise<Plan[]> {
     return this.tables.planes
@@ -58,11 +58,11 @@ export class OfflineStoreService {
   }
 
   /* ---------- EventoSolar ---------- */
+  /** Un registro por usuario y fecha (cache de 7 dias de I3). */
   async addEventoSolar(
     ev: Omit<EventoSolar, 'id' | 'usuario'>
   ): Promise<number> {
-    const user = this.getUserId();
-    return this.tables.eventosSolares.put({ ...ev, usuario: user });
+    return this.upsertPorFecha(this.tables.eventosSolares, ev);
   }
   async getMyEventosSolares(): Promise<EventoSolar[]> {
     return this.tables.eventosSolares
@@ -72,9 +72,9 @@ export class OfflineStoreService {
   }
 
   /* ---------- Turno ---------- */
+  /** Un turno por usuario y fecha: la cache se refresca al volver la conexion. */
   async addTurno(turno: Omit<Turno, 'id' | 'usuario'>): Promise<number> {
-    const user = this.getUserId();
-    return this.tables.turnos.put({ ...turno, usuario: user });
+    return this.upsertPorFecha(this.tables.turnos, turno);
   }
   async getMyTurnos(): Promise<Turno[]> {
     return this.tables.turnos
@@ -257,6 +257,17 @@ export class OfflineStoreService {
         .equals([user, clientId])
         .delete();
       this.assertCurrentUser(ownerId);
+    });
+  }
+
+  private async upsertPorFecha<T extends { id?: number; fecha: string; usuario: string }>(
+    tabla: Dexie.Table<T, number>,
+    item: Omit<T, 'id' | 'usuario'>
+  ): Promise<number> {
+    const usuario = this.getUserId();
+    return this.db.transaction('rw', tabla, async () => {
+      const existente = await tabla.where('[usuario+fecha]').equals([usuario, item.fecha]).first();
+      return tabla.put({ ...item, usuario, ...(existente ? { id: existente.id } : {}) } as T);
     });
   }
 

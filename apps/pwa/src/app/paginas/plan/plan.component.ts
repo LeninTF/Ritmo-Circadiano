@@ -2,11 +2,12 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { ProximoTurnoComponent } from '../turnos/proximo-turno/proximo-turno.component';
+import { PlanHoyComponent } from './plan-hoy.component';
 
 @Component({
   selector: 'app-plan',
   standalone: true,
-  imports: [CommonModule, ProximoTurnoComponent],
+  imports: [CommonModule, ProximoTurnoComponent, PlanHoyComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="pagina">
@@ -15,6 +16,9 @@ import { ProximoTurnoComponent } from '../turnos/proximo-turno/proximo-turno.com
 
       <!-- Tarjeta RF05: Tu próximo turno y confirmación/corrección -->
       <app-proximo-turno [idTurno]="idTurnoParam()" />
+
+      <!-- RF07: plan circadiano del próximo turno (I3) -->
+      <app-plan-hoy />
     </section>
   `,
   styles: `

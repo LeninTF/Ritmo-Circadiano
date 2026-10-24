@@ -4,6 +4,7 @@ export * from './error-api.dto';
 export * from './exportacion';
 export * from './paginacion';
 export * from './parametro-sistema.dto';
+export * from './plan';
 export * from './respuesta-agregada';
 export * from './rol';
 export * from './aptitud';

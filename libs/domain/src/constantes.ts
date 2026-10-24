@@ -1,4 +1,16 @@
-import type { CategoriaCronotipo } from '@circadiano/contracts';
+import type { CategoriaCronotipo, SedeEmpresa } from '@circadiano/contracts';
+
+// RF06 · ubicacion. Aqui y no en contracts: la PWA no puede importar valores de ese barrel
+// porque algunos DTO traen decoradores de NestJS.
+export const ZONA_HORARIA_EMPRESA = 'America/Lima';
+/** Respaldo manual cuando no hay permiso de ubicacion. Ica es la sede por defecto. */
+export const SEDES_EMPRESA: readonly SedeEmpresa[] = [
+  { nombre: 'Ica', lat: -14.0689, lng: -75.7222 },
+  { nombre: 'Nasca', lat: -14.8292, lng: -74.9386 },
+  { nombre: 'Palpa', lat: -14.5336, lng: -75.1856 },
+  { nombre: 'Acarí', lat: -15.4311, lng: -74.6156 },
+  { nombre: 'Lima', lat: -12.0464, lng: -77.0428 },
+];
 
 // RN01 · conduccion continua
 export const CONDUCCION_MAX_NOCTURNA_H = 4;
@@ -8,6 +20,8 @@ export const CONDUCCION_VENTANA_H = 24;
 /** Tramo nocturno: 22:00 a 05:59, es decir hora >= 22 u hora < 6. */
 export const HORA_INICIO_NOCTURNO = 22;
 export const HORA_FIN_NOCTURNO = 6;
+/** America/Lima es UTC-5 todo el ano (sin horario de verano). */
+export const DESFASE_LIMA_H = -5;
 
 // RN02 · umbral de cafeina residual al dormir (criterio de diseno, no clinico)
 export const UMBRAL_CAFEINA_MG_DEFECTO = 50;
@@ -24,6 +38,11 @@ export const CORTE_CAFEINA_ANTES_DORMIR_H = 6;
 export const OPORTUNIDAD_SUENO_MIN_H = 7;
 export const SIESTA_DURACION_MIN = 90;
 export const SIESTA_FIN_ANTES_TURNO_MIN = 60;
+
+// RF07 · plan circadiano. Cambiar cualquier parametro del motor => subir la version.
+export const VERSION_ALGORITMO_PLAN = '1.1.0';
+/** Dosis de referencia para el corte de cafeina del plan (la misma que usa I4 en /cafeina/residual). */
+export const DOSIS_REFERENCIA_CORTE_MG = 100;
 
 // RN07 · rMEQ de 5 items
 export const RMEQ_PUNTAJE_MIN = 4;
