@@ -134,6 +134,7 @@ describe('OperacionesService', () => {
       estadoConfirmacion: 'pendiente',
       horaInicioReal: null,
       horaFinReal: null,
+      actualizadoEn: new Date('2026-10-19T10:00:00Z'),
     };
 
     it('debe confirmar un turno exitosamente', async () => {
@@ -143,7 +144,23 @@ describe('OperacionesService', () => {
 
       const res = await service.confirmarTurno('t-1', 'u-1', { estadoConfirmacion: 'confirmado' });
       expect(res.estadoConfirmacion).toBe('confirmado');
-      expect(mockPrismaService.turnoLaboral.update).toHaveBeenCalled();
+      expect(mockPrismaService.turnoLaboral.update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 't-1', actualizadoEn: turnoMock.actualizadoEn } }),
+      );
+    });
+
+    it('debe responder 409 sin emitir evento si otra solicitud cambió el turno (concurrencia)', async () => {
+      mockPrismaService.turnoLaboral.findUnique.mockResolvedValue(turnoMock);
+      mockPrismaService.turnoLaboral.update.mockRejectedValue(Object.assign(new Error('no encontrado'), { code: 'P2025' }));
+
+      await expect(
+        service.confirmarTurno('t-1', 'u-1', {
+          estadoConfirmacion: 'corregido',
+          horaInicioReal: '2026-10-20T08:30:00Z',
+          horaFinReal: '2026-10-20T12:30:00Z',
+        }),
+      ).rejects.toThrow(ConflictException);
+      expect(mockEventEmitter.emit).not.toHaveBeenCalled();
     });
 
     it('debe corregir un turno exitosamente y emitir TURNO_ASIGNADO', async () => {

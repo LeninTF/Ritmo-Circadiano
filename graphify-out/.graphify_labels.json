@@ -52,7 +52,6 @@
   "54": "api/tsconfig.json",
   "57": ".guardarSuscripcion",
   "58": "overrides",
-  "59": "OfflineStoreService",
   "60": "devDependencies",
   "61": "package.json",
   "62": "Constraints",
@@ -62,7 +61,6 @@
   "67": "Prisma__TurnoLaboralClient",
   "68": "cafeina.ts",
   "70": "compilerOptions",
-  "71": "app.routes.ts",
   "73": "domain/tsconfig.lib.json",
   "74": "compilerOptions",
   "75": "targets",
@@ -95,14 +93,11 @@
   "109": "README.md",
   "114": ".eliminar",
   "116": "CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)",
-  "117": "TurnosService",
   "120": "Prisma__RutaClient",
   "121": "offline/offline-store.service.ts",
   "122": "exportacion.service.ts",
   "124": "ExportacionController",
-  "125": "@nestjs/swagger",
   "127": "sync-queue.ts",
   "129": "ngsw-config.spec.ts",
-  "130": "lww-policy.ts",
-  "134": "enums.ts"
+  "130": "lww-policy.ts"
 }

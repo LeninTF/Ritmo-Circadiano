@@ -14,7 +14,11 @@ import { OperacionesService } from './operaciones.service';
 describe('Roles en operaciones e indicadores (RNF04)', () => {
   let app: INestApplication;
   let jwt: JwtService;
-  const operaciones = { listarTurnos: jest.fn().mockResolvedValue([]), listarTurnosMe: jest.fn().mockResolvedValue([]) };
+  const operaciones = {
+    listarTurnos: jest.fn().mockResolvedValue([]),
+    listarTurnosMe: jest.fn().mockResolvedValue([]),
+    confirmarTurno: jest.fn().mockResolvedValue({}),
+  };
   const indicadores = { obtenerPanel: jest.fn().mockResolvedValue({ suficiente: false }) };
   const token = (rol: Rol, sub = 'u1') =>
     jwt.signAsync({ sub, rol, codigoParticipante: 'P01' }).then((t) => `Bearer ${t}`);
@@ -49,6 +53,24 @@ describe('Roles en operaciones e indicadores (RNF04)', () => {
       .set('x-usuario-id', 'otro')
       .set('Authorization', await token('trabajador', 'yo'));
     expect(operaciones.listarTurnosMe).toHaveBeenCalledWith('yo', undefined, undefined);
+  });
+
+  it('confirmar turno (RF05): 401 sin token, 403 para no trabajador, y el dueño sale del token', async () => {
+    const http = request(app.getHttpServer());
+    const cuerpo = { estadoConfirmacion: 'confirmado' };
+    expect((await http.patch('/operaciones/turnos/t-1/confirmacion').send(cuerpo)).status).toBe(401);
+    expect(
+      (await http.patch('/operaciones/turnos/t-1/confirmacion').set('Authorization', await token('despachador')).send(cuerpo)).status,
+    ).toBe(403);
+    expect(operaciones.confirmarTurno).not.toHaveBeenCalled();
+
+    await http
+      .patch('/operaciones/turnos/t-1/confirmacion')
+      .set('x-usuario-id', 'otro')
+      .set('Authorization', await token('trabajador', 'yo'))
+      .send(cuerpo)
+      .expect(200);
+    expect(operaciones.confirmarTurno).toHaveBeenCalledWith('t-1', 'yo', cuerpo);
   });
 
   it('el panel de indicadores responde al jefe y niega al trabajador', async () => {

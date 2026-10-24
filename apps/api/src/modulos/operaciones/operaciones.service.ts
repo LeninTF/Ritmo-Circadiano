@@ -263,8 +263,7 @@ export class OperacionesService {
    *   en caso de corrección), se retorna el turno sin actualizar ni emitir evento.
    * - Al corregir se comparan las horas reales existentes con las solicitadas.
    * - Se verifica propiedad del turno (idUsuario === idUsuarioAutenticado).
-   *
-   * Nota: `origen_registro` sigue pendiente de coordinación con el equipo de I2/I4.
+   * - Dos solicitudes simultaneas: la segunda recibe 409 (bloqueo optimista por `actualizadoEn`).
    */
   async confirmarTurno(id: string, idUsuarioAutenticado: string, dto: ConfirmarTurnoDto) {
     if (!idUsuarioAutenticado) {
@@ -342,11 +341,20 @@ export class OperacionesService {
         : (estadoConfirmacion === 'confirmado' ? turno.finProgramado : undefined),
     };
 
-    const turnoActualizado = await this.prisma.turnoLaboral.update({
-      where: { id },
-      data: dataUpdate,
-      include: { ruta: true },
-    });
+    // Bloqueo optimista: si otra solicitud cambio el turno desde la lectura, Prisma lanza P2025.
+    let turnoActualizado: typeof turno;
+    try {
+      turnoActualizado = await this.prisma.turnoLaboral.update({
+        where: { id, actualizadoEn: turno.actualizadoEn },
+        data: dataUpdate,
+        include: { ruta: true },
+      });
+    } catch (error) {
+      if ((error as { code?: string }).code === 'P2025') {
+        throw new ConflictException('El turno cambió mientras se confirmaba. Vuelve a intentarlo.');
+      }
+      throw error;
+    }
 
     // Si se ha corregido el turno, emitir TURNO_ASIGNADO para regenerar el plan circadiano (I3)
     if (estadoConfirmacion === 'corregido') {
@@ -357,9 +365,6 @@ export class OperacionesService {
       };
       this.eventEmitter.emit(TURNO_ASIGNADO, evento);
     }
-
-    // Dependencia pendiente I4: NotificacionService.encolar({ idUsuario: turnoActualizado.idUsuario, mensaje: 'Turno confirmado/corregido' })
-    // origen_registro: pendiente de coordinación con el equipo de I2/I4 — no se modifica el esquema Prisma de I2.
 
     return turnoActualizado;
   }

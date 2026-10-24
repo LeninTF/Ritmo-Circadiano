@@ -16,6 +16,7 @@ import { ApiOperation, ApiQuery, ApiResponse, ApiTags, ApiConsumes } from '@nest
 import { OperacionesService } from './operaciones.service';
 import { CrearTurnoDto } from './dto/crear-turno.dto';
 import { ActualizarTurnoDto } from './dto/actualizar-turno.dto';
+import { ConfirmarTurnoDto } from './dto/confirmar-turno.dto';
 import type { Rol, UsuarioJwtPayload } from '@circadiano/contracts';
 import { Auditable, Roles, UsuarioActual } from '../plataforma/auth';
 
@@ -94,6 +95,23 @@ export class OperacionesController {
   @ApiResponse({ status: 409, description: 'Conflicto por exceso de jornada laboral sin confirmación (RF14)' })
   async actualizarTurno(@Param('id') id: string, @Body() dto: ActualizarTurnoDto) {
     return this.operacionesService.actualizarTurno(id, dto);
+  }
+
+  @Patch('turnos/:id/confirmacion')
+  @Roles('trabajador')
+  @ApiOperation({ summary: 'Confirmar o corregir el horario real del turno propio (RF05)' })
+  @ApiResponse({ status: 200, description: 'Turno confirmado o corregido (repetir la misma solicitud no cambia nada).' })
+  @ApiResponse({ status: 400, description: 'Estado inválido o horas reales faltantes/incoherentes.' })
+  @ApiResponse({ status: 403, description: 'El turno no pertenece al trabajador o el rol no es trabajador.' })
+  @ApiResponse({ status: 404, description: 'Turno no encontrado.' })
+  @ApiResponse({ status: 409, description: 'El turno cambió durante la confirmación (solicitud simultánea).' })
+  async confirmarTurno(
+    @Param('id') id: string,
+    @Body() dto: ConfirmarTurnoDto,
+    // El dueño sale del token; el servicio rechaza turnos ajenos con 403.
+    @UsuarioActual() usuario: UsuarioJwtPayload,
+  ) {
+    return this.operacionesService.confirmarTurno(id, usuario.sub, dto);
   }
 
   @Delete('turnos/:id')
