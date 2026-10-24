@@ -57,6 +57,12 @@ describe('clasificarCronotipoDesdeRespuestas', () => {
     expect(clasificarCronotipoDesdeRespuestas(r)).toBe('vespertino_definido');
   });
 
+  it('el mínimo real del rMEQ (ítem 5 = 0) suma 4 → vespertino_definido', () => {
+    const r: RespuestasRmeq = { p1: 1, p2: 1, p3: 1, p4: 1, p5: 0 };
+    expect(sumarRespuestasRmeq(r)).toBe(4);
+    expect(clasificarCronotipoDesdeRespuestas(r)).toBe('vespertino_definido');
+  });
+
   it('respuestas que suman 14 → intermedio', () => {
     const r: RespuestasRmeq = { p1: 3, p2: 3, p3: 2, p4: 3, p5: 3 };
     expect(clasificarCronotipoDesdeRespuestas(r)).toBe('intermedio');

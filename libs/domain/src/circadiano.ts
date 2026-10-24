@@ -2,268 +2,231 @@
  * circadiano.ts — Motor de generación del plan circadiano diario (RF07).
  *
  * Función PURA: recibe todos los parámetros como argumentos, no llama a
- * Date.now() ni a ninguna API externa. Reutilizable en la PWA offline
- * y en el backend sin modificar una sola línea.
+ * Date.now() ni a ninguna API externa. La PWA (offline) y la API ejecutan
+ * exactamente este código.
  *
- * Reglas implementadas: RN06, RN07, RN08, RN05 (parcial por corte).
+ * Reglas: RN04 + RN05 (corte de cafeína), RN06 (sueño y siesta), RN07 (cronotipo), RN08 (luz).
  */
-import type { CategoriaCronotipo } from '@circadiano/contracts';
-import type { VentanaTemporal } from '@circadiano/contracts';
+import type {
+  CategoriaCronotipo,
+  RecordatorioDelPlan,
+  TipoTurnoPlan,
+} from '@circadiano/contracts';
+import { calcularHoraCorte, type IngestaCafeina } from './cafeina';
 import {
-  CORTE_CAFEINA_ANTES_DORMIR_H,
-  HORA_FIN_NOCTURNO,
-  HORA_INICIO_NOCTURNO,
+  DOSIS_REFERENCIA_CORTE_MG,
   OPORTUNIDAD_SUENO_MIN_H,
   SIESTA_DURACION_MIN,
   SIESTA_FIN_ANTES_TURNO_MIN,
 } from './constantes';
-import type { IngestaCafeina } from './cafeina';
 import type { EventosSolares } from './solar';
 
-// ─── Constantes internas del motor ──────────────────────────────────────────
-
-/** Minutos antes del inicio del turno en que debe despertar el conductor (diurno). */
+/** Minutos antes del inicio del turno en que despierta el conductor (diurno). */
 const DESPERTAR_ANTES_TURNO_MIN = 90;
 /** Horas de sueño objetivo (5 ciclos de 90 min). */
 const SUENO_OBJETIVO_H = 7.5;
-/** Ajuste de horario por cronotipo en minutos (±30 min). */
+/** Tras un turno nocturno se duerme 60 min después de terminar. */
+const DORMIR_TRAS_NOCTURNO_MIN = 60;
+/** Ajuste de horario por cronotipo en minutos (±30 min, solo diurno). */
 const AJUSTE_CRONOTIPO_MIN = 30;
-/** Primer pico: despertar+2 h → +4 h. */
+/** Primer pico: despertar + 2 h → + 4 h. */
 const PICO1_INICIO_H = 2;
 const PICO1_FIN_H = 4;
-/** Segundo pico: mediodía+1 h → +3 h. */
-const PICO2_INICIO_H = 1;
-const PICO2_FIN_H = 3;
+/** Pico de tarde (diurno): mediodía solar + 1 h → + 3 h. */
+const PICO_TARDE_INICIO_H = 1;
+const PICO_TARDE_FIN_H = 3;
+/** Pico de tarde (nocturno): despertar + 5 h → + 7 h. */
+const PICO2_NOCTURNO_INICIO_H = 5;
+const PICO2_NOCTURNO_FIN_H = 7;
+const VENTANA_LUZ_MIN = 60;
+const RELAJACION_ANTES_DORMIR_MIN = 30;
 
-// ─── Tipos ───────────────────────────────────────────────────────────────────
+const MS_POR_H = 3_600_000;
 
-/** Parámetros de un turno laboral para el motor circadiano. */
+export interface Ventana {
+  inicio: Date;
+  fin: Date;
+}
+
+/** Turno para el que se genera el plan. */
 export interface ParametrosTurno {
   inicioTurno: Date;
   finTurno: Date;
+  /** RN01: `turno_laboral.es_nocturno` o `detectarTurnoNocturno()`. */
+  esNocturno: boolean;
+  /** Inicio del siguiente turno; limita el sueño tras un turno nocturno (RN06). */
+  inicioSiguienteTurno?: Date | null;
 }
 
-/** Configuración inyectada del sistema. */
+/** Configuración inyectada (parametro_sistema y usuario.semivida_h). */
 export interface ConfiguracionMotor {
   versionAlgoritmo: string;
   semividaH: number;
   umbralCafeinaMg: number;
 }
 
-/** Tipo de turno detectado. */
-export type TipoTurno = 'diurno' | 'nocturno';
-
-/** Resultado completo del motor listo para persistir y serializar. */
+/** Resultado del motor listo para persistir y serializar. */
 export interface ResultadoPlan {
+  tipoTurno: TipoTurnoPlan;
   inicioSueno: Date;
   finSueno: Date;
   inicioSiesta: Date | null;
   finSiesta: Date | null;
-  tipoTurno: TipoTurno;
-  picos: VentanaTemporal[];
-  horaCorteCalefina: Date;
-  ventanaLuz: VentanaTemporal;
+  picos: Ventana[];
+  /** null = la cafeína previa ya llena el umbral: no tomar más (RN04). */
+  horaCorteCafeina: Date | null;
+  ventanaLuz: Ventana | null;
+  /** true tras turno nocturno: la ventana es para evitar luz intensa (RN08). */
+  protegerLuz: boolean;
   categoriaCronotipo: CategoriaCronotipo;
   versionAlgoritmo: string;
 }
 
-// ─── Helpers internos ────────────────────────────────────────────────────────
-
-/** Suma `minutos` a una fecha (inmutable). */
 function addMin(fecha: Date, minutos: number): Date {
   return new Date(fecha.getTime() + minutos * 60_000);
 }
 
-/** Suma `horas` a una fecha (inmutable). */
 function addH(fecha: Date, horas: number): Date {
   return addMin(fecha, horas * 60);
 }
 
-/** Devuelve el menor de dos Date. */
 function minDate(a: Date, b: Date): Date {
   return a.getTime() <= b.getTime() ? a : b;
 }
 
-/** Devuelve el mayor de dos Date. */
 function maxDate(a: Date, b: Date): Date {
   return a.getTime() >= b.getTime() ? a : b;
 }
 
-/** Diferencia en horas entre dos fechas (b − a). */
+/** Diferencia en horas (b − a). */
 function diffH(a: Date, b: Date): number {
-  return (b.getTime() - a.getTime()) / 3_600_000;
+  return (b.getTime() - a.getTime()) / MS_POR_H;
+}
+
+const DELTA_CRONOTIPO_MIN: Record<CategoriaCronotipo, number> = {
+  vespertino_definido: AJUSTE_CRONOTIPO_MIN,
+  vespertino_moderado: AJUSTE_CRONOTIPO_MIN,
+  intermedio: 0,
+  matutino_moderado: -AJUSTE_CRONOTIPO_MIN,
+  matutino_definido: -AJUSTE_CRONOTIPO_MIN,
+};
+
+/** RN04 + RN05 sobre el reloj en horas que usa cafeina.ts. */
+function calcularCorteCafeina(
+  dormir: Date,
+  ingestas: readonly IngestaCafeina[],
+  cfg: ConfiguracionMotor,
+): Date | null {
+  const corteH = calcularHoraCorte(
+    DOSIS_REFERENCIA_CORTE_MG,
+    dormir.getTime() / MS_POR_H,
+    ingestas,
+    cfg.semividaH,
+    cfg.umbralCafeinaMg,
+  );
+  return corteH === null ? null : new Date(corteH * MS_POR_H);
 }
 
 /**
- * Nocturno: hora local Lima (UTC-5) ≥ 22 o < 6.
- * Las fechas del turno llegan en UTC; restamos 5 h para obtener hora local.
- */
-function esTurnoNocturno(inicioTurno: Date): boolean {
-  const horaLocal = (inicioTurno.getUTCHours() - 5 + 24) % 24;
-  return horaLocal >= HORA_INICIO_NOCTURNO || horaLocal < HORA_FIN_NOCTURNO;
-}
-
-
-/** Ajusta ±30 min según cronotipo (vespertino → tarde; matutino → temprano). */
-function ajustarPorCronotipo(fecha: Date, categoria: CategoriaCronotipo): Date {
-  const delta: Record<CategoriaCronotipo, number> = {
-    vespertino_definido: +AJUSTE_CRONOTIPO_MIN,
-    vespertino_moderado: +AJUSTE_CRONOTIPO_MIN,
-    intermedio: 0,
-    matutino_moderado: -AJUSTE_CRONOTIPO_MIN,
-    matutino_definido: -AJUSTE_CRONOTIPO_MIN,
-  };
-  return addMin(fecha, delta[categoria]);
-}
-
-// ─── Motor principal ─────────────────────────────────────────────────────────
-
-/**
- * Genera el plan circadiano diario para un conductor.
+ * Genera el plan circadiano de un turno.
  *
- * **Diurno** (inicio local 06:00–21:59):
- * - `despertar = inicioTurno − 90 min` (ajustado ±30 min por cronotipo).
- * - `inicioSueno = despertar − 7.5 h`.
- * - Luz: `[max(despertar, amanecer), +60 min]` (RN08).
+ * **Diurno**: despertar = inicio − 90 min (±30 por cronotipo); sueño de 7,5 h antes;
+ * luz natural `[max(despertar, amanecer), +60 min]` recortada al atardecer (RN08).
  *
- * **Nocturno** (inicio local 22:00–05:59):
- * - `inicioSueno = finTurno + 60 min`.
- * - Si hueco < 7 h antes del siguiente turno → añade siesta 90 min
- *   que termina ≥ 60 min antes del turno (RN06).
- * - Luz: ventana de protección `[finTurno, inicioSueno]` (RN08).
+ * **Nocturno**: sueño desde fin + 60 min, 7,5 h o hasta 60 min antes del siguiente turno.
+ * Si no llega a 7 h, siesta de 90 min que termina 60 min antes de este turno (RN06).
+ * Entre el fin del turno y el sueño: proteger de luz intensa (RN08).
+ *
+ * @param ingestas Ingestas de cafeína previas, en horas (`hora = ms / 3 600 000`).
  */
 export function generarPlan(
   turno: ParametrosTurno,
   cronotipo: CategoriaCronotipo,
   solar: EventosSolares,
-  _ingestas: IngestaCafeina[],
+  ingestas: readonly IngestaCafeina[],
   cfg: ConfiguracionMotor,
 ): ResultadoPlan {
-  return esTurnoNocturno(turno.inicioTurno)
-    ? _planNocturno(turno, cronotipo, solar, cfg)
-    : _planDiurno(turno, cronotipo, solar, cfg);
+  const parcial = turno.esNocturno
+    ? planNocturno(turno)
+    : planDiurno(turno, cronotipo, solar);
+  return {
+    ...parcial,
+    horaCorteCafeina: calcularCorteCafeina(parcial.inicioSueno, ingestas, cfg),
+    categoriaCronotipo: cronotipo,
+    versionAlgoritmo: cfg.versionAlgoritmo,
+  };
 }
 
-// ─── Plan diurno ─────────────────────────────────────────────────────────────
+type PlanParcial = Omit<ResultadoPlan, 'horaCorteCafeina' | 'categoriaCronotipo' | 'versionAlgoritmo'>;
 
-function _planDiurno(
+function planDiurno(
   turno: ParametrosTurno,
   cronotipo: CategoriaCronotipo,
   solar: EventosSolares,
-  cfg: ConfiguracionMotor,
-): ResultadoPlan {
-  const despertar = ajustarPorCronotipo(
-    addMin(turno.inicioTurno, -DESPERTAR_ANTES_TURNO_MIN),
-    cronotipo,
-  );
-  const finSueno = despertar;
-  // El inicio del sueño se calcula a partir del despertar ya ajustado, sin segundo ajuste.
-  const inicioSueno = addH(despertar, -SUENO_OBJETIVO_H);
-
-  const picos: VentanaTemporal[] = [
-    { inicio: addH(despertar, PICO1_INICIO_H), fin: addH(despertar, PICO1_FIN_H) },
-    { inicio: addH(solar.mediodia, PICO2_INICIO_H), fin: addH(solar.mediodia, PICO2_FIN_H) },
-  ];
-
-  const horaCorteCalefina = addH(inicioSueno, -CORTE_CAFEINA_ANTES_DORMIR_H);
-
+): PlanParcial {
+  const despertar = addMin(turno.inicioTurno, -DESPERTAR_ANTES_TURNO_MIN + DELTA_CRONOTIPO_MIN[cronotipo]);
   const inicioLuz = maxDate(despertar, solar.amanecer);
-  const ventanaLuz: VentanaTemporal = { inicio: inicioLuz, fin: addH(inicioLuz, 1) };
+  const finLuz = minDate(addMin(inicioLuz, VENTANA_LUZ_MIN), solar.atardecer);
 
   return {
-    inicioSueno,
-    finSueno,
+    tipoTurno: 'diurno',
+    inicioSueno: addH(despertar, -SUENO_OBJETIVO_H),
+    finSueno: despertar,
     inicioSiesta: null,
     finSiesta: null,
-    tipoTurno: 'diurno',
-    picos,
-    horaCorteCalefina,
-    ventanaLuz,
-    categoriaCronotipo: cronotipo,
-    versionAlgoritmo: cfg.versionAlgoritmo,
+    picos: [
+      { inicio: addH(despertar, PICO1_INICIO_H), fin: addH(despertar, PICO1_FIN_H) },
+      { inicio: addH(solar.mediodia, PICO_TARDE_INICIO_H), fin: addH(solar.mediodia, PICO_TARDE_FIN_H) },
+    ],
+    ventanaLuz: inicioLuz.getTime() < finLuz.getTime() ? { inicio: inicioLuz, fin: finLuz } : null,
+    protegerLuz: false,
   };
 }
 
-
-// ─── Plan nocturno ────────────────────────────────────────────────────────────
-
-function _planNocturno(
-  turno: ParametrosTurno,
-  cronotipo: CategoriaCronotipo,
-  solar: EventosSolares,
-  cfg: ConfiguracionMotor,
-): ResultadoPlan {
-  const inicioSueno = ajustarPorCronotipo(addH(turno.finTurno, 1), cronotipo);
-  const finSuenoIdeal = addH(inicioSueno, SUENO_OBJETIVO_H);
-
-  // Límite: siesta termina ≥ 60 min antes del inicio del siguiente turno.
-  const limiteAntesTurno = addMin(turno.inicioTurno, -SIESTA_FIN_ANTES_TURNO_MIN);
-  const hueco = diffH(inicioSueno, limiteAntesTurno);
-
-  let finSueno: Date;
-  let inicioSiesta: Date | null = null;
-  let finSiesta: Date | null = null;
-
-  if (hueco >= OPORTUNIDAD_SUENO_MIN_H) {
-    finSueno = finSuenoIdeal;
-  } else {
-    // No caben 7 h continuas: siesta de 90 min al final del hueco.
-    finSiesta = limiteAntesTurno;
-    inicioSiesta = addMin(finSiesta, -SIESTA_DURACION_MIN);
-    finSueno = inicioSiesta.getTime() > inicioSueno.getTime() ? inicioSiesta : inicioSueno;
+function planNocturno(turno: ParametrosTurno): PlanParcial {
+  const inicioSueno = addMin(turno.finTurno, DORMIR_TRAS_NOCTURNO_MIN);
+  let finSueno = addH(inicioSueno, SUENO_OBJETIVO_H);
+  if (turno.inicioSiguienteTurno) {
+    const limite = addMin(turno.inicioSiguienteTurno, -SIESTA_FIN_ANTES_TURNO_MIN);
+    finSueno = maxDate(inicioSueno, minDate(finSueno, limite));
   }
 
-  const despertar = finSueno;
-  const picos: VentanaTemporal[] = [
-    { inicio: addH(despertar, PICO1_INICIO_H), fin: addH(despertar, PICO1_FIN_H) },
+  // RN06: si el sueño principal no llega a 7 h, siesta antes de este turno.
+  const necesitaSiesta = diffH(inicioSueno, finSueno) < OPORTUNIDAD_SUENO_MIN_H;
+  const finSiesta = necesitaSiesta ? addMin(turno.inicioTurno, -SIESTA_FIN_ANTES_TURNO_MIN) : null;
+
+  const picos: Ventana[] = [
+    { inicio: addH(finSueno, PICO1_INICIO_H), fin: addH(finSueno, PICO1_FIN_H) },
   ];
-  // Segundo pico sólo si queda antes del inicio del turno.
-  const pico2Inicio = addH(despertar, PICO1_FIN_H + PICO2_INICIO_H);
-  if (pico2Inicio.getTime() < turno.inicioTurno.getTime()) {
-    picos.push({
-      inicio: pico2Inicio,
-      fin: addH(pico2Inicio, PICO2_FIN_H - PICO2_INICIO_H),
-    });
+  const pico2 = { inicio: addH(finSueno, PICO2_NOCTURNO_INICIO_H), fin: addH(finSueno, PICO2_NOCTURNO_FIN_H) };
+  if (!turno.inicioSiguienteTurno || pico2.fin.getTime() <= turno.inicioSiguienteTurno.getTime()) {
+    picos.push(pico2);
   }
-
-  const horaCorteCalefina = addH(inicioSueno, -CORTE_CAFEINA_ANTES_DORMIR_H);
-
-  // Luz nocturna: proteger de luz intensa entre fin del turno e inicio del sueño (RN08).
-  const ventanaLuz: VentanaTemporal = { inicio: turno.finTurno, fin: inicioSueno };
-
-  void solar; // disponible para refinamiento futuro (protección solar precisa)
 
   return {
+    tipoTurno: 'nocturno',
     inicioSueno,
     finSueno,
-    inicioSiesta,
+    inicioSiesta: finSiesta && addMin(finSiesta, -SIESTA_DURACION_MIN),
     finSiesta,
-    tipoTurno: 'nocturno',
     picos,
-    horaCorteCalefina,
-    ventanaLuz,
-    categoriaCronotipo: cronotipo,
-    versionAlgoritmo: cfg.versionAlgoritmo,
+    ventanaLuz: { inicio: turno.finTurno, fin: inicioSueno },
+    protegerLuz: true,
   };
 }
 
-// ─── Recordatorios ───────────────────────────────────────────────────────────
-
-/**
- * Deriva los recordatorios push a partir del plan (SRP: el motor calcula,
- * esta función convierte en eventos de calendario para RF10).
- */
-export function derivarRecordatorios(
-  plan: ResultadoPlan,
-): Array<{ tipo: 'luz' | 'corte_cafeina' | 'relajacion' | 'dormir'; programadaPara: Date }> {
-  return [
-    { tipo: 'luz', programadaPara: plan.ventanaLuz.inicio },
-    { tipo: 'corte_cafeina', programadaPara: plan.horaCorteCalefina },
-    { tipo: 'relajacion', programadaPara: addMin(plan.inicioSueno, -30) },
-    { tipo: 'dormir', programadaPara: plan.inicioSueno },
-  ];
+/** Convierte el plan en recordatorios para las notificaciones de I4 (RF10). */
+export function derivarRecordatorios(plan: ResultadoPlan): RecordatorioDelPlan[] {
+  const recordatorios: RecordatorioDelPlan[] = [];
+  if (plan.ventanaLuz && !plan.protegerLuz) {
+    recordatorios.push({ tipo: 'luz', programadaPara: plan.ventanaLuz.inicio.toISOString() });
+  }
+  if (plan.horaCorteCafeina) {
+    recordatorios.push({ tipo: 'corte_cafeina', programadaPara: plan.horaCorteCafeina.toISOString() });
+  }
+  recordatorios.push(
+    { tipo: 'relajacion', programadaPara: addMin(plan.inicioSueno, -RELAJACION_ANTES_DORMIR_MIN).toISOString() },
+    { tipo: 'dormir', programadaPara: plan.inicioSueno.toISOString() },
+  );
+  return recordatorios;
 }
-
-// Exportar helpers para uso en tests y en la PWA offline.
-export { addMin, addH, minDate, maxDate, diffH, esTurnoNocturno };
-

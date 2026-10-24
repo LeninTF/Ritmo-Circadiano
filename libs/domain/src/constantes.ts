@@ -8,6 +8,8 @@ export const CONDUCCION_VENTANA_H = 24;
 /** Tramo nocturno: 22:00 a 05:59, es decir hora >= 22 u hora < 6. */
 export const HORA_INICIO_NOCTURNO = 22;
 export const HORA_FIN_NOCTURNO = 6;
+/** America/Lima es UTC-5 todo el ano (sin horario de verano). */
+export const DESFASE_LIMA_H = -5;
 
 // RN02 · umbral de cafeina residual al dormir (criterio de diseno, no clinico)
 export const UMBRAL_CAFEINA_MG_DEFECTO = 50;
@@ -24,6 +26,11 @@ export const CORTE_CAFEINA_ANTES_DORMIR_H = 6;
 export const OPORTUNIDAD_SUENO_MIN_H = 7;
 export const SIESTA_DURACION_MIN = 90;
 export const SIESTA_FIN_ANTES_TURNO_MIN = 60;
+
+// RF07 · plan circadiano. Cambiar cualquier parametro del motor => subir la version.
+export const VERSION_ALGORITMO_PLAN = '1.1.0';
+/** Dosis de referencia para el corte de cafeina del plan (la misma que usa I4 en /cafeina/residual). */
+export const DOSIS_REFERENCIA_CORTE_MG = 100;
 
 // RN07 · rMEQ de 5 items
 export const RMEQ_PUNTAJE_MIN = 4;

@@ -4,7 +4,13 @@ import {
   CONDUCCION_MAX_ACUMULADA_H,
   HORA_INICIO_NOCTURNO,
   HORA_FIN_NOCTURNO,
+  DESFASE_LIMA_H,
 } from './constantes';
+
+/** Hora del reloj en America/Lima, sin depender de la zona horaria del servidor. */
+export function horaLima(fecha: Date): number {
+  return (fecha.getUTCHours() + DESFASE_LIMA_H + 24) % 24;
+}
 
 export interface ValidacionJornadaInput {
   horasConduccion: number;
@@ -78,8 +84,8 @@ export function detectarTurnoNocturno(inicioIso: string, finIso: string): boolea
     return false;
   }
 
-  const horaInicio = inicio.getHours();
-  const horaFin = fin.getHours();
+  const horaInicio = horaLima(inicio);
+  const horaFin = horaLima(fin);
 
   const esHoraNocturna = (h: number) => h >= HORA_INICIO_NOCTURNO || h < HORA_FIN_NOCTURNO;
 
@@ -92,7 +98,7 @@ export function detectarTurnoNocturno(inicioIso: string, finIso: string): boolea
 
   let current = new Date(inicio);
   while (current < fin) {
-    const h = current.getHours();
+    const h = horaLima(current);
     if (esHoraNocturna(h)) {
       return true;
     }

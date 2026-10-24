@@ -4,7 +4,7 @@
  * Funciones PURAS: no leen Date.now(), no tienen I/O, no dependen de frameworks.
  * Importadas por `libs/domain/src/circadiano.ts` y directamente por la PWA offline.
  */
-import type { CategoriaCronotipo } from '@circadiano/contracts';
+import type { CategoriaCronotipo, RespuestasRmeq } from '@circadiano/contracts';
 import {
   CATEGORIA_RMEQ_SIN_RESPUESTA,
   RANGOS_RMEQ,
@@ -12,25 +12,7 @@ import {
   RMEQ_PUNTAJE_MIN,
 } from './constantes';
 
-// ─── Tipos públicos ─────────────────────────────────────────────────────────
-
-/**
- * Respuestas a los 5 ítems del cuestionario rMEQ.
- * Cada ítem devuelve un número entero en su propio rango (ver CLAUDE.md § RN07).
- * La suma total debe quedar en [4, 25].
- */
-export interface RespuestasRmeq {
-  /** Ítem 1: ¿A qué hora te levantarías si pudieras? (1–5) */
-  p1: number;
-  /** Ítem 2: ¿A qué hora te acostarías si pudieras? (1–5) */
-  p2: number;
-  /** Ítem 3: ¿Depende del despertador para levantarte? (1–4) */
-  p3: number;
-  /** Ítem 4: ¿Qué tan fácil te resulta levantarte? (1–5) */
-  p4: number;
-  /** Ítem 5: ¿Cuándo te sientes más activo? (1–6)  */
-  p5: number;
-}
+export type { RespuestasRmeq };
 
 // ─── Suma de respuestas ──────────────────────────────────────────────────────
 

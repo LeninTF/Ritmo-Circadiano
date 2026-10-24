@@ -59,33 +59,39 @@ describe('validarDescansoMinimo', () => {
 });
 
 describe('detectarTurnoNocturno (franja 22:00-05:59)', () => {
-  // Fechas sin zona horaria: se interpretan en hora local, igual que getHours().
+  // Hora de Lima explicita: el resultado no depende de la zona horaria de la maquina.
   it('turno diurno no es nocturno', () => {
-    expect(detectarTurnoNocturno('2026-10-20T08:00:00', '2026-10-20T12:00:00')).toBe(false);
+    expect(detectarTurnoNocturno('2026-10-20T08:00:00-05:00', '2026-10-20T12:00:00-05:00')).toBe(false);
   });
 
   it('inicio dentro de la franja nocturna', () => {
-    expect(detectarTurnoNocturno('2026-10-20T23:00:00', '2026-10-20T23:30:00')).toBe(true);
-    expect(detectarTurnoNocturno('2026-10-20T03:00:00', '2026-10-20T04:00:00')).toBe(true);
+    expect(detectarTurnoNocturno('2026-10-20T23:00:00-05:00', '2026-10-20T23:30:00-05:00')).toBe(true);
+    expect(detectarTurnoNocturno('2026-10-20T03:00:00-05:00', '2026-10-20T04:00:00-05:00')).toBe(true);
   });
 
   it('fin dentro de la franja nocturna', () => {
-    expect(detectarTurnoNocturno('2026-10-20T18:00:00', '2026-10-20T22:00:00')).toBe(true);
+    expect(detectarTurnoNocturno('2026-10-20T18:00:00-05:00', '2026-10-20T22:00:00-05:00')).toBe(true);
   });
 
   it('limites: 05:59 es nocturno y 06:00 no', () => {
-    expect(detectarTurnoNocturno('2026-10-20T05:59:00', '2026-10-20T05:59:30')).toBe(true);
-    expect(detectarTurnoNocturno('2026-10-20T06:00:00', '2026-10-20T07:00:00')).toBe(false);
+    expect(detectarTurnoNocturno('2026-10-20T05:59:00-05:00', '2026-10-20T05:59:30-05:00')).toBe(true);
+    expect(detectarTurnoNocturno('2026-10-20T06:00:00-05:00', '2026-10-20T07:00:00-05:00')).toBe(false);
   });
 
   it('turno largo que atraviesa la noche aunque inicio y fin sean diurnos', () => {
-    expect(detectarTurnoNocturno('2026-10-20T20:30:00', '2026-10-21T06:30:00')).toBe(true);
-    expect(detectarTurnoNocturno('2026-10-20T07:00:00', '2026-10-21T08:00:00')).toBe(true);
+    expect(detectarTurnoNocturno('2026-10-20T20:30:00-05:00', '2026-10-21T06:30:00-05:00')).toBe(true);
+    expect(detectarTurnoNocturno('2026-10-20T07:00:00-05:00', '2026-10-21T08:00:00-05:00')).toBe(true);
+  });
+
+  it('usa la hora de Lima aunque la fecha llegue en UTC (servidor en UTC)', () => {
+    // 14:00-20:00 Lima = 19:00-01:00 UTC: con getHours() en un servidor UTC salia nocturno.
+    expect(detectarTurnoNocturno('2026-10-20T19:00:00Z', '2026-10-21T01:00:00Z')).toBe(false);
+    expect(detectarTurnoNocturno('2026-10-20T19:00:00Z', '2026-10-21T04:30:00Z')).toBe(true);
   });
 
   it('fechas invalidas o rango invertido devuelven false', () => {
-    expect(detectarTurnoNocturno('no-es-fecha', '2026-10-20T12:00:00')).toBe(false);
-    expect(detectarTurnoNocturno('2026-10-20T12:00:00', 'no-es-fecha')).toBe(false);
-    expect(detectarTurnoNocturno('2026-10-20T14:00:00', '2026-10-20T10:00:00')).toBe(false);
+    expect(detectarTurnoNocturno('no-es-fecha', '2026-10-20T12:00:00-05:00')).toBe(false);
+    expect(detectarTurnoNocturno('2026-10-20T12:00:00-05:00', 'no-es-fecha')).toBe(false);
+    expect(detectarTurnoNocturno('2026-10-20T14:00:00-05:00', '2026-10-20T10:00:00-05:00')).toBe(false);
   });
 });
