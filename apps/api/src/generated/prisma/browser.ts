@@ -23,6 +23,16 @@ export * from './enums';
  */
 export type ParametroSistema = Prisma.ParametroSistemaModel
 /**
+ * Model Area
+ * Areas de la empresa (Tabla 5 del informe). La sede no esta definida aun.
+ */
+export type Area = Prisma.AreaModel
+/**
+ * Model Usuario
+ * Participante o usuario del sistema. Se identifica por codigo_participante (P01-P17).
+ */
+export type Usuario = Prisma.UsuarioModel
+/**
  * Model Ruta
  * Ruta de viaje interprovincial (p. ej. Lima – Nasca).
  */
@@ -37,3 +47,23 @@ export type TurnoLaboral = Prisma.TurnoLaboralModel
  * Auditoría de excesos de jornada laboral aprobados (RF14).
  */
 export type ExcesoJornadaAuditoria = Prisma.ExcesoJornadaAuditoriaModel
+/**
+ * Model Bebida
+ * 
+ */
+export type Bebida = Prisma.BebidaModel
+/**
+ * Model IngestaCafeina
+ * 
+ */
+export type IngestaCafeina = Prisma.IngestaCafeinaModel
+/**
+ * Model SuscripcionPush
+ * 
+ */
+export type SuscripcionPush = Prisma.SuscripcionPushModel
+/**
+ * Model Notificacion
+ * 
+ */
+export type Notificacion = Prisma.NotificacionModel

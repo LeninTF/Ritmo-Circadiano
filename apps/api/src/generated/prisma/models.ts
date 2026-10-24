@@ -9,7 +9,13 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/ParametroSistema'
+export type * from './models/Area'
+export type * from './models/Usuario'
 export type * from './models/Ruta'
 export type * from './models/TurnoLaboral'
 export type * from './models/ExcesoJornadaAuditoria'
+export type * from './models/Bebida'
+export type * from './models/IngestaCafeina'
+export type * from './models/SuscripcionPush'
+export type * from './models/Notificacion'
 export type * from './commonInputTypes'

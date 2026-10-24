@@ -3,12 +3,11 @@
   "index": "/index.html",
   "assetGroups": [
     {
-      "name": "app",
+      "name": "shell",
       "installMode": "prefetch",
       "resources": {
         "files": [
           "/favicon.ico",
-          "/index.csr.html",
           "/index.html",
           "/manifest.webmanifest",
           "/*.css",
@@ -24,6 +23,21 @@
         "files": [
           "/**/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2)"
         ]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "health-check",
+      "version": 1,
+      "urls": [
+        "/health"
+      ],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 1,
+        "maxAge": "1m",
+        "timeout": "3s"
       }
     }
   ]
