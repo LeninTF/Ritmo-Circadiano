@@ -1,6 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { EnvironmentProviders, inject, makeEnvironmentProviders } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import type { SyncLoteResultadoWireDto, SyncLoteWireDto } from '@circadiano/contracts';
 import { environment } from '../../../environments/environment';
 import { SesionService, decodificarJwt } from '../../auth/sesion.service';
 import { ISessionProvider, SESSION_PROVIDER_TOKEN } from './session-provider';
@@ -10,11 +11,6 @@ import {
   SyncTransportRequest,
   SyncTransportResponse,
 } from './sync-transport';
-
-// shortcut: forma JSON local de POST /sync/lote; usar SyncLoteWireDto de libs/contracts cuando entre el PR #23.
-interface ResultadoLoteWire {
-  results: { client_id: string; status: 'confirmed' | 'duplicate' | 'rejected' | 'retryable_failure' }[];
-}
 
 /** Estado HTTP equivalente para que OutboxService decida: confirmar, bloquear o reintentar. */
 const ESTADO_POR_RESULTADO = {
@@ -40,20 +36,19 @@ export function crearSesionOffline(sesion: SesionService): ISessionProvider {
 export function crearTransporteSync(http: HttpClient, apiUrl: string): ISyncTransport {
   return {
     send: async (op: SyncTransportRequest): Promise<SyncTransportResponse> => {
-      let respuesta: ResultadoLoteWire;
+      let respuesta: SyncLoteResultadoWireDto;
+      const lote: SyncLoteWireDto = {
+        operations: [
+          {
+            client_id: op.clientId,
+            created_at: op.createdAt,
+            operation: op.operation,
+            payload: op.payload,
+          },
+        ],
+      };
       try {
-        respuesta = await firstValueFrom(
-          http.post<ResultadoLoteWire>(`${apiUrl}/sync/lote`, {
-            operations: [
-              {
-                client_id: op.clientId,
-                created_at: op.createdAt,
-                operation: op.operation,
-                payload: op.payload,
-              },
-            ],
-          }),
-        );
+        respuesta = await firstValueFrom(http.post<SyncLoteResultadoWireDto>(`${apiUrl}/sync/lote`, lote));
       } catch (error: unknown) {
         // Status 0 = sin red: se lanza sin status para que OutboxService lo reintente.
         if (error instanceof HttpErrorResponse && error.status !== 0) throw error;

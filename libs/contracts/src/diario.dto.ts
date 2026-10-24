@@ -1,16 +1,15 @@
-import { IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsISO8601, IsNotEmpty, IsString, IsUUID, Max, Min } from 'class-validator';
 
 export class CrearActualizarDiarioDto {
   @IsUUID()
   @IsNotEmpty()
   clientId!: string;
 
-  @IsString()
-  @IsNotEmpty()
+  // ISO 8601 con zona: una hora invalida se rechaza con 400 antes de llegar a la BD.
+  @IsISO8601({ strict: true })
   horaAcostarse!: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @IsISO8601({ strict: true })
   horaDespertar!: string;
 
   @IsInt()

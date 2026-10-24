@@ -1,79 +1,83 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { randomBytes } from 'node:crypto';
+import type { INestApplication } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtModule, JwtService } from '@nestjs/jwt';
+import { Test } from '@nestjs/testing';
+import request from 'supertest';
+import { JwtAuthGuard, RolesGuard } from '../plataforma/auth';
 import { DiarioController } from './diario.controller';
 import { DiarioService } from './diario.service';
-import { UnauthorizedException } from '@nestjs/common';
 
-describe('DiarioController', () => {
-  let controller: DiarioController;
-  let service: DiarioService;
-
-  const mockDiarioService = {
-    upsertDiario: jest.fn().mockImplementation((idUsuario, fecha, dto) => Promise.resolve({ id: '1', idUsuario, fecha, ...dto })),
-    consultarDiarios: jest.fn().mockImplementation((idUsuario, desde, hasta) => Promise.resolve([{ id: '1', idUsuario, fecha: desde }])),
+describe('DiarioController con guards reales (RNF04)', () => {
+  let app: INestApplication;
+  let jwt: JwtService;
+  const diario = {
+    upsertDiario: jest.fn().mockResolvedValue({}),
+    consultarDiarios: jest.fn().mockResolvedValue([]),
   };
+  const dto = {
+    clientId: '123e4567-e89b-12d3-a456-426614174000',
+    horaAcostarse: '2026-10-20T22:00:00Z',
+    horaDespertar: '2026-10-21T06:00:00Z',
+    latenciaMin: 10,
+    despertares: 0,
+    calidadPercibida: 5,
+    fatigaPercibida: 1,
+    esDiaLaboral: true,
+    luzMatutinaMin: 30,
+  };
+  const token = (rol: string) =>
+    jwt.signAsync({ sub: 'yo', rol, codigoParticipante: 'P01' }).then((t) => `Bearer ${t}`);
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    const modulo = await Test.createTestingModule({
+      imports: [JwtModule.register({ secret: randomBytes(32).toString('hex') })],
       controllers: [DiarioController],
       providers: [
-        {
-          provide: DiarioService,
-          useValue: mockDiarioService,
-        },
+        { provide: DiarioService, useValue: diario },
+        { provide: APP_GUARD, useClass: JwtAuthGuard },
+        { provide: APP_GUARD, useClass: RolesGuard },
       ],
     }).compile();
-
-    controller = module.get<DiarioController>(DiarioController);
-    service = module.get<DiarioService>(DiarioService);
+    app = modulo.createNestApplication();
+    await app.init();
+    jwt = app.get(JwtService);
   });
 
-  it('debe estar definido', () => {
-    expect(controller).toBeDefined();
+  afterAll(() => app.close());
+  beforeEach(() => jest.clearAllMocks());
+
+  it('sin token responde 401 y no toca el servicio', async () => {
+    const http = request(app.getHttpServer());
+    await http.put('/diario/2026-10-21').send(dto).expect(401);
+    await http.get('/diario?desde=2026-10-01&hasta=2026-10-21').expect(401);
+    expect(diario.upsertDiario).not.toHaveBeenCalled();
+    expect(diario.consultarDiarios).not.toHaveBeenCalled();
   });
 
-  it('debe realizar upsert de diario extrayendo el usuario del request autenticado (req.user)', async () => {
-    const req = { user: { id: 'user-1' } };
-    const dto = {
-      clientId: '123e4567-e89b-12d3-a456-426614174000',
-      horaAcostarse: '2026-10-20T22:00:00Z',
-      horaDespertar: '2026-10-21T06:00:00Z',
-      latenciaMin: 10,
-      despertares: 0,
-      calidadPercibida: 5,
-      fatigaPercibida: 1,
-      esDiaLaboral: true,
-      luzMatutinaMin: 30,
-    };
-
-    const resultado = await controller.upsertDiario('2026-10-21', dto, req);
-    expect(resultado).toBeDefined();
-    expect(resultado.idUsuario).toBe('user-1');
-    expect(resultado.fecha).toBe('2026-10-21');
-    expect(service.upsertDiario).toHaveBeenCalledWith('user-1', '2026-10-21', dto);
+  it('un rol distinto de trabajador recibe 403', async () => {
+    const autorizacion = await token('despachador');
+    await request(app.getHttpServer())
+      .get('/diario?desde=2026-10-01&hasta=2026-10-21')
+      .set('Authorization', autorizacion)
+      .expect(403);
   });
 
-  it('debe lanzar UnauthorizedException si el request no tiene usuario autenticado', async () => {
-    const req = {};
-    const dto = {} as any;
-    await expect(controller.upsertDiario('2026-10-21', dto, req)).rejects.toThrow(
-      UnauthorizedException,
-    );
-  });
-
-  it('debe ignorar y rechazar cabeceras falsificadas x-usuario-id (prevenir suplantación de identidad)', async () => {
-    // Intento de suplantación enviando x-usuario-id pero sin req.user / req.usuario legítimo
-    const req = { headers: { 'x-usuario-id': 'hacker-user-id' } };
-    const dto = {} as any;
-    await expect(controller.upsertDiario('2026-10-21', dto, req)).rejects.toThrow(
-      UnauthorizedException,
-    );
-  });
-
-  it('debe consultar diarios filtrando por rango con usuario autenticado legítimo', async () => {
-    const req = { user: { id: 'user-2' }, headers: { 'x-usuario-id': 'hacker-user-id' } };
-    const resultado = await controller.consultarDiarios('2026-10-01', '2026-10-21', req);
-    expect(resultado).toBeDefined();
-    expect(resultado).toHaveLength(1);
-    expect(service.consultarDiarios).toHaveBeenCalledWith('user-2', '2026-10-01', '2026-10-21');
+  it('usa el sub del token e ignora x-usuario-id', async () => {
+    const autorizacion = await token('trabajador');
+    const http = request(app.getHttpServer());
+    await http
+      .put('/diario/2026-10-21')
+      .set('Authorization', autorizacion)
+      .set('x-usuario-id', 'otro')
+      .send(dto)
+      .expect(200);
+    await http
+      .get('/diario?desde=2026-10-01&hasta=2026-10-21')
+      .set('Authorization', autorizacion)
+      .set('x-usuario-id', 'otro')
+      .expect(200);
+    expect(diario.upsertDiario).toHaveBeenCalledWith('yo', '2026-10-21', dto);
+    expect(diario.consultarDiarios).toHaveBeenCalledWith('yo', '2026-10-01', '2026-10-21');
   });
 });
