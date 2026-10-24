@@ -8,6 +8,9 @@ export interface BebidaDto {
 export interface CrearIngestaCafeinaDto {
   id_usuario: string;
   id_bebida?: number | null;
+  /** Solo para bebidas del catálogo (1 a 4); el servidor calcula los mg. */
+  porciones?: number;
+  /** Solo sin bebida del catálogo (1 a 1000 mg). */
   cafeina_mg?: number;
   fecha_hora: string;
   client_id: string;

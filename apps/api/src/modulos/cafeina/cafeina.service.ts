@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   BebidaDto,
@@ -20,6 +20,9 @@ import {
 import { ParametrosService } from '../plataforma/parametros/parametros.service';
 
 const MS_H = 3_600_000;
+// HU-03: se acepta hasta 5 min en el futuro (relojes desfasados) y hasta 7 días atrás.
+const MARGEN_FUTURO_MS = 5 * 60_000;
+const VENTANA_REGISTRO_MS = 7 * 24 * MS_H;
 // America/Lima es UTC-5 todo el año.
 const ZONA_LIMA = '-05:00';
 
@@ -62,20 +65,28 @@ export class CafeinaService {
       };
     }
 
-    let cafeinaMg = dto.cafeina_mg;
-    if (dto.id_bebida) {
+    const fechaHora = new Date(dto.fecha_hora);
+    const ahoraMs = Date.now();
+    if (fechaHora.getTime() > ahoraMs + MARGEN_FUTURO_MS) {
+      throw new BadRequestException('La hora no puede estar en el futuro.');
+    }
+    if (fechaHora.getTime() < ahoraMs - VENTANA_REGISTRO_MS) {
+      throw new BadRequestException('Solo puedes registrar consumos de los últimos 7 días.');
+    }
+
+    let cafeinaMg: number;
+    if (dto.id_bebida != null) {
       const bebida = await this.prisma.bebida.findUnique({
         where: { id_bebida: dto.id_bebida },
       });
-      if (bebida && (cafeinaMg === undefined || cafeinaMg === null)) {
-        cafeinaMg = Number(bebida.cafeina_mg);
-      }
+      if (!bebida) throw new BadRequestException('Esa bebida no existe en el catálogo.');
+      // HU-03: para bebidas del catálogo el servidor calcula los mg y descarta los enviados.
+      cafeinaMg = Number(bebida.cafeina_mg) * (dto.porciones ?? 1);
+    } else if (dto.cafeina_mg != null) {
+      cafeinaMg = dto.cafeina_mg;
+    } else {
+      throw new BadRequestException('Indica los mg (entre 1 y 1000).');
     }
-    if (cafeinaMg === undefined || cafeinaMg === null) {
-      cafeinaMg = 0;
-    }
-
-    const fechaHora = new Date(dto.fecha_hora);
 
     const previas = await this.prisma.ingestaCafeina.findMany({
       where: {
