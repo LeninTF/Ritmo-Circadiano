@@ -17,6 +17,7 @@ import {
   SIESTA_DURACION_MIN,
   SIESTA_FIN_ANTES_TURNO_MIN,
 } from './constantes';
+import type { IngestaCafeina } from './cafeina';
 import type { EventosSolares } from './solar';
 
 // ─── Constantes internas del motor ──────────────────────────────────────────
@@ -40,12 +41,6 @@ const PICO2_FIN_H = 3;
 export interface ParametrosTurno {
   inicioTurno: Date;
   finTurno: Date;
-}
-
-/** Ingesta de cafeína (usada en fase futura de RN04; RN05 solo usa inicioSueno). */
-export interface IngestaCafeina {
-  momento: Date;
-  mg: number;
 }
 
 /** Configuración inyectada del sistema. */

@@ -8,3 +8,97 @@ model ParametroSistema {
 
   @@map("parametro_sistema")
 }
+
+enum Rol {
+  trabajador
+  jefe_operaciones
+  despachador
+  administrador
+
+  @@map("rol")
+}
+
+enum EstadoUsuario {
+  activo
+  retirado
+
+  @@map("estado_usuario")
+}
+
+/// Areas de la empresa (Tabla 5 del informe). La sede no esta definida aun.
+model Area {
+  id       String    @id @default(uuid()) @db.Uuid
+  nombre   String    @unique @db.VarChar(120)
+  sede     String?   @db.VarChar(120)
+  usuarios Usuario[]
+
+  @@map("area")
+}
+
+/// Participante o usuario del sistema. Se identifica por codigo_participante (P01-P17).
+model Usuario {
+  id                  String        @id @default(uuid()) @db.Uuid
+  idArea              String        @map("id_area") @db.Uuid
+  codigoParticipante  String        @unique @map("codigo_participante") @db.VarChar(10)
+  rol                 Rol
+  cargo               String?       @db.VarChar(120)
+  correo              String        @unique @db.VarChar(255)
+  hashClave           String        @map("hash_clave")
+  rangoEdad           String?       @map("rango_edad") @db.VarChar(20)
+  sexo                String?       @db.VarChar(20)
+  consentimiento      Boolean       @default(false)
+  fechaConsentimiento DateTime?     @map("fecha_consentimiento") @db.Timestamptz()
+  estado              EstadoUsuario @default(activo)
+  /// ERD01
+  semividaH           Decimal       @default(5) @map("semivida_h") @db.Decimal(3, 1)
+  fuma                Boolean       @default(false)
+
+  area         Area         @relation(fields: [idArea], references: [id])
+  evaluaciones Evaluacion[]
+
+  @@map("usuario")
+}
+
+/// Aplicacion de un instrumento (PSQI, ESE-VP, ficha) en el pretest o postest (Figura 9).
+/// Cascada: DELETE /me borra las evaluaciones del participante (Ley 29733).
+model Evaluacion {
+  id              String               @id @default(uuid()) @db.Uuid
+  idUsuario       String               @map("id_usuario") @db.Uuid
+  fase            String               @db.VarChar(8)
+  instrumento     String               @db.VarChar(10)
+  fechaAplicacion DateTime             @map("fecha_aplicacion") @db.Date
+  puntajeTotal    Decimal?             @map("puntaje_total") @db.Decimal(5, 2)
+  respuestas      Json?
+  usuario         Usuario              @relation(fields: [idUsuario], references: [id], onDelete: Cascade)
+  resultados      ResultadoIndicador[]
+
+  @@index([idUsuario, fase])
+  @@map("evaluacion")
+}
+
+/// Valor de un indicador del estudio; codigo_indicador en CODIGOS_INDICADOR (libs/contracts).
+model ResultadoIndicador {
+  id              String     @id @default(uuid()) @db.Uuid
+  idEvaluacion    String     @map("id_evaluacion") @db.Uuid
+  codigoIndicador String     @map("codigo_indicador") @db.VarChar(10)
+  valor           Decimal    @db.Decimal(7, 2)
+  unidad          String?    @db.VarChar(12)
+  evaluacion      Evaluacion @relation(fields: [idEvaluacion], references: [id], onDelete: Cascade)
+
+  @@unique([idEvaluacion, codigoIndicador])
+  @@map("resultado_indicador")
+}
+
+/// ERD03: acciones sensibles (login, exportacion, turno forzado, borrado).
+/// Sin FK a usuario: la fila sobrevive al borrado del participante (solo queda el UUID).
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  idUsuario String?  @map("id_usuario") @db.Uuid
+  accion    String   @db.VarChar(60)
+  recurso   String   @db.VarChar(255)
+  ip        String?  @db.VarChar(45)
+  fecha     DateTime @default(now()) @db.Timestamptz()
+
+  @@index([fecha])
+  @@map("audit_log")
+}
