@@ -1,138 +1,131 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { of, throwError } from 'rxjs';
+import { TurnoLaboral } from '@circadiano/domain';
 import { ProximoTurnoComponent } from './proximo-turno.component';
 import { ProximoTurnoService } from './proximo-turno.service';
-import { DEMO_PROXIMO_TURNO, DEMO_TURNO_NOCTURNO } from './proximo-turno.models';
+
+// Horas construidas en la zona del dispositivo: los tests no dependen del TZ de la máquina.
+const local = (d: number, h: number, m = 0) => new Date(2026, 9, d, h, m).toISOString();
+
+const TURNO: TurnoLaboral = {
+  id: 't-1',
+  idUsuario: 'u-1',
+  idRuta: 'r-1',
+  fecha: '2026-10-23T00:00:00.000Z',
+  inicioProgramado: local(23, 8),
+  finProgramado: local(23, 17),
+  horasConduccion: 8,
+  esNocturno: false,
+  estadoConfirmacion: 'pendiente',
+  horaInicioReal: null,
+  horaFinReal: null,
+  creadoEn: '2026-10-22T06:00:00Z',
+  actualizadoEn: '2026-10-22T06:00:00Z',
+};
 
 describe('ProximoTurnoComponent (RF05)', () => {
   let component: ProximoTurnoComponent;
   let fixture: ComponentFixture<ProximoTurnoComponent>;
-  let service: ProximoTurnoService;
+  let servicio: { obtenerProximoTurno: jest.Mock; confirmarTurno: jest.Mock };
 
   beforeEach(async () => {
+    servicio = {
+      obtenerProximoTurno: jest.fn().mockReturnValue(of({ ...TURNO })),
+      confirmarTurno: jest.fn(),
+    };
     await TestBed.configureTestingModule({
       imports: [ProximoTurnoComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting(), ProximoTurnoService],
+      providers: [{ provide: ProximoTurnoService, useValue: servicio }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ProximoTurnoComponent);
     component = fixture.componentInstance;
-    service = TestBed.inject(ProximoTurnoService);
   });
 
-  it('debe crearse correctamente', () => {
-    expect(component).toBeTruthy();
-  });
-
-  it('debe cargar y renderizar el próximo turno pendiente', () => {
-    service.setTurnoDemo({ ...DEMO_PROXIMO_TURNO });
-    component.cargarTurno();
+  it('carga y muestra el turno pendiente con horas locales', () => {
     fixture.detectChanges();
-
     expect(component.estadoVista()).toBe('pendiente');
-    expect(component.turno()).toBeTruthy();
-    expect(component.turno()?.id).toBe(DEMO_PROXIMO_TURNO.id);
+    expect(component.turno()?.id).toBe('t-1');
+    expect(component.extraerHoraHHmm(TURNO.inicioProgramado)).toBe('08:00');
   });
 
-  it('debe mostrar el estado sin turno cuando no hay asignaciones', () => {
-    service.setTurnoDemo(null);
-    component.cargarTurno();
+  it('muestra sin_turno cuando no hay asignaciones', () => {
+    servicio.obtenerProximoTurno.mockReturnValue(of(null));
     fixture.detectChanges();
-
     expect(component.estadoVista()).toBe('sin_turno');
   });
 
-  it('debe abrir y cerrar el formulario de corrección', () => {
-    service.setTurnoDemo({ ...DEMO_PROXIMO_TURNO });
-    component.cargarTurno();
+  it('muestra error si falla la carga', () => {
+    servicio.obtenerProximoTurno.mockReturnValue(throwError(() => new Error('red')));
     fixture.detectChanges();
+    expect(component.estadoVista()).toBe('error');
+  });
 
-    expect(component.modoCorreccion()).toBe(false);
+  it('pasa el idTurno del enlace al servicio', () => {
+    fixture.componentRef.setInput('idTurno', 't-9');
+    fixture.detectChanges();
+    expect(servicio.obtenerProximoTurno).toHaveBeenCalledWith('t-9');
+  });
+
+  it('abre y cierra el formulario de corrección precargado con las horas locales', () => {
+    fixture.detectChanges();
     component.abrirCorreccion();
-    fixture.detectChanges();
     expect(component.modoCorreccion()).toBe(true);
-
+    expect(component.formCorreccion.value).toMatchObject({ horaInicio: '08:00', horaFin: '17:00' });
     component.cancelarCorreccion();
-    fixture.detectChanges();
     expect(component.modoCorreccion()).toBe(false);
   });
 
-  it('debe validar la coherencia temporal y requerir confirmación previa', () => {
-    service.setTurnoDemo({ ...DEMO_PROXIMO_TURNO });
-    component.cargarTurno();
-    component.abrirCorreccion();
+  it('valida la coherencia temporal y pide confirmación antes de guardar', () => {
     fixture.detectChanges();
-
+    component.abrirCorreccion();
     component.formCorreccion.setValue({ horaInicio: '17:00', horaFin: '08:00', cruzaMedianoche: false });
     component.solicitarGuardarCorreccion();
-    fixture.detectChanges();
     expect(component.mensajeError()).toContain('posterior');
 
     component.formCorreccion.setValue({ horaInicio: '08:30', horaFin: '17:30', cruzaMedianoche: false });
     component.solicitarGuardarCorreccion();
-    fixture.detectChanges();
     expect(component.solicitandoConfirmacionCorreccion()).toBe(true);
   });
 
-  it('debe permitir turnos que cruzan medianoche correctamente', () => {
-    service.setTurnoDemo({ ...DEMO_TURNO_NOCTURNO });
-    component.cargarTurno();
-    component.abrirCorreccion();
-    fixture.detectChanges();
-
-    component.formCorreccion.setValue({ horaInicio: '22:00', horaFin: '06:00', cruzaMedianoche: true });
-    const val = component.validarCoherenciaTemporal('22:00', '06:00', true);
-    expect(val.esValido).toBe(true);
-
-    const ts = component.construirTimestampsIso('2026-10-23', '22:00', '06:00', true);
-    expect(ts.horaInicioRealIso).toContain('2026-10-23T22:00:00');
-    expect(ts.horaFinRealIso).toContain('2026-10-24T06:00:00');
+  it('arma timestamps desde la hora local, también cruzando medianoche', () => {
+    expect(component.construirTimestampsIso('2026-10-23T00:00:00.000Z', '22:00', '06:00', true)).toEqual({
+      horaInicioRealIso: local(23, 22),
+      horaFinRealIso: local(24, 6),
+    });
+    expect(component.validarCoherenciaTemporal('22:00', '06:00', true).esValido).toBe(true);
   });
 
-  it('debe prevenir doble envío deshabilitando el botón mientras guarda', () => {
-    service.setTurnoDemo({ ...DEMO_PROXIMO_TURNO });
-    component.cargarTurno();
+  it('confirma contra el servidor y muestra el estado real', () => {
+    servicio.confirmarTurno.mockReturnValue(of({ ...TURNO, estadoConfirmacion: 'confirmado' }));
+    fixture.detectChanges();
+    component.confirmarTurnoDirecto();
+
+    expect(servicio.confirmarTurno).toHaveBeenCalledWith('t-1', { estadoConfirmacion: 'confirmado' });
+    expect(component.estadoVista()).toBe('confirmado');
+    expect(component.mensajeExito()).toBe('Turno confirmado.');
+  });
+
+  it('envía la corrección con horas reales y muestra el error del servidor', () => {
+    servicio.confirmarTurno.mockReturnValue(throwError(() => new Error('El turno cambió mientras guardabas.')));
+    fixture.detectChanges();
+    component.abrirCorreccion();
+    component.formCorreccion.setValue({ horaInicio: '08:30', horaFin: '17:30', cruzaMedianoche: false });
+    component.ejecutarGuardarCorreccion();
+
+    expect(servicio.confirmarTurno).toHaveBeenCalledWith('t-1', {
+      estadoConfirmacion: 'corregido',
+      horaInicioReal: local(23, 8, 30),
+      horaFinReal: local(23, 17, 30),
+    });
+    expect(component.mensajeError()).toContain('cambió');
+    expect(component.guardando()).toBe(false);
+  });
+
+  it('deshabilita los botones mientras guarda (sin doble envío)', () => {
+    fixture.detectChanges();
     component.guardando.set(true);
     fixture.detectChanges();
-
-    const btn = (fixture.nativeElement as HTMLElement).querySelector('button');
-    expect(btn?.disabled).toBe(true);
+    expect((fixture.nativeElement as HTMLElement).querySelector('button')?.disabled).toBe(true);
   });
-
-  it('debe confirmar el turno directamente con éxito', () => {
-    service.setTurnoDemo({ ...DEMO_PROXIMO_TURNO });
-    component.cargarTurno();
-    component.confirmarTurnoDirecto();
-    fixture.detectChanges();
-
-   expect(component.estadoVista()).toBe('confirmado');
-expect(component.mensajeExito()).toContain('Confirmación simulada');
-expect(component.mensajeExito()).toContain(
-  'Los cambios no se guardaron en el servidor',
-);
-  });
-
-  it('debe manejar errores de carga correctamente', () => {
-    service.setForzarError(true);
-    component.cargarTurno();
-    fixture.detectChanges();
-
-    expect(component.estadoVista()).toBe('error');
-  });
-
-  it('debe aceptar input idTurno para enlace directo (deep link)', () => {
-  fixture.componentRef.setInput(
-    'idTurno',
-    DEMO_TURNO_NOCTURNO.id,
-  );
-
-  fixture.detectChanges();
-  component.cargarTurno();
-  fixture.detectChanges();
-
-  expect(component.turno()?.id).toBe(
-    DEMO_TURNO_NOCTURNO.id,
-  );
-});
 });

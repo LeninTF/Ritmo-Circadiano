@@ -86,9 +86,7 @@ export class ProximoTurnoComponent implements OnInit {
           this.guardando.set(false);
           this.turno.set(turnoActualizado);
           this.estadoVista.set('confirmado');
-          this.mensajeExito.set(
-  'Confirmación simulada. Los cambios no se guardaron en el servidor.',
-);
+          this.mensajeExito.set('Turno confirmado.');
         },
         error: (err: unknown) => {
           this.guardando.set(false);
@@ -179,9 +177,7 @@ export class ProximoTurnoComponent implements OnInit {
           this.modoCorreccion.set(false);
           this.solicitandoConfirmacionCorreccion.set(false);
           this.estadoVista.set('corregido');
-          this.mensajeExito.set(
-  'Corrección simulada. Los cambios no se guardaron en el servidor.',
-);
+          this.mensajeExito.set('Horario real guardado. Tu plan se actualizará con estos datos.');
         },
         error: (err: unknown) => {
           this.guardando.set(false);
@@ -209,8 +205,9 @@ export class ProximoTurnoComponent implements OnInit {
     try {
       const d = new Date(isoDateStr);
       if (isNaN(d.getTime())) return '';
-      const h = String(d.getUTCHours()).padStart(2, '0');
-      const m = String(d.getUTCMinutes()).padStart(2, '0');
+      // Hora local del dispositivo: la API guarda timestamps UTC.
+      const h = String(d.getHours()).padStart(2, '0');
+      const m = String(d.getMinutes()).padStart(2, '0');
       return `${h}:${m}`;
     } catch {
       return '';
@@ -237,7 +234,7 @@ export class ProximoTurnoComponent implements OnInit {
     try {
       const ini = new Date(inicioIso);
       const fin = new Date(finIso);
-      return fin.getTime() - ini.getTime() > 0 && fin.getUTCDate() !== ini.getUTCDate();
+      return fin.getTime() - ini.getTime() > 0 && fin.getDate() !== ini.getDate();
     } catch {
       return false;
     }
@@ -287,16 +284,14 @@ export class ProximoTurnoComponent implements OnInit {
     horaFin: string,
     cruzaMedianoche: boolean,
   ): { horaInicioRealIso: string; horaFinRealIso: string } {
-    const fechaLimpia = fechaBase.includes('T') ? fechaBase.split('T')[0] : fechaBase;
-    const horaInicioRealIso = `${fechaLimpia}T${horaInicio}:00.000Z`;
-
-    let fechaFin = fechaLimpia;
-    if (cruzaMedianoche) {
-      const baseDate = new Date(`${fechaLimpia}T00:00:00.000Z`);
-      baseDate.setUTCDate(baseDate.getUTCDate() + 1);
-      fechaFin = baseDate.toISOString().split('T')[0];
-    }
-    const horaFinRealIso = `${fechaFin}T${horaFin}:00.000Z`;
+    // `fecha` llega como día UTC (AAAA-MM-DD o medianoche UTC); las horas son locales del trabajador.
+    const [anio, mes, dia] = fechaBase.slice(0, 10).split('-').map(Number);
+    const enFecha = (hhmm: string, desfaseDias: number) => {
+      const [h, m] = hhmm.split(':').map(Number);
+      return new Date(anio, mes - 1, dia + desfaseDias, h, m).toISOString();
+    };
+    const horaInicioRealIso = enFecha(horaInicio, 0);
+    const horaFinRealIso = enFecha(horaFin, cruzaMedianoche ? 1 : 0);
 
     return { horaInicioRealIso, horaFinRealIso };
   }

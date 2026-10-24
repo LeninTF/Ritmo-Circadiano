@@ -1,111 +1,51 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, catchError, map, throwError } from 'rxjs';
 import { TurnoLaboral } from '@circadiano/domain';
-import {
-  ConfirmacionTurnoPayload,
-  DEMO_PROXIMO_TURNO,
-  DEMO_TURNO_NOCTURNO,
-} from './proximo-turno.models';
+import { environment } from '../../../../environments/environment';
+import { ConfirmacionTurnoPayload } from './proximo-turno.models';
 
-/**
- * Servicio para gestión del próximo turno del trabajador (RF05).
- * Separa la capa de presentación de la infraestructura HTTP.
- *
- * NOTA DE ARQUITECTURA (Fase 4):
- * El endpoint HTTP `/turnos/:id/confirmacion` depende del guard JWT oficial de I1.
- * Mientras tanto, este servicio permite operar en modo demostración/fixture tipada
- * sin enviar credenciales falsas ni eludir la seguridad del backend.
- */
-@Injectable({
-  providedIn: 'root',
-})
+/** Mensajes para el trabajador según la respuesta de PATCH /confirmacion (RF05). */
+const MENSAJE_POR_ESTADO: Record<number, string> = {
+  0: 'Sin conexión. Inténtalo cuando tengas señal.',
+  400: 'Los horarios enviados no son válidos.',
+  401: 'Tu sesión venció. Vuelve a iniciar sesión.',
+  403: 'Este turno no está asignado a ti.',
+  404: 'El turno ya no existe.',
+  409: 'El turno cambió mientras guardabas. Recarga e inténtalo de nuevo.',
+};
+
+/** Turnos y confirmación del trabajador autenticado (RF05); el authInterceptor agrega el token. */
+@Injectable({ providedIn: 'root' })
 export class ProximoTurnoService {
-  private readonly http = inject(HttpClient, { optional: true });
-  private readonly baseUrl = '/turnos';
+  private readonly http = inject(HttpClient);
+  private readonly url = `${environment.apiUrl}/operaciones/turnos`;
 
-  private turnoDemoActual: TurnoLaboral | null = { ...DEMO_PROXIMO_TURNO };
-  private forzarErrorDemo = false;
-
-  setTurnoDemo(turno: TurnoLaboral | null): void {
-    this.turnoDemoActual = turno ? { ...turno } : null;
-    this.forzarErrorDemo = false;
-  }
-
-  setForzarError(forzar: boolean): void {
-    this.forzarErrorDemo = forzar;
-  }
-
-  obtenerProximoTurno(
-  idTurno?: string | null,
-): Observable<TurnoLaboral | null> {
-  if (this.forzarErrorDemo) {
-    return throwError(
-      () => new Error('Error simulado en servidor'),
+  /**
+   * Con `idTurno` (enlace del aviso push) devuelve ese turno. Sin él, el último turno ya iniciado
+   * que siga pendiente de confirmar; si no hay, el próximo por terminar.
+   */
+  obtenerProximoTurno(idTurno?: string | null, ahora = new Date()): Observable<TurnoLaboral | null> {
+    const ayer = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() - 1);
+    const desde = `${ayer.getFullYear()}-${String(ayer.getMonth() + 1).padStart(2, '0')}-${String(ayer.getDate()).padStart(2, '0')}`;
+    // El backend ordena por inicio programado ascendente.
+    return this.http.get<TurnoLaboral[]>(`${this.url}/me`, { params: idTurno ? {} : { desde } }).pipe(
+      map((turnos) => {
+        if (idTurno) return turnos.find((t) => t.id === idTurno) ?? null;
+        const pendienteIniciado = [...turnos]
+          .reverse()
+          .find((t) => t.estadoConfirmacion === 'pendiente' && Date.parse(t.inicioProgramado) <= ahora.getTime());
+        return pendienteIniciado ?? turnos.find((t) => Date.parse(t.finProgramado) >= ahora.getTime()) ?? null;
+      }),
     );
   }
 
-  // Un ID explícito debe devolver únicamente ese turno.
-  if (idTurno) {
-    if (idTurno === DEMO_TURNO_NOCTURNO.id) {
-      return of({ ...DEMO_TURNO_NOCTURNO });
-    }
-
-    if (this.turnoDemoActual?.id === idTurno) {
-      return of({ ...this.turnoDemoActual });
-    }
-
-    return of(null);
-  }
-
-  // Sin ID: mostrar el próximo turno disponible.
-  return of(
-    this.turnoDemoActual
-      ? { ...this.turnoDemoActual }
-      : null,
-  );
-}
-
-  /**
-   * Confirma o corrige el horario de un turno.
-   *
-   * @param id Identificador único del turno
-   * @param payload Datos de confirmación o corrección
-   */
-  confirmarTurno(
-    id: string,
-    payload: ConfirmacionTurnoPayload,
-  ): Observable<TurnoLaboral> {
-    if (!id) {
-      return throwError(() => new Error('Identificador de turno no proporcionado.'));
-    }
-
-    // Modo demostración explícito: no se realizan llamadas HTTP.
-    if (this.turnoDemoActual && this.turnoDemoActual.id === id) {
-      if (this.forzarErrorDemo) {
-        return throwError(() => new Error('Error simulado en servidor'));
-      }
-
-      const turnoActualizado: TurnoLaboral = {
-        ...this.turnoDemoActual,
-        estadoConfirmacion: payload.estadoConfirmacion,
-        horaInicioReal:
-          payload.estadoConfirmacion === 'corregido'
-            ? payload.horaInicioReal ?? this.turnoDemoActual.inicioProgramado
-            : this.turnoDemoActual.inicioProgramado,
-        horaFinReal:
-          payload.estadoConfirmacion === 'corregido'
-            ? payload.horaFinReal ?? this.turnoDemoActual.finProgramado
-            : this.turnoDemoActual.finProgramado,
-        actualizadoEn: new Date().toISOString(),
-      };
-
-      this.turnoDemoActual = turnoActualizado;
-      return of(turnoActualizado);
-    }
-
-    return throwError(
-      () => new Error('Operación de demostración no disponible para este turno.')
+  confirmarTurno(id: string, payload: ConfirmacionTurnoPayload): Observable<TurnoLaboral> {
+    return this.http.patch<TurnoLaboral>(`${this.url}/${id}/confirmacion`, payload).pipe(
+      catchError((error: unknown) => {
+        const estado = error instanceof HttpErrorResponse ? error.status : -1;
+        return throwError(() => new Error(MENSAJE_POR_ESTADO[estado] ?? 'No se pudo guardar. Inténtalo nuevamente.'));
+      }),
     );
   }
 }

@@ -61,6 +61,7 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'plan/:idTurno',
+    canActivate: [autenticadoGuard],
     loadComponent: () =>
       import('./paginas/plan/plan.component').then((m) => m.PlanComponent),
   },
