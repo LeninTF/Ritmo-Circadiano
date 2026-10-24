@@ -447,10 +447,6 @@ export type ExcesoJornadaAuditoriaUncheckedUpdateManyWithoutTurnoNestedInput = {
   deleteMany?: Prisma.ExcesoJornadaAuditoriaScalarWhereInput | Prisma.ExcesoJornadaAuditoriaScalarWhereInput[]
 }
 
-export type NullableStringFieldUpdateOperationsInput = {
-  set?: string | null
-}
-
 export type ExcesoJornadaAuditoriaCreateWithoutTurnoInput = {
   id?: string
   idUsuario: string
