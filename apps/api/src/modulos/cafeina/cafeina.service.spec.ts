@@ -1,9 +1,13 @@
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import type { PrismaService } from '../../prisma/prisma.service';
 import type { ParametrosService } from '../plataforma/parametros/parametros.service';
 import { CafeinaService } from './cafeina.service';
 
 describe('CafeinaService · resumen y cafeína activa (RF09)', () => {
-  const prisma = { ingestaCafeina: { findMany: jest.fn() } };
+  const prisma = {
+    ingestaCafeina: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn() },
+    bebida: { findUnique: jest.fn() },
+  };
   const parametros = { listar: jest.fn() };
   const servicio = new CafeinaService(
     prisma as unknown as PrismaService,
@@ -82,5 +86,60 @@ describe('CafeinaService · resumen y cafeína activa (RF09)', () => {
     const { fecha_hora } = prisma.ingestaCafeina.findMany.mock.calls[0][0].where;
     expect(fecha_hora.gte.toISOString()).toBe('2026-10-24T05:00:00.000Z');
     expect(fecha_hora.lte.toISOString()).toBe('2026-10-25T04:59:59.999Z');
+  });
+
+  describe('registrarIngesta (HU-03)', () => {
+    const base = {
+      id_usuario: 'u-1',
+      client_id: '3f1c2b9e-8a4d-4c1e-9b7a-2d5e6f708192',
+      fecha_hora: new Date(Date.now() - 3_600_000).toISOString(),
+    };
+
+    beforeEach(() => {
+      prisma.ingestaCafeina.findUnique.mockResolvedValue(null);
+      prisma.ingestaCafeina.findMany.mockResolvedValue([]);
+      prisma.ingestaCafeina.create.mockImplementation(({ data }) => Promise.resolve({ id_ingesta: 1, ...data }));
+    });
+
+    it('bebida del catálogo: mg = mg por porción × porciones y descarta los mg enviados', async () => {
+      prisma.bebida.findUnique.mockResolvedValue({ id_bebida: 1, cafeina_mg: 95 });
+
+      const res = await servicio.registrarIngesta({ ...base, id_bebida: 1, porciones: 2, cafeina_mg: 5 });
+
+      expect(res.cafeina_mg).toBe(190);
+    });
+
+    it('sin bebida usa los mg indicados', async () => {
+      const res = await servicio.registrarIngesta({ ...base, cafeina_mg: 150 });
+      expect(res.cafeina_mg).toBe(150);
+    });
+
+    it.each([
+      ['bebida inexistente', { id_bebida: 99 }],
+      ['ni bebida ni mg', {}],
+      ['más de 5 min en el futuro', { cafeina_mg: 50, fecha_hora: new Date(Date.now() + 10 * 60_000).toISOString() }],
+      ['más de 7 días atrás', { cafeina_mg: 50, fecha_hora: new Date(Date.now() - 8 * 86_400_000).toISOString() }],
+    ])('rechaza con 400: %s', async (_caso, extra) => {
+      prisma.bebida.findUnique.mockResolvedValue(null);
+      await expect(servicio.registrarIngesta({ ...base, ...extra })).rejects.toBeInstanceOf(BadRequestException);
+      expect(prisma.ingestaCafeina.create).not.toHaveBeenCalled();
+    });
+
+    it('idempotente: mismo client_id del mismo usuario devuelve lo guardado sin crear otro', async () => {
+      prisma.ingestaCafeina.findUnique.mockResolvedValue({
+        id_ingesta: 7, id_usuario: 'u-1', id_bebida: 1, cafeina_mg: 95,
+        fecha_hora: new Date(base.fecha_hora), residual_estimado_mg: 95, client_id: base.client_id,
+      });
+
+      const res = await servicio.registrarIngesta({ ...base, id_bebida: 1 });
+
+      expect(res.id_ingesta).toBe(7);
+      expect(prisma.ingestaCafeina.create).not.toHaveBeenCalled();
+    });
+
+    it('client_id de otro usuario: 409', async () => {
+      prisma.ingestaCafeina.findUnique.mockResolvedValue({ id_usuario: 'otro' });
+      await expect(servicio.registrarIngesta({ ...base, cafeina_mg: 50 })).rejects.toBeInstanceOf(ConflictException);
+    });
   });
 });
