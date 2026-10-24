@@ -9,8 +9,10 @@
  */
 import type {
   CategoriaCronotipo,
+  PlanDiarioDto,
   RecordatorioDelPlan,
   TipoTurnoPlan,
+  VentanaTemporalDto,
 } from '@circadiano/contracts';
 import { calcularHoraCorte, type IngestaCafeina } from './cafeina';
 import {
@@ -212,6 +214,30 @@ function planNocturno(turno: ParametrosTurno): PlanParcial {
     picos,
     ventanaLuz: { inicio: turno.finTurno, fin: inicioSueno },
     protegerLuz: true,
+  };
+}
+
+const aIso = (v: Ventana): VentanaTemporalDto => ({ inicio: v.inicio.toISOString(), fin: v.fin.toISOString() });
+
+/** Serializa el plan igual en la API y en la PWA offline. */
+export function aPlanDiarioDto(
+  plan: ResultadoPlan,
+  meta: Pick<PlanDiarioDto, 'id' | 'idTurno' | 'fecha' | 'actualizadoEn'>,
+): PlanDiarioDto {
+  return {
+    ...meta,
+    tipoTurno: plan.tipoTurno,
+    inicioSueno: plan.inicioSueno.toISOString(),
+    finSueno: plan.finSueno.toISOString(),
+    inicioSiesta: plan.inicioSiesta?.toISOString() ?? null,
+    finSiesta: plan.finSiesta?.toISOString() ?? null,
+    picos: plan.picos.map(aIso),
+    horaCorteCafeina: plan.horaCorteCafeina?.toISOString() ?? null,
+    ventanaLuz: plan.ventanaLuz && aIso(plan.ventanaLuz),
+    protegerLuz: plan.protegerLuz,
+    categoriaCronotipo: plan.categoriaCronotipo,
+    versionAlgoritmo: plan.versionAlgoritmo,
+    recordatorios: derivarRecordatorios(plan),
   };
 }
 

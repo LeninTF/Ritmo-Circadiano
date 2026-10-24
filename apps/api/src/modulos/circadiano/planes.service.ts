@@ -4,8 +4,8 @@ import {
   SEMIVIDA_H_DEFECTO,
   UMBRAL_CAFEINA_MG_DEFECTO,
   VERSION_ALGORITMO_PLAN,
+  aPlanDiarioDto,
   calcularEventosSolares,
-  derivarRecordatorios,
   generarPlan,
   type IngestaCafeina,
   type ResultadoPlan,
@@ -129,7 +129,6 @@ export class PlanesService {
   }
 
   private aDto(fila: PlanDiario): PlanDiarioDto {
-    const picos = fila.picos as unknown as VentanaTemporalDto[];
     const ventanaLuz = fila.ventanaLuz as unknown as VentanaTemporalDto | null;
     const resultado: ResultadoPlan = {
       tipoTurno: fila.protegerLuz ? 'nocturno' : 'diurno',
@@ -137,30 +136,18 @@ export class PlanesService {
       finSueno: fila.finSueno,
       inicioSiesta: fila.inicioSiesta,
       finSiesta: fila.finSiesta,
-      picos: picos.map(aFecha),
+      picos: (fila.picos as unknown as VentanaTemporalDto[]).map(aFecha),
       horaCorteCafeina: fila.horaCorteCafeina,
       ventanaLuz: ventanaLuz && aFecha(ventanaLuz),
       protegerLuz: fila.protegerLuz,
       categoriaCronotipo: fila.categoria,
       versionAlgoritmo: fila.versionAlgoritmo,
     };
-    return {
+    return aPlanDiarioDto(resultado, {
       id: fila.id,
       idTurno: fila.idTurno,
       fecha: diaIso(fila.fecha),
-      tipoTurno: resultado.tipoTurno,
-      inicioSueno: fila.inicioSueno.toISOString(),
-      finSueno: fila.finSueno.toISOString(),
-      inicioSiesta: fila.inicioSiesta?.toISOString() ?? null,
-      finSiesta: fila.finSiesta?.toISOString() ?? null,
-      picos,
-      horaCorteCafeina: fila.horaCorteCafeina?.toISOString() ?? null,
-      ventanaLuz,
-      protegerLuz: fila.protegerLuz,
-      categoriaCronotipo: fila.categoria,
-      versionAlgoritmo: fila.versionAlgoritmo,
-      recordatorios: derivarRecordatorios(resultado),
       actualizadoEn: fila.actualizadoEn.toISOString(),
-    };
+    });
   }
 }

@@ -7,8 +7,8 @@ export type CategoriaCronotipo =
   | 'matutino_definido';
 
 /**
- * Respuestas al rMEQ de 5 items (Adan y Almirall, 1991). Rangos por item:
- * p1 1-5, p2 1-5, p3 1-4, p4 1-5, p5 0-6. La suma queda en 4-25.
+ * Respuestas al rMEQ de 5 items (Adan y Almirall, 1991), items 1, 7, 10, 18 y 19 del MEQ.
+ * Rangos: p1 1-5, p2 1-4, p3 1-5, p4 1-5, p5 0/2/4/6. La suma queda en 4-25.
  */
 export interface RespuestasRmeq {
   p1: number;

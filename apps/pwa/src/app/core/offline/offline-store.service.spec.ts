@@ -84,6 +84,22 @@ describe('OfflineStoreService', () => {
     });
   });
 
+  it('reemplaza el plan y el evento solar de la misma fecha en vez de duplicarlos', async () => {
+    session.login('alice');
+    const id = await service.addPlan({ fecha: '2026-10-20', data: { version: 1 } });
+    expect(await service.addPlan({ fecha: '2026-10-20', data: { version: 2 } })).toBe(id);
+    await service.addPlan({ fecha: '2026-10-21', data: { version: 1 } });
+    await service.addEventoSolar({ fecha: '2026-10-20', data: { amanecer: 'a' } });
+    await service.addEventoSolar({ fecha: '2026-10-20', data: { amanecer: 'b' } });
+
+    const planes = await service.getMyPlans();
+    expect(planes).toHaveLength(2);
+    expect(planes.find((p) => p.fecha === '2026-10-20')?.data).toEqual({ version: 2 });
+    expect(await service.getMyEventosSolares()).toEqual([
+      expect.objectContaining({ fecha: '2026-10-20', data: { amanecer: 'b' } }),
+    ]);
+  });
+
   it('guarda y recupera registros de los otros stores', async () => {
     session.login('alice');
 
