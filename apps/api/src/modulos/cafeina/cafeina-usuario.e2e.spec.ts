@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import type { INestApplication } from '@nestjs/common';
+import { ValidationPipe, type INestApplication } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
@@ -13,11 +13,13 @@ import { CafeinaService } from './cafeina.service';
 describe('Cafeina y push usan el usuario del token (RNF04)', () => {
   let app: INestApplication;
   let autorizacion: string;
+  let autorizacionDespachador: string;
   const cafeina = {
     registrarIngesta: jest.fn().mockResolvedValue({}),
     listarIngestas: jest.fn().mockResolvedValue([]),
     eliminarIngesta: jest.fn().mockResolvedValue(undefined),
     calcularResidualHastaSueno: jest.fn().mockResolvedValue({}),
+    obtenerResumen: jest.fn().mockResolvedValue({}),
     sincronizarLote: jest.fn().mockResolvedValue([]),
   };
   const notificaciones = { guardarSuscripcion: jest.fn(), marcarAbierta: jest.fn().mockResolvedValue({}) };
@@ -34,9 +36,12 @@ describe('Cafeina y push usan el usuario del token (RNF04)', () => {
       ],
     }).compile();
     app = modulo.createNestApplication();
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
     await app.init();
     const t = await app.get(JwtService).signAsync({ sub: 'yo', rol: 'trabajador', codigoParticipante: 'P01' });
     autorizacion = `Bearer ${t}`;
+    const d = await app.get(JwtService).signAsync({ sub: 'otro', rol: 'despachador', codigoParticipante: 'P02' });
+    autorizacionDespachador = `Bearer ${d}`;
   });
 
   afterAll(() => app.close());
@@ -65,5 +70,23 @@ describe('Cafeina y push usan el usuario del token (RNF04)', () => {
     expect(cafeina.eliminarIngesta).toHaveBeenCalledWith(7, 'yo');
     expect(notificaciones.guardarSuscripcion.mock.calls[0][0].id_usuario).toBe('yo');
     expect(notificaciones.marcarAbierta).toHaveBeenCalledWith(3, 'yo');
+  });
+
+  it('el resumen usa el usuario del token, 7 días por defecto y valida la query (RF09)', async () => {
+    const http = request(app.getHttpServer());
+    await http.get('/cafeina/resumen').set('Authorization', autorizacion).expect(200);
+    await http.get('/cafeina/resumen?dias=14').set('Authorization', autorizacion).expect(200);
+    expect(cafeina.obtenerResumen).toHaveBeenNthCalledWith(1, 'yo', 7);
+    expect(cafeina.obtenerResumen).toHaveBeenNthCalledWith(2, 'yo', 14);
+
+    await http.get('/cafeina/resumen?dias=0').set('Authorization', autorizacion).expect(400);
+    await http.get('/cafeina/resumen?dias=31').set('Authorization', autorizacion).expect(400);
+    await http.get('/cafeina/resumen?id_usuario=otro').set('Authorization', autorizacion).expect(400);
+  });
+
+  it('el resumen exige token y rol trabajador', async () => {
+    const http = request(app.getHttpServer());
+    await http.get('/cafeina/resumen').expect(401);
+    await http.get('/cafeina/resumen').set('Authorization', autorizacionDespachador).expect(403);
   });
 });
