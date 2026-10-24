@@ -196,3 +196,34 @@ Rules:
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
 - A committed graphify-out/graph.json is rewritten whole on every build, so a large diff to it in a pull request is expected. Do not flag it as churn or suggest skipping the graph rebuild or its hooks.
+
+## 14. Sistema de diseño (fuente: Figma "Gestor Circadiano — Prototipo PWA")
+
+Figma `0Vxkj2VLxxaXP8fkxT4JdR` (pantallas 01 Dashboard, 02 Cafeína, 03 Pre-salida, 04 Dashboard nocturno). El archivo **no define variables Figma**: los valores salen de los frames. Todo color/tamaño va como token CSS (`--color-*`, `--radio-*`) en `apps/pwa/src/styles`, nunca hex sueltos en componentes. Mobile-first, lienzo base **390 px**, margen lateral **20 px**, tema claro por defecto y **modo nocturno** (`prefers-color-scheme: dark` + `[data-tema="oscuro"]`, útil en turno nocturno).
+
+**Colores**
+
+| Token | Claro | Nocturno | Uso |
+|---|---|---|---|
+| `--color-fondo` | `#f2f4f7` | degradado `#131c36` → `#0a0f1e` | Fondo de pantalla |
+| `--color-superficie` | `#ffffff` | `#141c2f` (borde `#273049`) | Tarjetas, tab bar (`#0d1425` de noche) |
+| `--color-superficie-2` | `#eaecf0` | `#1b2438` | Botón secundario, tiles, avatar |
+| `--color-borde` | `#d0d5dd` | `#273049` | Bordes, barras inactivas |
+| `--color-texto` | `#101828` | `#f8fafc` | Texto principal |
+| `--color-texto-2` | `#475467` | `#a8b3c7` | Texto secundario |
+| `--color-texto-3` | `#98a2b3` | `#6b7794` | Etiquetas, inactivo |
+| `--color-primario` | `#3538cd` | `#818cf8` | Acción, tab activa, pico, chip de turno (fondo `#eef0ff` / `#1e1b4b`, borde `#3730a3`) |
+| `--color-ok` | `#12b76a` | `#34d399` | Semáforo verde, luz natural, completado |
+| `--color-alerta` | `#f79009` | `#fbbf24` | Semáforo ámbar, corte de cafeína (fondo `#fffaeb`) |
+| `--color-peligro` | `#f04438` | `#f87171` | Semáforo rojo, valle circadiano (fondo nocturno `#2a1215`, borde `#7f1d1d`) |
+| `--color-boton-fuerte` | `#101828` | — | CTA de confirmación (texto blanco) |
+
+Semáforo RN09: verde = `ok`, ámbar = `alerta`, rojo = `peligro`. Nunca comunicar el estado **solo con color**: acompañar con icono y texto ("APTO CON MEDIDAS"). Barras de la curva: inactiva `#d0d5dd` (`#232c45` / `#3b4468` de noche), hora actual/pico en `primario`, valle en `peligro`.
+
+**Tipografía:** Inter. Título pantalla 20/27 bold (22/30 en nocturno) · cifra héroe 38–40/44–46 bold · cifra de tile 19–20/26–27 bold · título de tarjeta 13–14 semibold · cuerpo 12–13 regular/medium · pie y etiquetas 10–11 · micro-etiqueta MAYÚSCULAS 9–11 semibold con `letter-spacing` 0.4–0.8 px. Hora siempre `HH:mm` 24 h.
+
+**Forma y espacio:** radios — tarjeta 16 (héroe nocturno 20), tile 14–16, botón 10–12, chip/pastilla 20, barras del gráfico 3–4, círculos para avatar/check. Padding de tarjeta 16–18, gap entre bloques 14–16, gap de tiles 10. Sombra solo en nocturno: `0 8px 24px rgba(0,0,0,.35)`. Gráfico de 24 barras con gap 3 px (alto 86–96).
+
+**Componentes y patrón de navegación:** tab bar inferior de 4 pestañas — **Hoy · Cafeína · Pre-salida · Diario** (activa en `primario` semibold, resto `texto-3`; iconos 22–24 px); status bar 36–38 px. Tarjeta héroe "Ventana de descanso" (rango horario grande + meta + "Ajustar"), banda de 3 micro-tarjetas (Café hasta · Luz natural · Próx. pico), curva circadiana 24 h, lista de recomendaciones con check, alerta de riesgo, stepper de 3 pasos (Datos · Autorreporte · Resultado), slider de somnolencia de 5 pasos, chips de síntomas, catálogo de bebidas en rejilla de 2 columnas con mg. Aviso fijo en Pre-salida: "Herramienta preventiva de apoyo. No reemplaza la evaluación médica ni autoriza la salida." (RN11, no disciplinario).
+
+**Reglas:** (1) un componente compartido por patrón, en `apps/pwa/src/app/compartido/` (dueño I4, shell PWA); (2) contraste mínimo WCAG AA (verificar `texto-3` sobre `superficie`, falla en 9–10 px: usarlo solo en texto no esencial); (3) objetivos táctiles ≥ 44 px (los chips y la tab bar del Figma ya cumplen; los iconos sueltos no); (4) cambios de paleta se hacen en Figma + este §14 + la página de Notion en el mismo PR.

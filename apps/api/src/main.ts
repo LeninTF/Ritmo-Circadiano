@@ -1,11 +1,16 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function arrancar(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Render pone un proxy delante: sin esto req.ip es el del proxy y el limite de peticiones
+  // se compartiria entre todos. shortcut: confia en 1 salto, revisar si cambia el hosting.
+  app.set('trust proxy', 1);
 
   app.use(helmet());
   // Un origen distinto a CORS_ORIGIN no recibe cabeceras CORS (el navegador lo bloquea).
