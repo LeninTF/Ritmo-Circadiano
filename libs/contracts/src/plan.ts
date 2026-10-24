@@ -1,89 +1,86 @@
 import type { CategoriaCronotipo } from './cronotipo';
 
-// ─── Ventana temporal (inicio + fin) ───────────────────────────────────────
+// Todas las horas viajan como ISO 8601 (UTC): es lo que llega por JSON y lo que guarda Dexie.
 
 /** Bloque de tiempo con inicio y fin. */
-export interface VentanaTemporal {
-  inicio: Date;
-  fin: Date;
+export interface VentanaTemporalDto {
+  inicio: string;
+  fin: string;
 }
 
-// ─── Recordatorio del plan ─────────────────────────────────────────────────
+export type TipoTurnoPlan = 'diurno' | 'nocturno';
 
-/**
- * Recordatorio puntual derivado del plan circadiano (RF07).
- * El motor genera uno por cada evento relevante del dia.
- */
+export type TipoRecordatorioPlan = 'luz' | 'corte_cafeina' | 'relajacion' | 'dormir';
+
+/** Recordatorio derivado del plan (RF07); I4 lo programa como notificacion (RF10). */
 export interface RecordatorioDelPlan {
-  /** Tipo de accion que el trabajador debe realizar. */
-  tipo: 'luz' | 'corte_cafeina' | 'relajacion' | 'dormir';
-  /** Momento exacto (UTC) en que se debe disparar la notificacion. */
-  programadaPara: Date;
+  tipo: TipoRecordatorioPlan;
+  programadaPara: string;
 }
 
-// ─── DTO principal del plan diario ─────────────────────────────────────────
-
-/**
- * DTO de respuesta del plan circadiano diario (RF07, RN06, RN08).
- * Fuente de verdad compartida entre la API y la PWA.
- * La PWA usa este tipo para pintar la linea de tiempo de 24 h.
- */
+/** Plan circadiano diario (RF07, RN04-RN08). Lo consumen I4 (RF09, RF10) e I5 (RF11). */
 export interface PlanDiarioDto {
   id: string;
-  idUsuario: string;
-  /** Fecha del turno, formato ISO YYYY-MM-DD. */
+  idTurno: string | null;
+  /** Fecha del turno, YYYY-MM-DD. */
   fecha: string;
-
-  // ── Bloque de sueno principal ─────────────────────────────────────────────
-  /** Inicio del sueno principal (UTC). */
-  inicioSueno: Date;
-  /** Fin del sueno principal (UTC). */
-  finSueno: Date;
-
-  // ── Siesta compensatoria (RN06) ───────────────────────────────────────────
-  /** Inicio de la siesta de 90 min si el turno no permite 7 h continuas. */
-  inicioSiesta: Date | null;
-  /** Fin de la siesta de 90 min. Siempre >= 60 min antes del siguiente turno. */
-  finSiesta: Date | null;
-
-  // ── Ventanas de rendimiento ───────────────────────────────────────────────
-  /** Bloques de maximo rendimiento cognitivo derivados del cronotipo y el turno. */
-  picos: VentanaTemporal[];
-
-  // ── Cafeina (RN04, RN05) ──────────────────────────────────────────────────
-  /** Hora maxima para consumir cafeina: min(RN04, inicio_sueno - 6 h). */
-  horaCorteCalefina: Date;
-
-  // ── Luz natural (RN08) ────────────────────────────────────────────────────
-  /**
-   * Ventana de exposicion a luz natural.
-   * Diurno: [max(despertar, amanecer), +60 min].
-   * Nocturno: campo presente pero marcado como "proteger de luz intensa".
-   */
-  ventanaLuz: VentanaTemporal;
-
-  /** Cronotipo aplicado para generar este plan. */
+  tipoTurno: TipoTurnoPlan;
+  inicioSueno: string;
+  finSueno: string;
+  /** Siesta de 90 min cuando el sueno principal no llega a 7 h (RN06). */
+  inicioSiesta: string | null;
+  finSiesta: string | null;
+  picos: VentanaTemporalDto[];
+  /** min(RN04, dormir - 6 h); null = no tomar mas cafeina ese dia. */
+  horaCorteCafeina: string | null;
+  /** Diurno: buscar luz natural. Nocturno (protegerLuz): evitar luz intensa. Null si no hay luz de dia. */
+  ventanaLuz: VentanaTemporalDto | null;
+  protegerLuz: boolean;
   categoriaCronotipo: CategoriaCronotipo;
-
-  /** Version del algoritmo. Cambia con cada modificacion de formulas (OCP). */
   versionAlgoritmo: string;
-
-  /** Recordatorios listos para programar en el scheduler de push (RF10). */
   recordatorios: RecordatorioDelPlan[];
-
-  creadoEn: Date;
-  actualizadoEn: Date;
+  actualizadoEn: string;
 }
 
-// ─── DTO de solicitud de generacion de plan ─────────────────────────────────
-
-/**
- * Body del endpoint POST /planes/generar.
- * Minimo necesario para que el motor circadiano genere el plan.
- */
+/** Body de POST /planes/generar. El usuario sale del token, nunca del body. */
 export interface GenerarPlanDto {
-  idUsuario: string;
-  /** Fecha del turno, formato ISO YYYY-MM-DD. */
-  fecha: string;
   idTurno: string;
 }
+
+/** Body de POST /ubicacion (RF06). */
+export interface CrearUbicacionDto {
+  lat: number;
+  lng: number;
+  /** Ciudad elegida o "Ubicación actual" si vino del GPS. */
+  origen: string;
+}
+
+export interface UbicacionDto extends CrearUbicacionDto {
+  id: string;
+  zonaHoraria: string;
+}
+
+/** Amanecer, mediodia solar y atardecer de un dia (RF06, CP-06). */
+export interface EventoSolarDto {
+  fecha: string;
+  amanecer: string;
+  mediodia: string;
+  atardecer: string;
+}
+
+export const ZONA_HORARIA_EMPRESA = 'America/Lima';
+
+export interface SedeEmpresa {
+  nombre: string;
+  lat: number;
+  lng: number;
+}
+
+/** Sedes para el respaldo manual cuando no hay permiso de ubicacion (RF06). Ica es la sede por defecto. */
+export const SEDES_EMPRESA: readonly SedeEmpresa[] = [
+  { nombre: 'Ica', lat: -14.0689, lng: -75.7222 },
+  { nombre: 'Nasca', lat: -14.8292, lng: -74.9386 },
+  { nombre: 'Palpa', lat: -14.5336, lng: -75.1856 },
+  { nombre: 'Acarí', lat: -15.4311, lng: -74.6156 },
+  { nombre: 'Lima', lat: -12.0464, lng: -77.0428 },
+];
