@@ -14,9 +14,11 @@ import {
   CrearIngestaCafeinaDto,
   IngestaCafeinaRespuestaDto,
   ResidualCafeinaRespuestaDto,
+  ResumenCafeinaDto,
   type UsuarioJwtPayload,
 } from '@circadiano/contracts';
-import { UsuarioActual } from '../plataforma/auth';
+import { Roles, UsuarioActual } from '../plataforma/auth';
+import { ConsultarResumenCafeinaDto } from './dto/consultar-resumen.dto';
 
 @ApiTags('cafeina')
 @Controller('cafeina')
@@ -53,6 +55,17 @@ export class CafeinaController {
     @Param('id', ParseIntPipe) id: number,
   ): Promise<void> {
     return this.cafeinaService.eliminarIngesta(id, usuario.sub);
+  }
+
+  @Get('resumen')
+  @Roles('trabajador')
+  @ApiOperation({ summary: 'Consumo por día (hora de Lima) y cafeína activa estimada (RF09)' })
+  @ApiResponse({ status: 200, description: 'Resumen calculado. La cafeína activa es una estimación, no un dato médico.' })
+  async obtenerResumen(
+    @UsuarioActual() usuario: UsuarioJwtPayload,
+    @Query() query: ConsultarResumenCafeinaDto,
+  ): Promise<ResumenCafeinaDto> {
+    return this.cafeinaService.obtenerResumen(usuario.sub, query.dias);
   }
 
   @Get('residual')

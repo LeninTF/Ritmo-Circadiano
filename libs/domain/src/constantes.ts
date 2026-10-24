@@ -31,6 +31,9 @@ export const SEMIVIDA_H_DEFECTO = 5;
 export const SEMIVIDA_H_FUMADOR = 3;
 export const SEMIVIDA_H_METABOLIZADOR_LENTO = 8;
 
+// RF09 · cafeina activa ahora: solo cuentan las ingestas de las ultimas 24 h (estimacion, no dato medico)
+export const VENTANA_CAFEINA_ACTIVA_H = 24;
+
 // RN05 · el corte final nunca pasa de dormir - 6 h
 export const CORTE_CAFEINA_ANTES_DORMIR_H = 6;
 

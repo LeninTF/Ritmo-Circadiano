@@ -5,7 +5,13 @@ import {
   SEMIVIDA_H_METABOLIZADOR_LENTO,
   UMBRAL_CAFEINA_MG_DEFECTO,
 } from './constantes';
-import { calcularHoraCorte, IngestaCafeina, residual } from './cafeina';
+import {
+  calcularCafeinaActiva,
+  calcularHoraCorte,
+  IngestaCafeina,
+  residual,
+  resumirConsumoPorDia,
+} from './cafeina';
 
 describe('dominio farmacocinético de cafeína', () => {
   describe('residual', () => {
@@ -95,6 +101,65 @@ describe('dominio farmacocinético de cafeína', () => {
       expect(() => calcularHoraCorte(1, 20, [], -2)).toThrow(RangeError);
       expect(() => calcularHoraCorte(1, 20, [], { semivida_h: 0 })).toThrow(RangeError);
       expect(() => calcularHoraCorte(1, 20, [], 5, -1)).toThrow(RangeError);
+    });
+  });
+
+  describe('calcularCafeinaActiva (SPEC §7.1, con ahora fijo)', () => {
+    const ahora = 1000;
+
+    it.each<[string, IngestaCafeina[], number, number | null]>([
+      ['100 mg hace 5 h', [{ dosisMg: 100, hora: ahora - 5 }], 50, null],
+      ['200 mg ahora', [{ dosisMg: 200, hora: ahora }], 200, ahora + 10],
+      ['300 mg hace 25 h (fuera de la ventana)', [{ dosisMg: 300, hora: ahora - 25 }], 0, null],
+      ['ninguno', [], 0, null],
+    ])('%s', (_caso, ingestas, mg, horaNivelBajo) => {
+      const activa = calcularCafeinaActiva(ingestas, ahora, 5, 50);
+      expect(activa.mg).toBeCloseTo(mg, 6);
+      if (horaNivelBajo === null) expect(activa.horaNivelBajo).toBeNull();
+      else expect(activa.horaNivelBajo).toBeCloseTo(horaNivelBajo, 6);
+    });
+
+    it('95 mg hace 10 h + 63 mg ahora: ~87 mg y baja en ~3 h 58 min 29 s (±1 min)', () => {
+      const activa = calcularCafeinaActiva(
+        [{ dosisMg: 95, hora: ahora - 10 }, { dosisMg: 63, hora: ahora }],
+        ahora,
+      );
+      expect(activa.mg).toBeCloseTo(86.75, 6);
+      expect(Math.round(activa.mg)).toBe(87);
+      const segundos = ((activa.horaNivelBajo ?? Number.NaN) - ahora) * 3600;
+      expect(Math.abs(segundos - (3 * 3600 + 58 * 60 + 29))).toBeLessThan(60);
+    });
+
+    it('rechaza ahora o umbral inválidos', () => {
+      expect(() => calcularCafeinaActiva([], Number.NaN)).toThrow(RangeError);
+      expect(() => calcularCafeinaActiva([], ahora, 5, 0)).toThrow(RangeError);
+    });
+  });
+
+  describe('resumirConsumoPorDia (SPEC §7.2)', () => {
+    const h = (iso: string) => Date.parse(iso) / 3_600_000;
+    // 15:00 en Lima del 24 de octubre.
+    const ahora = h('2026-10-24T20:00:00.000Z');
+
+    it('agrupa por día de Lima, rellena con 0 y termina en hoy', () => {
+      const resumen = resumirConsumoPorDia([
+        { dosisMg: 95, hora: h('2026-10-24T04:00:00.000Z') }, // 23:00 del 23 en Lima
+        { dosisMg: 63, hora: h('2026-10-24T06:00:00.000Z') }, // 01:00 del 24 en Lima
+        { dosisMg: 95, hora: h('2026-10-24T15:00:00.000Z') },
+        { dosisMg: 80, hora: h('2026-10-10T15:00:00.000Z') }, // fuera del rango
+      ], ahora, 7);
+
+      expect(resumen.map((d) => d.fecha)).toEqual([
+        '2026-10-18', '2026-10-19', '2026-10-20', '2026-10-21', '2026-10-22', '2026-10-23', '2026-10-24',
+      ]);
+      expect(resumen[5]).toEqual({ fecha: '2026-10-23', totalMg: 95, conteo: 1 });
+      expect(resumen[6]).toEqual({ fecha: '2026-10-24', totalMg: 158, conteo: 2 });
+      expect(resumen.slice(0, 5).every((d) => d.totalMg === 0 && d.conteo === 0)).toBe(true);
+    });
+
+    it('rechaza una cantidad de días inválida', () => {
+      expect(() => resumirConsumoPorDia([], ahora, 0)).toThrow(RangeError);
+      expect(() => resumirConsumoPorDia([], ahora, 1.5)).toThrow(RangeError);
     });
   });
 });

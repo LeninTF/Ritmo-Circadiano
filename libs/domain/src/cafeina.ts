@@ -1,7 +1,9 @@
 import {
   CORTE_CAFEINA_ANTES_DORMIR_H,
+  DESFASE_LIMA_H,
   SEMIVIDA_H_DEFECTO,
   UMBRAL_CAFEINA_MG_DEFECTO,
+  VENTANA_CAFEINA_ACTIVA_H,
 } from './constantes';
 
 /** Una dosis de cafeína y el instante en que fue ingerida, expresado en horas. */
@@ -71,6 +73,77 @@ export function calcularHoraCorte(
     corteFarmacocinetico,
     dormir - CORTE_CAFEINA_ANTES_DORMIR_H,
   );
+}
+
+export interface CafeinaActiva {
+  /** Sin redondear: se redondea solo al responder. */
+  mg: number;
+  /** Hora (en horas) en que baja del umbral; null si ya está en nivel bajo. */
+  horaNivelBajo: number | null;
+}
+
+/**
+ * Estima la cafeína activa en `ahora` con las ingestas de las últimas 24 h y cuándo
+ * bajará del umbral. Todas decaen al mismo ritmo, así que la hora es exacta:
+ * ahora + t½ · log2(mg / umbral).
+ */
+export function calcularCafeinaActiva(
+  ingestas: readonly IngestaCafeina[],
+  ahora: number,
+  tMedia: SemividaCafeina = SEMIVIDA_H_DEFECTO,
+  umbral: number = UMBRAL_CAFEINA_MG_DEFECTO,
+): CafeinaActiva {
+  validarHora(ahora, 'ahora');
+  const semivida = resolverSemivida(tMedia);
+  if (!Number.isFinite(umbral) || umbral <= 0) {
+    throw new RangeError('umbral debe ser un número finito mayor que cero');
+  }
+
+  const recientes = ingestas.filter((i) => i.hora >= ahora - VENTANA_CAFEINA_ACTIVA_H);
+  const mg = residual(recientes, ahora, semivida);
+  return {
+    mg,
+    horaNivelBajo: mg <= umbral ? null : ahora + semivida * Math.log2(mg / umbral),
+  };
+}
+
+export interface ConsumoDia {
+  /** Fecha local en America/Lima, YYYY-MM-DD. */
+  fecha: string;
+  totalMg: number;
+  conteo: number;
+}
+
+/**
+ * Agrupa las ingestas por día de Lima. Devuelve exactamente `dias` elementos,
+ * del más antiguo al más reciente; el último es el día de `ahora`. Días sin consumo van en 0.
+ */
+export function resumirConsumoPorDia(
+  ingestas: readonly IngestaCafeina[],
+  ahora: number,
+  dias: number,
+): ConsumoDia[] {
+  validarHora(ahora, 'ahora');
+  if (!Number.isInteger(dias) || dias < 1) {
+    throw new RangeError('dias debe ser un entero mayor o igual a 1');
+  }
+
+  const diaLima = (hora: number) => Math.floor((hora + DESFASE_LIMA_H) / 24);
+  const hoy = diaLima(ahora);
+  const resumen: ConsumoDia[] = Array.from({ length: dias }, (_, i) => ({
+    fecha: new Date((hoy - dias + 1 + i) * 86_400_000).toISOString().slice(0, 10),
+    totalMg: 0,
+    conteo: 0,
+  }));
+
+  for (const ingesta of ingestas) {
+    validarIngesta(ingesta);
+    const indice = diaLima(ingesta.hora) - (hoy - dias + 1);
+    if (indice < 0 || indice >= dias) continue;
+    resumen[indice].totalMg += ingesta.dosisMg;
+    resumen[indice].conteo += 1;
+  }
+  return resumen;
 }
 
 function validarIngesta(ingesta: IngestaCafeina): void {

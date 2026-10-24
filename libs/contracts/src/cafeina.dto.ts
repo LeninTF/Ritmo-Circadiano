@@ -30,3 +30,32 @@ export interface ResidualCafeinaRespuestaDto {
   hora_corte: number | null;
   sugerencia: string;
 }
+
+/** Consumo de un día en hora de Lima (RF09). */
+export interface ConsumoDiaDto {
+  /** YYYY-MM-DD en America/Lima. */
+  fecha: string;
+  totalMg: number;
+  conteo: number;
+}
+
+/** Cafeína activa ahora. Siempre es una estimación, nunca un dato médico. */
+export interface CafeinaActivaDto {
+  /** Redondeado a mg enteros. */
+  mg: number;
+  calculadoEn: string;
+  /** Cuándo baja del umbral; null si ya está en nivel bajo. */
+  horaNivelBajo: string | null;
+  semividaH: number;
+  umbralMg: number;
+  esEstimacion: true;
+}
+
+/** Respuesta de GET /cafeina/resumen. La hora de corte sale del plan (PlanDiarioDto.horaCorteCafeina). */
+export interface ResumenCafeinaDto {
+  zonaHoraria: string;
+  /** Exactamente `dias` elementos, del más antiguo a hoy. */
+  dias: ConsumoDiaDto[];
+  hoy: ConsumoDiaDto;
+  cafeinaActiva: CafeinaActivaDto;
+}
