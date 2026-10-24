@@ -63,3 +63,6 @@ export interface DiarioRespuestaDto {
   clientId: string;
   updatedAt: string;
 }
+
+/** Payload de la operacion `diario` en POST /sync/lote; el client_id va en el sobre del lote. */
+export type DiarioSyncPayload = Omit<CrearActualizarDiarioDto, 'clientId'> & { fecha: string };

@@ -1,0 +1,136 @@
+<section class="pagina-diario">
+  <header class="diario-header">
+    <h1>Diario de sueño</h1>
+    <p>Registra tu descanso diario de forma rápida (≤ 60 s)</p>
+  </header>
+
+  <form [formGroup]="form" (ngSubmit)="guardar()" class="diario-form">
+    <!-- Fecha -->
+    <div class="campo-grupo">
+      <label for="fecha">Fecha de registro</label>
+      <input id="fecha" type="date" formControlName="fecha" class="input-control" />
+      @if (form.get('fecha')?.invalid && form.get('fecha')?.touched) {
+        <span class="error-msg" role="alert">La fecha es obligatoria.</span>
+      }
+    </div>
+
+    <!-- Horarios de sueño -->
+    <fieldset class="tarjeta-seccion">
+      <legend>Horarios de sueño</legend>
+      <div class="fila-horarios">
+        <div class="campo-grupo">
+          <label for="horaAcostarse">Hora de acostarse (24h)</label>
+          <input id="horaAcostarse" type="time" formControlName="horaAcostarse" class="input-control" />
+          @if (form.get('horaAcostarse')?.invalid && form.get('horaAcostarse')?.touched) {
+            <span class="error-msg" role="alert">Hora de acostarse inválida (HH:mm).</span>
+          }
+        </div>
+
+        <div class="campo-grupo">
+          <label for="horaDespertar">Hora de despertar (24h)</label>
+          <input id="horaDespertar" type="time" formControlName="horaDespertar" class="input-control" />
+          @if (form.get('horaDespertar')?.invalid && form.get('horaDespertar')?.touched) {
+            <span class="error-msg" role="alert">Hora de despertar inválida (HH:mm).</span>
+          }
+        </div>
+      </div>
+
+      <div class="fila-horarios">
+        <div class="campo-grupo">
+          <label for="latenciaMin">Latencia (minutos para dormir)</label>
+          <input id="latenciaMin" type="number" min="0" max="180" formControlName="latenciaMin" class="input-control" />
+        </div>
+
+        <div class="campo-grupo">
+          <label for="despertares">Número de despertares</label>
+          <input id="despertares" type="number" min="0" max="20" formControlName="despertares" class="input-control" />
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Calidad y Fatiga (Escala 1 - 5) -->
+    <fieldset class="tarjeta-seccion">
+      <legend>Evaluación subjetiva (Escala 1 a 5)</legend>
+      <div class="campo-grupo escala-grupo">
+        <span class="label-titulo">Calidad percibida del sueño (1: Muy mala - 5: Excelente)</span>
+        <div class="botones-escala" role="radiogroup" aria-label="Calidad percibida del sueño">
+          @for (val of [1, 2, 3, 4, 5]; track val) {
+            <button
+              type="button"
+              class="btn-escala"
+              [class.activo]="form.get('calidadPercibida')?.value === val"
+              (click)="form.get('calidadPercibida')?.setValue(val)"
+              [attr.aria-checked]="form.get('calidadPercibida')?.value === val"
+              role="radio">
+              <span class="escala-num">{{ val }}</span>
+              <span class="escala-desc">{{ obtenerTextoCalidad(val) }}</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="campo-grupo escala-grupo">
+        <span class="label-titulo">Fatiga percibida al despertar (1: Muy fresco - 5: Extrema fatiga)</span>
+        <div class="botones-escala" role="radiogroup" aria-label="Fatiga percibida">
+          @for (val of [1, 2, 3, 4, 5]; track val) {
+            <button
+              type="button"
+              class="btn-escala"
+              [class.activo]="form.get('fatigaPercibida')?.value === val"
+              (click)="form.get('fatigaPercibida')?.setValue(val)"
+              [attr.aria-checked]="form.get('fatigaPercibida')?.value === val"
+              role="radio">
+              <span class="escala-num">{{ val }}</span>
+              <span class="escala-desc">{{ obtenerTextoFatiga(val) }}</span>
+            </button>
+          }
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Contexto diario -->
+    <fieldset class="tarjeta-seccion">
+      <legend>Contexto de la jornada</legend>
+      <div class="campo-grupo checkbox-grupo">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="esDiaLaboral" />
+          <span>¿Es día laboral?</span>
+        </label>
+      </div>
+
+      <div class="campo-grupo">
+        <label for="luzMatutinaMin">Exposición a luz matutina (minutos)</label>
+        <input id="luzMatutinaMin" type="number" min="0" max="180" formControlName="luzMatutinaMin" class="input-control" />
+      </div>
+    </fieldset>
+
+    <!-- Estado y acciones -->
+    <div class="acciones-contenedor">
+      <button
+        type="submit"
+        class="btn-principal"
+        [disabled]="guardando() || form.invalid"
+        aria-label="Guardar diario de sueño">
+        @if (guardando()) {
+          <span>Guardando...</span>
+        } @else {
+          <span>Guardar diario</span>
+        }
+      </button>
+    </div>
+
+    @if (estadoGuardado() === 'en_cola') {
+      <div class="estado-alerta exito" role="status" aria-live="polite">
+        <span class="icono-estado" aria-hidden="true">✅</span>
+        <span>Diario guardado en tu dispositivo. Se enviará al servidor cuando haya conexión.</span>
+      </div>
+    }
+
+    @if (estadoGuardado() === 'error') {
+      <div class="estado-alerta error" role="alert" aria-live="assertive">
+        <span class="icono-estado" aria-hidden="true">⚠️</span>
+        <span>No se pudo guardar el registro. Verifique su sesión e intente nuevamente.</span>
+      </div>
+    }
+  </form>
+</section>
