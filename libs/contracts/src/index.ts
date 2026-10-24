@@ -10,6 +10,7 @@ export * from './semaforo';
 export * from './sync-handler';
 export * from './sync-lote.dto';
 export * from './turno-asignado.evento';
+export * from './confirmacion-turno';
 export * from './diario.dto';
 export * from './usuario-eliminado.evento';
 export * from './cafeina.dto';
