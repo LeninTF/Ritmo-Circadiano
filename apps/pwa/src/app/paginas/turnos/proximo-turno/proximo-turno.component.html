@@ -1,0 +1,77 @@
+<app-tarjeta [heroe]="true" class="tarjeta-proximo-turno">
+  <div class="cabecera-tarjeta">
+    <h2 class="titulo-seccion">Tu próximo turno</h2>
+    @switch (estadoVista()) {
+      @case ('pendiente') { <span class="badge badge-alerta" role="status">⏳ Pendiente</span> }
+      @case ('confirmado') { <span class="badge badge-ok" role="status">✓ Confirmado</span> }
+      @case ('corregido') { <span class="badge badge-primario" role="status">✏️ Corregido</span> }
+      @case ('sin_turno') { <span class="badge badge-neutro" role="status">ℹ️ Sin turno</span> }
+      @case ('error') { <span class="badge badge-peligro" role="status">⚠️ Error</span> }
+      @default { <span class="badge badge-neutro" role="status">⌛ Cargando...</span> }
+    }
+  </div>
+
+  @if (mensajeExito()) { <div class="alerta alerta-exito" role="status"><span>✅ {{ mensajeExito() }}</span></div> }
+  @if (mensajeError()) { <div class="alerta alerta-error" role="alert"><span>⚠️ {{ mensajeError() }}</span></div> }
+
+  @switch (estadoVista()) {
+    @case ('cargando') { <div class="estado-vacio-carga"><p class="texto-secundario">Cargando...</p></div> }
+    @case ('sin_turno') {
+      <div class="estado-vacio">
+        <p class="texto-principal">No tienes ningún turno asignado próximamente.</p>
+      </div>
+    }
+    @case ('error') {
+      <div class="estado-vacio">
+        <p class="texto-principal">Ocurrió un problema al cargar el turno.</p>
+        <button class="btn btn-secundario" (click)="cargarTurno()">Reintentar</button>
+      </div>
+    }
+    @default {
+      @if (turno(); as t) {
+        <div class="detalle-turno">
+          <div class="fila-info"><span class="etiqueta">Fecha</span><span class="valor-destacado">{{ formatearFechaLegible(t.fecha) }}</span></div>
+          <div class="fila-info"><span class="etiqueta">Horario Programado</span><span class="valor">{{ extraerHoraHHmm(t.inicioProgramado) }} – {{ extraerHoraHHmm(t.finProgramado) }} @if(t.esNocturno){<span class="chip-nocturno">🌙 Nocturno</span>}</span></div>
+          @if (t.estadoConfirmacion === 'corregido' || t.horaInicioReal) {
+            <div class="fila-info corregido-info"><span class="etiqueta">Horario Real</span><span class="valor valor-ok">{{ extraerHoraHHmm(t.horaInicioReal || null) }} – {{ extraerHoraHHmm(t.horaFinReal || null) }}</span></div>
+          }
+        </div>
+
+        @if (!modoCorreccion()) {
+          <div class="acciones-turno">
+            @if (t.estadoConfirmacion !== 'confirmado') {
+              <button class="btn btn-fuerte" [disabled]="guardando()" (click)="confirmarTurnoDirecto()">{{ guardando() ? 'Procesando...' : '✓ Confirmar' }}</button>
+            }
+            <button class="btn btn-secundario" [disabled]="guardando()" (click)="abrirCorreccion()">✏️ Corregir</button>
+          </div>
+        }
+
+        @if (modoCorreccion()) {
+          <div class="formulario-correccion">
+            <h3 class="subtitulo-form">Corrección de Horario Real</h3>
+            <form [formGroup]="formCorreccion" (ngSubmit)="solicitarGuardarCorreccion()">
+              <div class="grupo-campo"><label for="horaInicio">Inicio (HH:mm)</label><input id="horaInicio" type="time" formControlName="horaInicio" class="input-control" /></div>
+              <div class="grupo-campo"><label for="horaFin">Fin (HH:mm)</label><input id="horaFin" type="time" formControlName="horaFin" class="input-control" /></div>
+              <div class="grupo-checkbox"><label class="checkbox-label"><input type="checkbox" formControlName="cruzaMedianoche" /><span>Cruza medianoche (+1 día)</span></label></div>
+
+              @if (solicitandoConfirmacionCorreccion()) {
+                <div class="banner-confirmacion-previa">
+                  <p><strong>¿Confirmas guardar esta corrección?</strong></p>
+                  <div class="botones-previa">
+                    <button type="button" class="btn btn-fuerte" [disabled]="guardando()" (click)="ejecutarGuardarCorreccion()">{{ guardando() ? 'Guardando...' : 'Sí, guardar' }}</button>
+                    <button type="button" class="btn btn-secundario" [disabled]="guardando()" (click)="regresarAEdicion()">Volver</button>
+                  </div>
+                </div>
+              } @else {
+                <div class="acciones-form">
+                  <button type="submit" class="btn btn-fuerte" [disabled]="guardando()">Revisar</button>
+                  <button type="button" class="btn btn-secundario" [disabled]="guardando()" (click)="cancelarCorreccion()">Cancelar</button>
+                </div>
+              }
+            </form>
+          </div>
+        }
+      }
+    }
+  }
+</app-tarjeta>
