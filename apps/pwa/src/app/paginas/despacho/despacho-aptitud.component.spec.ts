@@ -1,105 +1,89 @@
-import { By } from '@angular/platform-browser';
-import { FormGroupDirective } from '@angular/forms';
-import { TestBed } from '@angular/core/testing';
-import { ComponentFixture } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
+import { environment } from '../../../environments/environment';
+import { fechaLocal } from '../aptitud/aptitud.service';
 import { DespachoAptitudComponent } from './despacho-aptitud.component';
-import { AptitudService } from '../aptitud/aptitud.service';
-import { of, throwError } from 'rxjs';
 
-describe('DespachoAptitudComponent', () => {
-  let component: DespachoAptitudComponent;
+const URL_DESPACHO = `${environment.apiUrl}/aptitud/despacho`;
+
+describe('DespachoAptitudComponent (RF12, RN10)', () => {
   let fixture: ComponentFixture<DespachoAptitudComponent>;
-  let aptitudServiceSpy: { consultarDespacho: jest.Mock };
+  let http: HttpTestingController;
 
-  beforeEach(async () => {
-    aptitudServiceSpy = { consultarDespacho: jest.fn() };
+  const pagina = () => fixture.nativeElement as HTMLElement;
+  const consulta = (): TestRequest => http.expectOne((r) => r.method === 'GET' && r.url === URL_DESPACHO);
+  const estabilizar = async () => {
+    await fixture.whenStable();
+    fixture.detectChanges();
+  };
 
-    await TestBed.configureTestingModule({
+  beforeEach(() => {
+    TestBed.configureTestingModule({
       imports: [DespachoAptitudComponent],
-      providers: [{ provide: AptitudService, useValue: aptitudServiceSpy }],
-    }).compileComponents();
-
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(DespachoAptitudComponent);
-    component = fixture.componentInstance;
-
     fixture.detectChanges();
   });
 
-  function formulario() { return fixture.debugElement.query(By.directive(FormGroupDirective)).injector.get(FormGroupDirective).form; }
+  afterEach(() => http.verify());
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  it('al abrir carga la lista del día local sin código', async () => {
+    const req = consulta();
+    expect(req.request.params.get('fecha')).toBe(fechaLocal(new Date()));
+    expect(req.request.params.has('codigo')).toBe(false);
+    req.flush({ evaluaciones: [] });
+    await estabilizar();
+
+    expect(pagina().querySelector<HTMLInputElement>('#fecha')?.value).toBe(fechaLocal(new Date()));
+    expect(pagina().textContent).toContain('Nadie ha compartido su resultado');
   });
 
-  describe('form validation', () => {
-    it('should require codigo (fecha has default value)', () => {
-      expect(formulario().get('codigo')?.invalid).toBe(true);
-      expect(formulario().get('fecha')?.valid).toBe(true); // fecha has default value
+  it('dos turnos del mismo código se muestran sin error de track', async () => {
+    const avisos = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    consulta().flush({
+      evaluaciones: [
+        { codigo: 'P01', color: 'verde' },
+        { codigo: 'P01', color: 'rojo' },
+        { codigo: 'P02', color: 'ambar' },
+      ],
     });
+    await estabilizar();
 
-    it('should be valid when codigo is filled', () => {
-      formulario().patchValue({ codigo: 'T-123' });
-      expect(formulario().valid).toBe(true);
-    });
+    const filas = [...pagina().querySelectorAll('li')].map((li) => [
+      li.querySelector('.participante')?.textContent,
+      li.querySelector('app-semaforo-aptitud .texto')?.textContent,
+    ]);
+    expect(filas).toEqual([
+      ['P01', 'APTO'],
+      ['P01', 'NO APTO'],
+      ['P02', 'APTO CON MEDIDAS'],
+    ]);
+    expect(avisos).not.toHaveBeenCalled();
+    avisos.mockRestore();
   });
 
-  describe('consultar', () => {
-    it('should call consultarDespacho with correct params and display results', async () => {
-      const mockResponse = {
-        evaluaciones: [
-          { codigo: 'CON-001', color: 'verde' as const },
-          { codigo: 'CON-002', color: 'rojo' as const },
-        ],
-      };
-      aptitudServiceSpy.consultarDespacho.mockReturnValue(of(mockResponse));
+  it('el filtro opcional envía el código normalizado', async () => {
+    consulta().flush({ evaluaciones: [] });
+    await estabilizar();
 
-      formulario().patchValue({ codigo: 'T-789', fecha: '2025-01-15' });
-      fixture.debugElement.query(By.css('form')).triggerEventHandler('ngSubmit');
-      await fixture.whenStable();
-      fixture.detectChanges();
+    const codigo = pagina().querySelector<HTMLInputElement>('#codigo') as HTMLInputElement;
+    codigo.value = ' p01 ';
+    codigo.dispatchEvent(new Event('input'));
+    pagina().querySelector('form')?.dispatchEvent(new Event('submit'));
 
-      expect(aptitudServiceSpy.consultarDespacho).toHaveBeenCalledWith({
-        codigo: 'T-789',
-        fecha: '2025-01-15',
-      });
-      expect(fixture.nativeElement.textContent).toContain('CON-001');
-      expect(fixture.nativeElement.querySelector('[role=list], [role=status]')).not.toBeNull();
-    });
+    const req = consulta();
+    expect(req.request.params.get('codigo')).toBe('P01');
+    req.flush({ evaluaciones: [{ codigo: 'P01', color: 'verde' }] });
+    await estabilizar();
+    expect(pagina().querySelectorAll('li')).toHaveLength(1);
+  });
 
-    it('should display empty state when no evaluations', async () => {
-      const mockResponse = { evaluaciones: [] };
-      aptitudServiceSpy.consultarDespacho.mockReturnValue(of(mockResponse));
-
-      formulario().patchValue({ codigo: 'T-999', fecha: '2025-01-16' });
-      fixture.debugElement.query(By.css('form')).triggerEventHandler('ngSubmit');
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      expect(fixture.nativeElement.textContent).toContain('No hay evaluaciones');
-      expect(fixture.nativeElement.querySelector('[role=list], [role=status]')).not.toBeNull();
-    });
-
-    it('should handle network error', async () => {
-      aptitudServiceSpy.consultarDespacho.mockReturnValue(throwError(() => ({ status: 0 })));
-
-      formulario().patchValue({ codigo: 'T-111', fecha: '2025-01-17' });
-      fixture.debugElement.query(By.css('form')).triggerEventHandler('ngSubmit');
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      expect(fixture.nativeElement.textContent).toContain('conexión');
-      expect(fixture.debugElement.query(By.css('button')).nativeElement.disabled).toBe(false);
-    });
-
-    it('should handle 403 forbidden', async () => {
-      aptitudServiceSpy.consultarDespacho.mockReturnValue(throwError(() => ({ status: 403 })));
-
-      formulario().patchValue({ codigo: 'T-222', fecha: '2025-01-18' });
-      fixture.debugElement.query(By.css('form')).triggerEventHandler('ngSubmit');
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      expect(fixture.nativeElement.textContent).toContain('permiso de despachador');
-    });
+  it('403 → mensaje del rol', async () => {
+    consulta().flush(null, { status: 403, statusText: 'Forbidden' });
+    await estabilizar();
+    expect(pagina().textContent).toContain('Esta vista es solo para el despachador.');
   });
 });

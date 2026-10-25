@@ -1,213 +1,128 @@
-import { By } from '@angular/platform-browser';
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule } from '@angular/forms';
-import { SemaforoAptitudComponent } from '../../compartido/semaforo-aptitud/semaforo-aptitud.component';
-import { TarjetaComponent } from '../../compartido/tarjeta/tarjeta.component';
-import { TestBed } from '@angular/core/testing';
-import { ComponentFixture } from '@angular/core/testing';
-import { AptitudComponent } from './aptitud.component';
-import { AptitudService } from './aptitud.service';
-import { SesionService } from '../../auth/sesion.service';
-import { Router } from '@angular/router';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import type { CrearAptitudResponse } from '@circadiano/contracts';
-import { of, throwError } from 'rxjs';
+import type { TurnoLaboral } from '@circadiano/domain';
+import { environment } from '../../../environments/environment';
+import { AptitudComponent } from './aptitud.component';
 
-@Component({ selector: 'app-aptitud-prueba', standalone: true, templateUrl: './aptitud.component.html', imports: [CommonModule, ReactiveFormsModule, SemaforoAptitudComponent, TarjetaComponent] })
-class AptitudPruebaComponent extends AptitudComponent {
-  turnoId: string | null = 'turno-test-123';
-  protected override obtenerTurnoIdDelDia(): string | null { return this.turnoId; }
-  getFormulario() { return this.formulario; }
-  getPasoActual() { return this.pasoActual(); }
-  getPasos() { return this.pasos(); }
-  getResultadoColor() { return this.resultadoColor(); }
-  getMotivos() { return this.motivos(); }
-  getErrorEnvio() { return this.errorEnvio(); }
-  getEnviando() { return this.enviando(); }
-  override siguientePaso() { super.siguientePaso(); }
-  override enviarAutoevaluacion() { return super.enviarAutoevaluacion(); }
-  override puedeAvanzarAPaso(id: 'datos' | 'autorreporte' | 'resultado') { return super.puedeAvanzarAPaso(id); }
-  override reiniciar() { super.reiniciar(); }
-}
+const HORA_MS = 60 * 60 * 1000;
+const URL_TURNOS = `${environment.apiUrl}/operaciones/turnos/me`;
 
-describe('AptitudComponent', () => {
-  let component: AptitudPruebaComponent;
-  let fixture: ComponentFixture<AptitudPruebaComponent>;
-  let aptitudServiceSpy: { crearAptitud: jest.Mock };
-  let sesionServiceSpy: { cerrar: jest.Mock };
-  let routerSpy: { navigate: jest.Mock };
+/** Turno que empieza `horas` despues del reloj real (puede ser negativo). */
+const turno = (id: string, horas: number): TurnoLaboral => {
+  const inicio = new Date(Date.now() + horas * HORA_MS);
+  return {
+    id,
+    idUsuario: 'u-1',
+    idRuta: 'r-1',
+    fecha: inicio.toISOString(),
+    inicioProgramado: inicio.toISOString(),
+    finProgramado: new Date(inicio.getTime() + 8 * HORA_MS).toISOString(),
+    horasConduccion: 4,
+    esNocturno: false,
+    estadoConfirmacion: 'pendiente',
+    horaInicioReal: null,
+    horaFinReal: null,
+    creadoEn: inicio.toISOString(),
+    actualizadoEn: inicio.toISOString(),
+  };
+};
 
-  beforeEach(async () => {
-    aptitudServiceSpy = { crearAptitud: jest.fn() };
-    sesionServiceSpy = { cerrar: jest.fn() };
-    routerSpy = { navigate: jest.fn() };
+describe('AptitudComponent (RF12, CP-12)', () => {
+  let fixture: ComponentFixture<AptitudComponent>;
+  let http: HttpTestingController;
 
-    await TestBed.configureTestingModule({
-      imports: [AptitudPruebaComponent],
-      providers: [
-        { provide: AptitudService, useValue: aptitudServiceSpy },
-        { provide: SesionService, useValue: sesionServiceSpy },
-        { provide: Router, useValue: routerSpy },
-      ],
-    }).compileComponents();
+  const pagina = () => fixture.nativeElement as HTMLElement;
+  const texto = () => pagina().textContent ?? '';
+  const boton = (etiqueta: string) =>
+    [...pagina().querySelectorAll('button')].find((b) => b.textContent?.trim() === etiqueta) as HTMLButtonElement;
+  const slider = () => pagina().querySelector<HTMLInputElement>('#somnolencia') as HTMLInputElement;
+  const estabilizar = async () => {
+    await fixture.whenStable();
+    fixture.detectChanges();
+  };
+  const responderTurnos = async (turnos: TurnoLaboral[]) => {
+    http.expectOne((r) => r.method === 'GET' && r.url === URL_TURNOS).flush(turnos);
+    await estabilizar();
+  };
+  const irAlAutorreporte = async () => {
+    await responderTurnos([turno('t-pasado', -1), turno('t-1', 2)]);
+    boton('Continuar').click();
+    fixture.detectChanges();
+  };
 
-    fixture = TestBed.createComponent(AptitudPruebaComponent);
-
-    component = fixture.componentInstance;
-    component.turnoId = 'turno-test-123';
-
-    // Mock obtenerTurnoIdDelDia to return a valid ID for service interaction tests
-
-
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [AptitudComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    });
+    http = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(AptitudComponent);
     fixture.detectChanges();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  afterEach(() => http.verify());
+
+  it('turno próximo → elige somnolencia → envía → muestra color, horas y motivos de la API', async () => {
+    await responderTurnos([turno('t-pasado', -1), turno('t-1', 2), turno('t-2', 5)]);
+    expect(texto()).toContain('Empieza a las');
+    expect(pagina().querySelector('a[href="/diario"]')).not.toBeNull();
+
+    boton('Continuar').click();
+    fixture.detectChanges();
+
+    // Sin elección explícita no se puede enviar.
+    expect(boton('Ver resultado').disabled).toBe(true);
+    expect(slider().getAttribute('aria-valuetext')).toBe('Sin elegir');
+
+    slider().value = '2';
+    slider().dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(slider().getAttribute('aria-valuetext')).toBe('2 de 5: Alerta');
+
+    boton('Ver resultado').click();
+    const post = http.expectOne(`${environment.apiUrl}/aptitud/t-1`);
+    expect(post.request.method).toBe('POST');
+    expect(post.request.body).toEqual({ somnolencia: 2, compartido: false });
+    const respuesta: CrearAptitudResponse = { color: 'ambar', horasSueno24h: 6.3, motivos: ['sueno_intermedio'] };
+    post.flush(respuesta);
+    await estabilizar();
+
+    expect(texto()).toContain('APTO CON MEDIDAS');
+    expect(texto()).toContain('6,3 h');
+    expect(texto()).toContain('Dormiste entre 5 y 7 h');
   });
 
-  describe('form validation', () => {
-    it('should have somnolencia required and between 1-5', () => {
-      const control = component.getFormulario().get('somnolencia');
-      expect(control).toBeTruthy();
+  it('sin turno en las próximas 12 h → mensaje y sin POST', async () => {
+    await responderTurnos([turno('t-pasado', -1), turno('t-lejano', 13)]);
 
-      control?.setValue(null);
-      expect(control?.invalid).toBe(true);
-
-      control?.setValue(0);
-      expect(control?.invalid).toBe(true);
-
-      control?.setValue(6);
-      expect(control?.invalid).toBe(true);
-
-      control?.setValue(3);
-      expect(control?.valid).toBe(true);
-    });
-
-    it('should have compartido default to false', () => {
-      component.siguientePaso(); fixture.detectChanges();
-      expect(fixture.debugElement.query(By.css('#compartido')).nativeElement.checked).toBe(false);
-    });
+    expect(texto()).toContain('No tienes un turno en las próximas 12 h');
+    expect(boton('Continuar')).toBeUndefined();
+    http.expectNone((r) => r.method === 'POST');
   });
 
-  describe('consent toggle logic', () => {
-    it('should allow toggling compartido checkbox', () => {
-      // Advance to autorreporte step where the checkbox is rendered
-      component.siguientePaso();
-      fixture.detectChanges();
+  it('compartido es falso por defecto y el toque sobre el slider confirma el valor en el que está', async () => {
+    await irAlAutorreporte();
+    expect(pagina().querySelector<HTMLInputElement>('#compartido')?.checked).toBe(false);
 
-      const checkbox = fixture.debugElement.nativeElement.querySelector('#compartido');
-      expect(checkbox).toBeTruthy();
-
-      // Initially unchecked
-      expect(fixture.debugElement.query(By.css('#compartido')).nativeElement.checked).toBe(false);
-
-      // Click to check
-      checkbox.click();
-      fixture.detectChanges();
-      expect(checkbox.checked).toBe(true);
-    });
+    slider().dispatchEvent(new Event('pointerup'));
+    fixture.detectChanges();
+    expect(slider().getAttribute('aria-valuetext')).toBe('3 de 5: Normal');
+    expect(boton('Ver resultado').disabled).toBe(false);
   });
 
-  describe('service interaction', () => {
-    it('should call crearAptitud with correct parameters and navigate to resultado on success', async () => {
-      const mockResponse: CrearAptitudResponse = { color: 'verde', horasSueno24h: 8, motivos: ['sueno_suficiente'] };
-      // Return an Observable that has toPromise() method
-      aptitudServiceSpy.crearAptitud.mockReturnValue(of(mockResponse));
+  it('403 al enviar → mensaje y sigue en el autorreporte', async () => {
+    await irAlAutorreporte();
+    slider().dispatchEvent(new Event('pointerup'));
+    fixture.detectChanges();
 
-      // Set somnolencia to valid value
-      component.getFormulario().patchValue({ somnolencia: 2, compartido: false });
+    boton('Ver resultado').click();
+    http.expectOne(`${environment.apiUrl}/aptitud/t-1`).flush(null, { status: 403, statusText: 'Forbidden' });
+    await estabilizar();
 
-      await component.enviarAutoevaluacion();
-      await fixture.whenStable();
-
-      expect(aptitudServiceSpy.crearAptitud).toHaveBeenCalledWith('turno-test-123', {
-        somnolencia: 2,
-        compartido: false,
-      });
-      expect(component.getResultadoColor()).toBe('verde');
-      expect(component.getPasoActual()).toBe('resultado');
-    });
-
-    it('should handle network error gracefully', async () => {
-      aptitudServiceSpy.crearAptitud.mockReturnValue(throwError(() => ({ status: 0 })));
-
-      component.getFormulario().patchValue({ somnolencia: 3, compartido: true });
-      await component.enviarAutoevaluacion();
-      await fixture.whenStable();
-
-      expect(component.getErrorEnvio()).toContain('conexión');
-      expect(component.getEnviando()).toBe(false);
-    });
-
-    it('should handle 401 by logging out and redirecting', async () => {
-      aptitudServiceSpy.crearAptitud.mockReturnValue(throwError(() => ({ status: 401 })));
-
-      component.getFormulario().patchValue({ somnolencia: 3, compartido: false });
-      await component.enviarAutoevaluacion();
-      await fixture.whenStable();
-
-      expect(sesionServiceSpy.cerrar).toHaveBeenCalled();
-      expect(routerSpy.navigate).toHaveBeenCalledWith(['/ingresar'], {
-        queryParams: { retorno: '/aptitud' },
-      });
-    });
-
-    it('should handle 409 conflict', async () => {
-      aptitudServiceSpy.crearAptitud.mockReturnValue(throwError(() => ({ status: 409 })));
-
-      component.getFormulario().patchValue({ somnolencia: 3, compartido: false });
-      await component.enviarAutoevaluacion();
-      await fixture.whenStable();
-
-      expect(component.getErrorEnvio()).toContain('Ya existe una evaluación');
-    });
-  });
-
-  describe('turnoId validation', () => {
-    it('should show error when no active turno for today', async () => {
-      // Override mock to return null (no turno)
-      component.turnoId = null;
-
-      component.getFormulario().patchValue({ somnolencia: 3, compartido: false });
-      await component.enviarAutoevaluacion();
-      await fixture.whenStable();
-
-      expect(component.getErrorEnvio()).toContain('No hay un turno activo');
-      expect(component.getEnviando()).toBe(false);
-      expect(aptitudServiceSpy.crearAptitud).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('step navigation', () => {
-    it('should start at datos step', () => {
-      expect(component.getPasoActual()).toBe('datos');
-    });
-
-    it('should advance to autorreporte after completing datos', () => {
-      component.siguientePaso();
-      expect(component.getPasoActual()).toBe('autorreporte');
-      expect(component.getPasos()[0].completado).toBe(true);
-    });
-
-    it('should not allow skipping steps', () => {
-      expect(component.puedeAvanzarAPaso('resultado')).toBe(false);
-    });
-  });
-
-  describe('reiniciar', () => {
-    it('should reset form and state', async () => {
-      component.getFormulario().patchValue({ somnolencia: 4, compartido: true });
-      await component.enviarAutoevaluacion();
-
-      component.reiniciar();
-
-      expect(component.getFormulario().get('somnolencia')?.value).toBeNull();
-      component.siguientePaso(); fixture.detectChanges();
-      expect(fixture.debugElement.query(By.css('#compartido')).nativeElement.checked).toBe(false);
-      expect(component.getResultadoColor()).toBeNull();
-      expect(component.getMotivos()).toEqual([]);
-      expect(component.getPasoActual()).toBe('autorreporte');
-    });
+    expect(texto()).toContain('Este turno no está asignado a ti.');
+    expect(boton('Ver resultado')).toBeDefined();
   });
 });

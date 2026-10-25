@@ -1,47 +1,51 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { ConsultarDespachoRequest, EvaluacionDespacho } from '@circadiano/contracts';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
+import type { EvaluacionDespacho } from '@circadiano/contracts';
 import { SemaforoAptitudComponent } from '../../compartido/semaforo-aptitud/semaforo-aptitud.component';
 import { TarjetaComponent } from '../../compartido/tarjeta/tarjeta.component';
 import { ESTILOS_FORMULARIO } from '../../auth/estilos-formulario';
-import { AptitudService } from '../aptitud/aptitud.service';
+import { AptitudService, fechaLocal } from '../aptitud/aptitud.service';
 
+// El 401 lo resuelve el authInterceptor (renueva o cierra la sesión).
+const MENSAJE_POR_ESTADO: Record<number, string> = {
+  0: 'Sin conexión. No se pudo consultar.',
+  400: 'Revisa la fecha y el código.',
+  403: 'Esta vista es solo para el despachador.',
+};
+
+/** RF12 / RN10: colores del semáforo que los conductores decidieron compartir en el día. */
 @Component({
   selector: 'app-despacho-aptitud',
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    SemaforoAptitudComponent,
-    TarjetaComponent,
-  ],
+  imports: [ReactiveFormsModule, SemaforoAptitudComponent, TarjetaComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  styles: ESTILOS_FORMULARIO,
+  styles: [
+    ESTILOS_FORMULARIO,
+    `
+      .pagina { display: grid; gap: 14px; }
+      .lista { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+      .fila { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
+      .fila .participante { font-size: 0.875rem; font-weight: 600; color: var(--color-texto); }
+    `,
+  ],
   template: `
     <section class="pagina">
-      <header class="encabezado-pagina">
-        <h1>Despacho — Evaluaciones de aptitud</h1>
-        <p class="ayuda">Consulta el semáforo de aptitud de los conductores por turno y fecha.</p>
-      </header>
+      <h1>Pre-salida del día</h1>
+      <p>Solo aparecen los conductores que compartieron su resultado. No se muestran horas de sueño ni respuestas.</p>
 
       <app-tarjeta>
-        <h2>Filtros</h2>
         <form [formGroup]="formulario" (ngSubmit)="consultar()">
-          <div class="fila-formulario">
-            <div class="campo">
-              <label for="codigo">Código de turno</label>
-              <input type="text" id="codigo" formControlName="codigo" placeholder="Ej: T-123" />
-            </div>
-            <div class="campo">
-              <label for="fecha">Fecha</label>
-              <input type="date" id="fecha" formControlName="fecha" />
-            </div>
-          </div>
-          <button class="boton" type="submit" [disabled]="consultando()">Consultar</button>
+          <label for="fecha">
+            Fecha
+            <input type="date" id="fecha" formControlName="fecha" />
+          </label>
+          <label for="codigo">
+            Código de participante (P01)
+            <input type="text" id="codigo" formControlName="codigo" placeholder="Todos" autocomplete="off" />
+          </label>
+          <button class="boton" type="submit" [disabled]="consultando() || formulario.invalid">Consultar</button>
         </form>
-
         @if (error()) {
           <p class="error" role="alert">{{ error() }}</p>
         }
@@ -49,19 +53,18 @@ import { AptitudService } from '../aptitud/aptitud.service';
 
       @if (evaluaciones().length > 0) {
         <app-tarjeta>
-          <h2>Evaluaciones ({{ evaluaciones().length }})</h2>
-          <ul class="lista-evaluaciones" role="list">
-            @for (e of evaluaciones(); track e.codigo) {
-              <li class="fila-evaluacion">
-                <span class="codigo">{{ e.codigo }}</span>
+          <ul class="lista">
+            @for (e of evaluaciones(); track $index) {
+              <li class="fila">
+                <span class="participante">{{ e.codigo }}</span>
                 <app-semaforo-aptitud [color]="e.color" />
               </li>
             }
           </ul>
         </app-tarjeta>
-      } @else if (consultado()) {
+      } @else if (consultado() && !error()) {
         <app-tarjeta>
-          <p class="vacio" role="status">No hay evaluaciones para los filtros seleccionados.</p>
+          <p role="status">Nadie ha compartido su resultado para esta búsqueda.</p>
         </app-tarjeta>
       }
     </section>
@@ -72,8 +75,8 @@ export class DespachoAptitudComponent {
   private readonly aptitudService = inject(AptitudService);
 
   protected readonly formulario = this.fb.group({
-    codigo: ['', [Validators.required, Validators.maxLength(20)]],
-    fecha: [this.fechaHoy(), [Validators.required]],
+    fecha: [fechaLocal(new Date()), [Validators.required]],
+    codigo: ['', [Validators.maxLength(10)]],
   });
 
   protected readonly evaluaciones = signal<readonly EvaluacionDespacho[]>([]);
@@ -81,8 +84,8 @@ export class DespachoAptitudComponent {
   protected readonly consultado = signal(false);
   protected readonly error = signal<string | null>(null);
 
-  private fechaHoy(): string {
-    return new Date().toISOString().split('T')[0];
+  constructor() {
+    void this.consultar();
   }
 
   protected async consultar(): Promise<void> {
@@ -90,37 +93,21 @@ export class DespachoAptitudComponent {
       this.formulario.markAllAsTouched();
       return;
     }
+    const { fecha, codigo } = this.formulario.getRawValue();
+    const codigoLimpio = codigo.trim().toUpperCase();
 
     this.consultando.set(true);
     this.error.set(null);
-
-    const codigo = this.formulario.value.codigo;
-    const fecha = this.formulario.value.fecha;
-
-    if (!codigo || !fecha) {
-      this.consultando.set(false);
-      return;
-    }
-
-    const request: ConsultarDespachoRequest = {
-      codigo,
-      fecha,
-    };
-
     try {
-      const respuesta = await this.aptitudService.consultarDespacho(request).toPromise();
-      this.evaluaciones.set(respuesta?.evaluaciones ?? []);
+      const respuesta = await firstValueFrom(
+        this.aptitudService.consultarDespacho({ fecha, ...(codigoLimpio && { codigo: codigoLimpio }) }),
+      );
+      this.evaluaciones.set(respuesta.evaluaciones);
     } catch (e: unknown) {
-      const httpError = e as { status?: number; error?: { message?: string } };
-      if (httpError.status === 0) {
-        this.error.set('Sin conexión. No se pudo consultar el despacho.');
-      } else if (httpError.status === 401) {
-        this.error.set('Sesión expirada. Vuelve a iniciar sesión.');
-      } else if (httpError.status === 403) {
-        this.error.set('No tienes permiso de despachador.');
-      } else {
-        this.error.set(httpError.error?.message ?? 'Error al consultar evaluaciones.');
-      }
+      this.evaluaciones.set([]);
+      this.error.set(
+        (e instanceof HttpErrorResponse && MENSAJE_POR_ESTADO[e.status]) || 'No se pudo consultar. Inténtalo de nuevo.',
+      );
     } finally {
       this.consultando.set(false);
       this.consultado.set(true);
