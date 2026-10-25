@@ -2,8 +2,10 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CafeinaService } from './cafeina.service';
 import { BebidaDto } from '@circadiano/contracts';
+import { Roles } from '../plataforma/auth';
 
 @ApiTags('bebidas')
+@Roles('trabajador')
 @Controller('bebidas')
 export class BebidasController {
   constructor(private readonly cafeinaService: CafeinaService) {}

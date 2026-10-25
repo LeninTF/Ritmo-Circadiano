@@ -7,6 +7,7 @@ import request from 'supertest';
 import { JwtAuthGuard, RolesGuard } from '../plataforma/auth';
 import { NotificacionesController } from '../notificaciones/notificaciones.controller';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
+import { BebidasController } from './bebidas.controller';
 import { CafeinaController } from './cafeina.controller';
 import { CafeinaService } from './cafeina.service';
 
@@ -22,6 +23,7 @@ describe('Cafeina y push usan el usuario del token (RNF04)', () => {
     eliminarIngesta: jest.fn().mockResolvedValue(undefined),
     calcularResidualHastaSueno: jest.fn().mockResolvedValue({}),
     obtenerResumen: jest.fn().mockResolvedValue({}),
+    obtenerBebidas: jest.fn().mockResolvedValue([]),
     sincronizarLote: jest.fn().mockResolvedValue([]),
   };
   const notificaciones = { guardarSuscripcion: jest.fn(), marcarAbierta: jest.fn().mockResolvedValue({}) };
@@ -29,7 +31,7 @@ describe('Cafeina y push usan el usuario del token (RNF04)', () => {
   beforeAll(async () => {
     const modulo = await Test.createTestingModule({
       imports: [JwtModule.register({ secret: randomBytes(32).toString('hex') })],
-      controllers: [CafeinaController, NotificacionesController],
+      controllers: [CafeinaController, BebidasController, NotificacionesController],
       providers: [
         { provide: CafeinaService, useValue: cafeina },
         { provide: NotificacionesService, useValue: notificaciones },
@@ -94,10 +96,26 @@ describe('Cafeina y push usan el usuario del token (RNF04)', () => {
     await http.get('/cafeina/resumen?id_usuario=otro').set('Authorization', autorizacion).expect(400);
   });
 
-  it('el resumen exige token y rol trabajador', async () => {
+  it('todas las rutas de cafeína y bebidas exigen token y rol trabajador (CLAUDE.md §6)', async () => {
     const http = request(app.getHttpServer());
-    await http.get('/cafeina/resumen').expect(401);
-    await http.get('/cafeina/resumen').set('Authorization', autorizacionDespachador).expect(403);
+    const cuerpo = { id_bebida: 1, fecha_hora: '2026-10-24T13:30:00.000Z', client_id: UUID };
+    const rutas = [
+      () => http.get('/cafeina/resumen'),
+      () => http.get('/cafeina?fecha=2026-10-24'),
+      () => http.get('/cafeina/residual?hasta=23'),
+      () => http.post('/cafeina').send(cuerpo),
+      () => http.post('/cafeina/sync/lote').send([cuerpo]),
+      () => http.delete('/cafeina/7'),
+      () => http.get('/bebidas'),
+    ];
+    jest.clearAllMocks();
+    for (const ruta of rutas) {
+      await ruta().expect(401);
+      await ruta().set('Authorization', autorizacionDespachador).expect(403);
+    }
+    expect(Object.values(cafeina).every((fn) => fn.mock.calls.length === 0)).toBe(true);
+
+    await http.get('/bebidas').set('Authorization', autorizacion).expect(200);
   });
 
   it('POST /cafeina valida el cuerpo antes de llegar al servicio (HU-03)', async () => {

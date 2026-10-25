@@ -22,6 +22,8 @@ import { ConsultarResumenCafeinaDto } from './dto/consultar-resumen.dto';
 import { CrearIngestaCafeinaBodyDto } from './dto/crear-ingesta.dto';
 
 @ApiTags('cafeina')
+// Datos personales de consumo: solo el trabajador dueño (CLAUDE.md §6).
+@Roles('trabajador')
 @Controller('cafeina')
 export class CafeinaController {
   constructor(private readonly cafeinaService: CafeinaService) {}
@@ -59,7 +61,6 @@ export class CafeinaController {
   }
 
   @Get('resumen')
-  @Roles('trabajador')
   @ApiOperation({ summary: 'Consumo por día (hora de Lima) y cafeína activa estimada (RF09)' })
   @ApiResponse({ status: 200, description: 'Resumen calculado. La cafeína activa es una estimación, no un dato médico.' })
   async obtenerResumen(
