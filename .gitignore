@@ -10,6 +10,8 @@ coverage/
 .env
 .env.*
 !.env.example
+# Puerto de la PWA en desarrollo; no es secreto.
+!apps/pwa/.env.serve
 
 # herramientas locales
 .qodo/
