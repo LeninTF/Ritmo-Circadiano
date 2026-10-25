@@ -118,6 +118,18 @@ describe('CafeinaService', () => {
     expect(outbox.sync).toHaveBeenCalled();
   });
 
+  it('espera el envío para que «Mi consumo» ya lo cuente, pero nunca más de 5 s', async () => {
+    jest.useFakeTimers();
+    try {
+      outbox.sync.mockReturnValue(new Promise(() => undefined));
+      const guardado = servicio.registrar(registro(), AHORA);
+      await jest.advanceTimersByTimeAsync(5_000);
+      await expect(guardado).resolves.toBe('cid-1');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('si falla el store auxiliar no lanza: ya está en la cola y reintentar la duplicaría', async () => {
     store.addIngesta.mockRejectedValue(new Error('cuota llena'));
 
