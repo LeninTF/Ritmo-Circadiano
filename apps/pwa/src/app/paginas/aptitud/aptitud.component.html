@@ -1,0 +1,119 @@
+<section class="pagina">
+  <h1>Chequeo pre-salida</h1>
+
+  <nav class="stepper" aria-label="Pasos de la autoevaluación">
+    @for (paso of pasos(); track paso.id) {
+      <button
+        type="button"
+        class="paso"
+        [class.activo]="pasoActual() === paso.id"
+        [class.completado]="paso.completado"
+        [disabled]="!puedeAvanzarAPaso(paso.id)"
+        (click)="irAPaso(paso.id)"
+        [attr.aria-current]="pasoActual() === paso.id ? 'step' : null"
+      >
+        <span class="numero">{{ indicePaso(paso.id) + 1 }}</span>
+        <span class="texto">{{ paso.titulo }}</span>
+      </button>
+    }
+  </nav>
+
+  <!-- Aviso fijo RN11 -->
+  <p class="aviso-rn11" role="note">
+    Herramienta preventiva de apoyo. No reemplaza la evaluación médica ni autoriza la salida.
+  </p>
+
+  @if (pasoActual() === 'datos') {
+    <app-tarjeta>
+      <h2>Tu próximo turno</h2>
+      @if (cargandoTurno()) {
+        <p role="status">Buscando tu turno…</p>
+      } @else if (errorTurno()) {
+        <p class="error" role="alert">{{ errorTurno() }}</p>
+        <button class="boton boton--secundario" type="button" (click)="reiniciar()">Reintentar</button>
+      } @else if (turno(); as t) {
+        <p class="dato">Empieza a las {{ t.inicioProgramado | date: 'HH:mm' }}</p>
+        <p>
+          Tu resultado usa el sueño que anotaste en tu
+          <a class="enlace" routerLink="/diario">Diario</a> en las últimas 24 h.
+          Si aún no lo anotaste, puedes hacerlo antes o continuar igual.
+        </p>
+        <button class="boton" type="button" (click)="siguientePaso()">Continuar</button>
+      } @else {
+        <p role="status">No tienes un turno en las próximas 12 h.</p>
+      }
+    </app-tarjeta>
+  }
+
+  @if (pasoActual() === 'autorreporte') {
+    <app-tarjeta>
+      <h2 id="titulo-somnolencia">¿Cuánto sueño sientes ahora?</h2>
+      <form [formGroup]="formulario" (ngSubmit)="enviarAutoevaluacion()">
+        <div>
+          <input
+            #slider
+            type="range"
+            id="somnolencia"
+            formControlName="somnolencia"
+            min="1"
+            max="5"
+            step="1"
+            class="slider"
+            aria-labelledby="titulo-somnolencia"
+            [attr.aria-valuetext]="etiquetaSomnolencia(formulario.controls.somnolencia.value)"
+            (pointerup)="elegirSomnolencia(slider)"
+            (keydown.enter)="$event.preventDefault(); elegirSomnolencia(slider)"
+            (keydown.space)="$event.preventDefault(); elegirSomnolencia(slider)"
+          />
+          <div class="slider-etiquetas" aria-hidden="true">
+            @for (nivel of nivelesSomnolencia; track nivel.valor) {
+              <span [class.activo]="formulario.controls.somnolencia.value === nivel.valor">
+                <strong>{{ nivel.valor }}</strong>
+                {{ nivel.etiqueta }}
+              </span>
+            }
+          </div>
+          <p class="eleccion" aria-hidden="true">
+            Elegiste: {{ etiquetaSomnolencia(formulario.controls.somnolencia.value) }}
+          </p>
+        </div>
+
+        @if (formulario.controls.somnolencia.invalid && formulario.controls.somnolencia.touched) {
+          <p class="error" role="alert">Mueve o toca el control para elegir un nivel del 1 al 5.</p>
+        }
+
+        <label class="casilla" for="compartido">
+          <input type="checkbox" id="compartido" formControlName="compartido" />
+          <span>
+            Compartir el color con el despachador
+            <span class="ayuda">Solo verá el color (verde, ámbar o rojo). No verá tus horas de sueño ni tu respuesta.</span>
+          </span>
+        </label>
+
+        <button class="boton" type="submit" [disabled]="enviando() || formulario.invalid">
+          {{ enviando() ? 'Evaluando…' : 'Ver resultado' }}
+        </button>
+
+        @if (errorEnvio()) {
+          <p class="error" role="alert">{{ errorEnvio() }}</p>
+        }
+      </form>
+    </app-tarjeta>
+  }
+
+  @if (pasoActual() === 'resultado') {
+    <app-tarjeta [heroe]="true">
+      <h2>Resultado</h2>
+      @if (resultado(); as r) {
+        <app-semaforo-aptitud [color]="r.color" />
+        <p class="dato">Sueño en las últimas 24 h: {{ formatearHoras(r.horasSueno24h) }} h</p>
+        <ul class="motivos">
+          @for (m of r.motivos; track m) {
+            <li>{{ textoMotivo(m) }}</li>
+          }
+        </ul>
+        <button class="boton boton--secundario" type="button" (click)="reiniciar()">Nueva evaluación</button>
+      }
+    </app-tarjeta>
+  }
+</section>

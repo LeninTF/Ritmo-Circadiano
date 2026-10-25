@@ -55,6 +55,8 @@ model Usuario {
 
   area         Area         @relation(fields: [idArea], references: [id])
   evaluaciones Evaluacion[]
+  /// Inversa de la FK de I5 (RF12).
+  aptitudes    AptitudPresalida[]
 
   @@map("usuario")
 }

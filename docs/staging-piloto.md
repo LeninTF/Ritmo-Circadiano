@@ -21,6 +21,7 @@ La API usa `apps/api/Dockerfile`. Al arrancar corre `prisma migrate deploy` y `p
    - `VAPID_PUBLIC_KEY` y `VAPID_PRIVATE_KEY`: generarlas una vez con `npx web-push generate-vapid-keys`.
    - `JWT_SECRET`: con Blueprint lo genera Render solo; en el servicio manual hay que crearla: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` (minimo 32 caracteres).
    - `JWT_EXPIRA`: `8h` (solo en el servicio manual).
+   - `SWAGGER_HABILITADO`: `true` (solo en el servicio manual; sin ella `/docs` no se publica).
 3. **PWA.** En Cloudflare, *Workers & Pages > Create > Connect to Git* (hoy crea un proyecto de tipo Workers que sirve archivos estaticos). Repo `LeninTF/Ritmo-Circadiano`, rama de produccion `develop`:
    - Nombre del proyecto: `ritmo-circadiano-pwa`. **Debe coincidir con `name` de `wrangler.jsonc`**; si se elige otro, cambiar ese archivo.
    - Comando de build (con guarda: falla si falta `API_URL`): `test -n "$API_URL" && sed -i "s#apiUrl: ''#apiUrl: '$API_URL'#" apps/pwa/src/environments/environment.production.ts && npm ci && npx nx build pwa --configuration=production`
