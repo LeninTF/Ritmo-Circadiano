@@ -64,12 +64,17 @@ describe('NotificacionesService', () => {
       abierta: true,
     });
 
-    const resultado = await service.marcarAbierta(1);
+    const resultado = await service.marcarAbierta(1, 'usr-1');
     expect(resultado.abierta).toBe(true);
     expect(mockPrismaService.notificacion.update).toHaveBeenCalledWith({
-      where: { id_notificacion: 1 },
+      where: { id_notificacion: 1, id_usuario: 'usr-1' },
       data: { abierta: true },
     });
+  });
+
+  it('una notificacion ajena o inexistente da 404', async () => {
+    mockPrismaService.notificacion.update.mockRejectedValueOnce(new Error('P2025'));
+    await expect(service.marcarAbierta(1, 'otro')).rejects.toThrow('Notificacion no encontrada');
   });
 
   it('debe encolar una nueva notificación', async () => {

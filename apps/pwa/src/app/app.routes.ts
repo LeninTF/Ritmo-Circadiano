@@ -46,10 +46,30 @@ export const appRoutes: Route[] = [
       ),
   },
   {
+    path: 'admin/parametros',
+    canActivate: [rolGuard('administrador')],
+    loadComponent: () =>
+      import('./paginas/admin-parametros/admin-parametros.component').then(
+        (m) => m.AdminParametrosComponent,
+      ),
+  },
+  {
     path: 'plan',
     canActivate: [autenticadoGuard],
     loadComponent: () =>
       import('./paginas/plan/plan.component').then((m) => m.PlanComponent),
+  },
+  {
+    path: 'plan/:idTurno',
+    canActivate: [autenticadoGuard],
+    loadComponent: () =>
+      import('./paginas/plan/plan.component').then((m) => m.PlanComponent),
+  },
+  {
+    path: 'cronotipo',
+    canActivate: [autenticadoGuard],
+    loadComponent: () =>
+      import('./paginas/circadiano/rmeq.component').then((m) => m.RmeqComponent),
   },
   {
     path: 'cafeina',

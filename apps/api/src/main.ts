@@ -1,13 +1,23 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function arrancar(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Render pone un proxy delante: sin esto req.ip es el del proxy y el limite de peticiones
+  // se compartiria entre todos. shortcut: confia en 1 salto, revisar si cambia el hosting.
+  app.set('trust proxy', 1);
 
   app.use(helmet());
+  // Las respuestas tienen datos personales: ni el navegador ni un proxy deben guardarlas (ZAP 10049).
+  app.use((_solicitud: unknown, respuesta: { setHeader(n: string, v: string): void }, siguiente: () => void) => {
+    respuesta.setHeader('Cache-Control', 'no-store');
+    siguiente();
+  });
   // Un origen distinto a CORS_ORIGIN no recibe cabeceras CORS (el navegador lo bloquea).
   const origenPermitido = process.env['CORS_ORIGIN'];
   app.enableCors({
@@ -24,16 +34,19 @@ async function arrancar(): Promise<void> {
     }),
   );
 
-  const documento = new DocumentBuilder()
-    .setTitle('Gestor Web Circadiano')
-    .setVersion('0.0.0')
-    .addBearerAuth()
-    .build();
-  SwaggerModule.setup(
-    'docs',
-    app,
-    SwaggerModule.createDocument(app, documento),
-  );
+  // Cerrado por defecto: en produccion /docs y /docs-json revelarian toda la superficie de la API.
+  if (process.env['SWAGGER_HABILITADO'] === 'true') {
+    const documento = new DocumentBuilder()
+      .setTitle('Gestor Web Circadiano')
+      .setVersion('0.0.0')
+      .addBearerAuth()
+      .build();
+    SwaggerModule.setup(
+      'docs',
+      app,
+      SwaggerModule.createDocument(app, documento),
+    );
+  }
 
   const puerto = Number(process.env['PORT'] ?? 3000);
   await app.listen(puerto);
