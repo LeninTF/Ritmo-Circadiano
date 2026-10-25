@@ -52,11 +52,33 @@ describe('App', () => {
     await fixture.whenStable();
     fixture.nativeElement.querySelector('.boton-tema').click();
     fixture.detectChanges();
-    expect(fixture.nativeElement.getAttribute('data-tema')).toBe('oscuro');
+    expect(document.documentElement.getAttribute('data-tema')).toBe('oscuro');
     expect(localStorage.getItem('gestor-circadiano-tema')).toBe('oscuro');
     fixture.nativeElement.querySelector('.boton-tema').click();
     fixture.detectChanges();
-    expect(fixture.nativeElement.getAttribute('data-tema')).toBe('claro');
+    expect(document.documentElement.getAttribute('data-tema')).toBe('claro');
+  });
+
+  it('el texto y el icono del botón siguen al tema (OnPush)', async () => {
+    localStorage.setItem('gestor-circadiano-tema', 'claro');
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    const boton = () => fixture.nativeElement.querySelector('.boton-tema') as HTMLButtonElement;
+    expect(boton().getAttribute('aria-label')).toBe('Activar modo oscuro');
+
+    boton().click();
+    fixture.detectChanges();
+    expect(boton().getAttribute('aria-label')).toBe('Activar modo claro');
+    expect(boton().textContent).toContain('Modo claro');
+  });
+
+  it('los iconos son SVG decorativos, sin caracteres Unicode', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    const raiz = fixture.nativeElement as HTMLElement;
+    expect(raiz.querySelectorAll('nav a svg[aria-hidden="true"]')).toHaveLength(4);
+    expect(raiz.querySelector('.boton-tema svg[aria-hidden="true"]')).not.toBeNull();
+    expect(raiz.textContent).not.toMatch(/[☀☾◒]/);
   });
 
 
