@@ -1,4 +1,4 @@
-import type { ColorSemaforo } from '@circadiano/contracts';
+import type { ColorSemaforo, MotivoAptitud } from '@circadiano/contracts';
 import {
   SEMAFORO_AMBAR_MIN_H,
   SEMAFORO_ROJO_SOMNOLENCIA_MIN,
@@ -24,7 +24,7 @@ export interface ResultadoAptitudPresalida {
    * Motivos del color. Rojo tiene prioridad y puede acumular ambos.
    * No es un diagnostico medico ni autoriza conducir o salir.
    */
-  motivos: readonly ('sueno_insuficiente' | 'somnolencia_elevada' | 'sueno_intermedio' | 'sueno_suficiente')[];
+  motivos: readonly MotivoAptitud[];
   /** El calculo no depende del consentimiento. */
   compartido: false;
   /**
@@ -83,7 +83,7 @@ export function calcularAptitudPresalida(
   const somnolenciaElevada = entrada.somnolencia >= SEMAFORO_ROJO_SOMNOLENCIA_MIN;
 
   if (suenoInsuficiente || somnolenciaElevada) {
-    const motivos: ResultadoAptitudPresalida['motivos'][number][] = [];
+    const motivos: MotivoAptitud[] = [];
     if (suenoInsuficiente) motivos.push('sueno_insuficiente');
     if (somnolenciaElevada) motivos.push('somnolencia_elevada');
     return {

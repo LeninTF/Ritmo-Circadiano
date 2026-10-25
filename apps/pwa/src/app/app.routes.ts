@@ -96,6 +96,14 @@ export const appRoutes: Route[] = [
       ),
   },
   {
+    path: 'despacho',
+    canActivate: [rolGuard('despachador')],
+    loadComponent: () =>
+      import('./paginas/despacho/despacho-aptitud.component').then(
+        (m) => m.DespachoAptitudComponent,
+      ),
+  },
+  {
     path: 'diario',
     canActivate: [autenticadoGuard],
     loadComponent: () =>
