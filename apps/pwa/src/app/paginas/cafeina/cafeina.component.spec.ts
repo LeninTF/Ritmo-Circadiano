@@ -52,14 +52,18 @@ describe('CafeinaComponent (HU-03)', () => {
     expect(el.querySelector('.cifra-heroe')?.textContent).toBe('190');
   });
 
-  it('«Otro» pide los mg y bloquea Guardar hasta que sean válidos', async () => {
+  it('«Otro» pide los mg, avisa el error al salir del campo y bloquea Guardar hasta que sean válidos', async () => {
     tiles()[2].click();
     await render();
-    expect(el.querySelector('.error')?.textContent).toContain('Indica los mg (entre 1 y 1000).');
+    expect(el.querySelector('.error')?.textContent?.trim()).toBe('');
     expect(boton('Guardar')?.disabled).toBe(true);
 
     const mg = el.querySelector<HTMLInputElement>('#mg');
     if (!mg) throw new Error('falta el campo de mg');
+    mg.dispatchEvent(new Event('blur'));
+    await render();
+    expect(el.querySelector('.error')?.textContent).toContain('Indica los mg (entre 1 y 1000).');
+
     mg.value = '150';
     mg.dispatchEvent(new Event('input'));
     await render();

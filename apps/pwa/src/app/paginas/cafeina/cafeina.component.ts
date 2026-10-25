@@ -65,7 +65,8 @@ const horaActual = (ahora = new Date()) =>
             <div class="campo">
               <label for="mg">Miligramos de cafeína</label>
               <input id="mg" type="number" inputmode="numeric" min="1" max="1000" [value]="cafeinaMg() ?? ''"
-                (input)="cambiarMg($any($event.target).value)" [attr.aria-invalid]="!!error()"
+                (input)="cambiarMg($any($event.target).value)" (blur)="mgTocado.set(true)"
+                [attr.aria-invalid]="!!errorVisible()"
                 aria-describedby="error-registro" />
             </div>
           } @else {
@@ -88,7 +89,7 @@ const horaActual = (ahora = new Date()) =>
           </div>
 
           <p class="total"><span class="cifra-heroe">{{ total() }}</span> mg</p>
-          <p id="error-registro" class="error" role="alert">{{ error() ?? errorGuardado() }}</p>
+          <p id="error-registro" class="error" role="alert">{{ errorVisible() ?? errorGuardado() }}</p>
 
           <button type="button" class="primario" (click)="guardar()" [disabled]="guardando() || !!error()">
             {{ guardando() ? 'Guardando…' : 'Guardar' }}
@@ -186,6 +187,8 @@ export class CafeinaComponent implements OnInit {
   readonly guardando = signal(false);
   readonly aviso = signal('');
   readonly errorGuardado = signal('');
+  /** El error de mg se muestra al salir del campo, no apenas se elige «Otro». */
+  readonly mgTocado = signal(false);
 
   private readonly registro = computed<RegistroCafeina>(() => {
     const elegida = this.seleccion();
@@ -197,7 +200,8 @@ export class CafeinaComponent implements OnInit {
     };
   });
   readonly total = computed(() => totalMg(this.registro()));
-  readonly error = computed(() => (this.seleccion() ? errorRegistro(this.registro(), new Date()) : null));
+  readonly error = computed(() => (this.seleccion() ? errorRegistro(this.registro()) : null));
+  readonly errorVisible = computed(() => (this.seleccion() === 'otro' && !this.mgTocado() ? null : this.error()));
 
   async ngOnInit(): Promise<void> {
     this.bebidas.set(await this.cafeina.obtenerBebidas());
@@ -211,6 +215,7 @@ export class CafeinaComponent implements OnInit {
   elegir(opcion: BebidaDto | 'otro'): void {
     this.seleccion.set(opcion);
     this.porciones.set(1);
+    this.mgTocado.set(false);
     this.aviso.set('');
     this.errorGuardado.set('');
   }
@@ -221,6 +226,7 @@ export class CafeinaComponent implements OnInit {
 
   cambiarMg(valor: string): void {
     this.cafeinaMg.set(valor === '' ? null : Number(valor));
+    if (valor !== '') this.mgTocado.set(true);
   }
 
   async guardar(): Promise<void> {
