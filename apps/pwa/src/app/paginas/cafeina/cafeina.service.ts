@@ -57,6 +57,8 @@ export interface MiConsumo {
 type IngestaLocalConFecha = IngestaLocal & { fechaHora: string };
 
 const MS_H = 3_600_000;
+// Con señal se espera el envío antes de volver a «Mi consumo», pero nunca más de esto.
+const ESPERA_ENVIO_MS = 5_000;
 const CLAVE_CACHE_BEBIDAS = 'circaruta.bebidas';
 // HU-03: el servidor acepta hasta 5 min en el futuro por relojes desfasados.
 const MARGEN_FUTURO_MS = 5 * 60_000;
@@ -127,6 +129,12 @@ export function mensajeCafeinaActiva(activa: CafeinaActivaDto, plan: PlanDiarioD
   return `${nivel} Si duermes a las ${horaLima(plan.inicioSueno)}, ${corte}.`;
 }
 
+async function esperarConTope(promesa: Promise<unknown>, ms: number): Promise<void> {
+  let tope: ReturnType<typeof setTimeout> | undefined;
+  await Promise.race([promesa, new Promise((listo) => (tope = setTimeout(listo, ms)))]);
+  clearTimeout(tope);
+}
+
 const aItemLocal = (l: IngestaLocalConFecha, pendiente: boolean): ConsumoItem => ({
   clientId: l.clientId,
   idIngesta: null,
@@ -189,7 +197,8 @@ export class CafeinaService {
     } catch {
       // Ya está en la cola: fallar aquí haría que el trabajador reintente y la duplique.
     }
-    void this.outbox.sync().catch(() => undefined);
+    // Así «Mi consumo» ya lo cuenta al volver; sin señal la cola falla rápido y queda pendiente.
+    await esperarConTope(this.outbox.sync().catch(() => undefined), ESPERA_ENVIO_MS);
     return clientId;
   }
 
