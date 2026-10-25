@@ -36,6 +36,18 @@ describe('CafeinaComponent (HU-03)', () => {
     await render();
   });
 
+  it('elige el icono por el nombre, también con tilde («Té»)', () => {
+    const icono = (nombre: string) =>
+      fixture.componentInstance.icono({ id_bebida: 9, nombre, cafeina_mg: 1, volumen_ml: 1 });
+    expect(icono('Té')).toBe('te');
+    expect(icono('Té verde')).toBe('te');
+    expect(icono('Infusión de coca')).toBe('te');
+    expect(icono('Bebida energizante')).toBe('energia');
+    expect(icono('Gaseosa cola')).toBe('gaseosa');
+    expect(icono('Tetera de café')).toBe('cafe');
+    expect(icono('Espresso')).toBe('cafe');
+  });
+
   it('muestra el catálogo de la API más «Otro», sin selección ni botón Guardar', () => {
     expect(tiles().map((t) => t.querySelector('.nombre')?.textContent)).toEqual(['Café pasado', 'Té verde', 'Otro']);
     expect(tiles().every((t) => t.getAttribute('aria-pressed') === 'false')).toBe(true);
