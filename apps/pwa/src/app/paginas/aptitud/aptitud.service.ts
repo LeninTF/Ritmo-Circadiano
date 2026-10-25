@@ -19,7 +19,7 @@ export class AptitudService {
 
   consultarDespacho(request: ConsultarDespachoRequest): Observable<ConsultarDespachoResponse> {
     return this.http.get<ConsultarDespachoResponse>(`${this.baseUrl}/despacho`, {
-      params: { codigo: request.codigo, fecha: request.fecha },
+      params: request.codigo ? { fecha: request.fecha, codigo: request.codigo } : { fecha: request.fecha },
     });
   }
 }

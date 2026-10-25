@@ -42,7 +42,7 @@ export class AptitudService {
       ahora,
     );
 
-    const { color } = calcularAptitudPresalida({ horasSueno24h, somnolencia: dto.somnolencia });
+    const { color, motivos } = calcularAptitudPresalida({ horasSueno24h, somnolencia: dto.somnolencia });
     await this.prisma.aptitudPresalida.create({
       data: {
         idUsuario,
@@ -55,41 +55,42 @@ export class AptitudService {
         compartido: dto.compartido === true,
       },
     });
-    return { color };
+    // Se persiste el valor exacto; solo la respuesta se redondea a 0,1 h.
+    return { color, horasSueno24h: Math.round(horasSueno24h * 10) / 10, motivos: [...motivos] };
   }
 
   /**
-   * Color de la ultima evaluacion de cada turno del participante en el dia (hora de Lima).
-   * Solo el color y solo si esa ultima evaluacion se compartio (RN10).
+   * Color de la ultima evaluacion de cada turno del dia (hora de Lima). Sin `codigo`, de todos
+   * los participantes. Solo el color y solo si esa ultima evaluacion se compartio (RN10): quien
+   * no evaluo o no compartio no aparece, para no revelar quien se nego (RN11).
    */
-  async consultarDespacho(codigo: string, fecha: string): Promise<ConsultarDespachoResponse> {
+  async consultarDespacho(fecha: string, codigo?: string): Promise<ConsultarDespachoResponse> {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha ?? '') || Number.isNaN(Date.parse(`${fecha}T00:00:00${ZONA_LIMA}`))) {
       throw new BadRequestException('fecha debe tener formato AAAA-MM-DD.');
     }
-    if (!codigo?.trim()) {
-      throw new BadRequestException('codigo es obligatorio.');
+    if (codigo !== undefined && (typeof codigo !== 'string' || !codigo.trim())) {
+      throw new BadRequestException('codigo no puede estar vacio.');
     }
     const desde = new Date(`${fecha}T00:00:00${ZONA_LIMA}`);
     const hasta = new Date(desde.getTime() + VENTANA_SUENO_MS);
 
-    // Lectura minima de `usuario` (I1): solo traduce codigo_participante a id.
-    const usuario = await this.prisma.usuario.findUnique({
-      where: { codigoParticipante: codigo },
-      select: { id: true },
-    });
-    if (!usuario) return { evaluaciones: [] };
-
     const ultimas = await this.prisma.aptitudPresalida.findMany({
-      where: { idUsuario: usuario.id, fechaHora: { gte: desde, lt: hasta } },
+      where: {
+        fechaHora: { gte: desde, lt: hasta },
+        ...(codigo !== undefined && { usuario: { codigoParticipante: codigo } }),
+      },
       orderBy: { fechaHora: 'desc' },
-      distinct: ['idTurno'],
-      select: { color: true, compartido: true },
+      distinct: ['idUsuario', 'idTurno'],
+      // Lectura minima de `usuario` (I1): solo codigo_participante.
+      select: { color: true, compartido: true, usuario: { select: { codigoParticipante: true } } },
     });
     return {
-      evaluaciones: ultimas.flatMap(({ color, compartido }) => {
-        const visible = colorDivulgableAlDespachador(color, compartido);
-        return visible ? [{ codigo, color: visible }] : [];
-      }),
+      evaluaciones: ultimas
+        .flatMap(({ color, compartido, usuario }) => {
+          const visible = colorDivulgableAlDespachador(color, compartido);
+          return visible ? [{ codigo: usuario.codigoParticipante, color: visible }] : [];
+        })
+        .sort((a, b) => a.codigo.localeCompare(b.codigo)),
     };
   }
 }

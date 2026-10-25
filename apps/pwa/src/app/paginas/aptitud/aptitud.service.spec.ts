@@ -33,7 +33,7 @@ describe('AptitudService', () => {
     it('POSTs to /aptitud/:turnoId with request body and returns response', (done) => {
       const turnoId = 'turno-123';
       const request: CrearAptitudRequest = { somnolencia: 3, compartido: true };
-      const mockResponse: CrearAptitudResponse = { color: 'ambar' };
+      const mockResponse: CrearAptitudResponse = { color: 'ambar', horasSueno24h: 6, motivos: ['sueno_intermedio'] };
 
       service.crearAptitud(turnoId, request).subscribe((response) => {
         expect(response).toEqual(mockResponse);
@@ -49,7 +49,7 @@ describe('AptitudService', () => {
     it('sends somnolencia only when compartido is false', (done) => {
       const turnoId = 'turno-456';
       const request: CrearAptitudRequest = { somnolencia: 2, compartido: false };
-      const mockResponse: CrearAptitudResponse = { color: 'verde' };
+      const mockResponse: CrearAptitudResponse = { color: 'verde', horasSueno24h: 8, motivos: ['sueno_suficiente'] };
 
       service.crearAptitud(turnoId, request).subscribe((response) => {
         expect(response).toEqual(mockResponse);

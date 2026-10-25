@@ -111,7 +111,7 @@ describe('AptitudComponent', () => {
 
   describe('service interaction', () => {
     it('should call crearAptitud with correct parameters and navigate to resultado on success', async () => {
-      const mockResponse: CrearAptitudResponse = { color: 'verde' };
+      const mockResponse: CrearAptitudResponse = { color: 'verde', horasSueno24h: 8, motivos: ['sueno_suficiente'] };
       // Return an Observable that has toPromise() method
       aptitudServiceSpy.crearAptitud.mockReturnValue(of(mockResponse));
 
