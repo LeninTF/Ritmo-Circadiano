@@ -1,5 +1,7 @@
 import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
+import { Auditable } from '../auditoria/auditable.decorator';
 import type {
   AuthTokens,
   UsuarioDto,
@@ -22,6 +24,7 @@ export class AuthController {
   ) {}
 
   @Publica()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('auth/registro')
   @ApiOperation({ summary: 'Registrar un participante con consentimiento (RN11)' })
   registrar(@Body() dto: RegistroDto): Promise<UsuarioDto> {
@@ -29,6 +32,9 @@ export class AuthController {
   }
 
   @Publica()
+  // 10/min por IP: los trabajadores pueden compartir la red de la empresa al iniciar turno.
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Auditable('login')
   @Post('auth/login')
   @HttpCode(200)
   @ApiOperation({ summary: 'Iniciar sesion y obtener tokens' })
@@ -37,6 +43,7 @@ export class AuthController {
   }
 
   @Publica()
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @Post('auth/refresh')
   @HttpCode(200)
   @ApiOperation({ summary: 'Renovar tokens con el token de refresco' })

@@ -1,1 +1,89 @@
 // Slice I3 · tablas: ubicacion, evento_solar, perfil_cronotipo, plan_diario
+//
+// NOTA DE INTEGRACION: `id_usuario` e `id_turno` son referencias logicas a
+// usuario (I1) y turno_laboral (I2), igual que en I5: una relacion Prisma
+// exigiria campos inversos en modelos de otros slices. DELETE /me borra estas
+// filas con el listener UsuarioEliminado del modulo circadiano.
+
+/// Punto donde se calculan los eventos solares (RF06). Se usa la ultima registrada.
+model Ubicacion {
+  id          String   @id @default(uuid()) @db.Uuid
+  idUsuario   String   @map("id_usuario") @db.Uuid
+  lat         Decimal  @db.Decimal(9, 6)
+  lng         Decimal  @db.Decimal(9, 6)
+  /// Ciudad elegida o "Ubicación actual" si vino del GPS.
+  origen      String   @db.VarChar(60)
+  zonaHoraria String   @default("America/Lima") @map("zona_horaria") @db.VarChar(40)
+  creadoEn    DateTime @default(now()) @map("creado_en") @db.Timestamptz()
+
+  eventos EventoSolar[]
+
+  @@index([idUsuario, creadoEn])
+  @@map("ubicacion")
+}
+
+/// Cache de amanecer, mediodia y atardecer por ubicacion y dia (RF06, 7 dias por consulta).
+model EventoSolar {
+  id          String   @id @default(uuid()) @db.Uuid
+  idUbicacion String   @map("id_ubicacion") @db.Uuid
+  fecha       DateTime @db.Date
+  amanecer    DateTime @db.Timestamptz()
+  mediodia    DateTime @db.Timestamptz()
+  atardecer   DateTime @db.Timestamptz()
+
+  ubicacion Ubicacion @relation(fields: [idUbicacion], references: [id], onDelete: Cascade)
+
+  @@unique([idUbicacion, fecha])
+  @@map("evento_solar")
+}
+
+/// Categorias del rMEQ (RN07).
+enum CategoriaCronotipo {
+  vespertino_definido
+  vespertino_moderado
+  intermedio
+  matutino_moderado
+  matutino_definido
+
+  @@map("categoria_cronotipo")
+}
+
+/// Resultado del rMEQ de 5 items (RF03, RN07). Una fila por usuario.
+model PerfilCronotipo {
+  id             String             @id @default(uuid()) @db.Uuid
+  idUsuario      String             @unique @map("id_usuario") @db.Uuid
+  /// { p1, p2, p3, p4, p5 }
+  respuestasRmeq Json               @map("respuestas_rmeq") @db.JsonB
+  puntaje        Int                @db.SmallInt
+  categoria      CategoriaCronotipo
+  actualizadoEn  DateTime           @updatedAt @map("actualizado_en") @db.Timestamptz()
+
+  @@map("perfil_cronotipo")
+}
+
+/// Plan circadiano diario (RF07). Se regenera con upsert por usuario y fecha.
+model PlanDiario {
+  id               String    @id @default(uuid()) @db.Uuid
+  idUsuario        String    @map("id_usuario") @db.Uuid
+  /// Brecha ERD: turno que origino el plan (TurnoAsignado lo regenera).
+  idTurno          String?   @map("id_turno") @db.Uuid
+  fecha            DateTime  @db.Date
+  inicioSueno      DateTime  @map("inicio_sueno") @db.Timestamptz()
+  finSueno         DateTime  @map("fin_sueno") @db.Timestamptz()
+  inicioSiesta     DateTime? @map("inicio_siesta") @db.Timestamptz()
+  finSiesta        DateTime? @map("fin_siesta") @db.Timestamptz()
+  /// [{ inicio, fin }] en ISO.
+  picos            Json      @db.JsonB
+  /// Null cuando la cafeina previa ya llena el umbral (RN04).
+  horaCorteCafeina DateTime? @map("hora_corte_cafeina") @db.Timestamptz()
+  /// { inicio, fin } en ISO, o null si no hay luz de dia.
+  ventanaLuz       Json?     @map("ventana_luz") @db.JsonB
+  /// Brecha ERD: true tras turno nocturno, la ventana es para evitar luz (RN08).
+  protegerLuz      Boolean   @default(false) @map("proteger_luz")
+  categoria        CategoriaCronotipo
+  versionAlgoritmo String    @map("version_algoritmo") @db.VarChar(20)
+  actualizadoEn    DateTime  @updatedAt @map("actualizado_en") @db.Timestamptz()
+
+  @@unique([idUsuario, fecha])
+  @@map("plan_diario")
+}

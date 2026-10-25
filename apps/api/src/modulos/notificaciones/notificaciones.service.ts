@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { OnEvent } from '@nestjs/event-emitter';
 import * as webPush from 'web-push';
@@ -47,11 +47,16 @@ export class NotificacionesService {
     });
   }
 
-  async marcarAbierta(idNotificacion: number): Promise<NotificacionRespuestaDto> {
-    const actualizada = await this.prisma.notificacion.update({
-      where: { id_notificacion: idNotificacion },
-      data: { abierta: true },
-    });
+  async marcarAbierta(idNotificacion: number, idUsuario: string): Promise<NotificacionRespuestaDto> {
+    // Una notificacion ajena o inexistente responde igual: 404.
+    const actualizada = await this.prisma.notificacion
+      .update({
+        where: { id_notificacion: idNotificacion, id_usuario: idUsuario },
+        data: { abierta: true },
+      })
+      .catch(() => {
+        throw new NotFoundException('Notificacion no encontrada');
+      });
     return {
       id_notificacion: actualizada.id_notificacion,
       id_usuario: actualizada.id_usuario,

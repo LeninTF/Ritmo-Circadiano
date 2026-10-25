@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   BebidaDto,
@@ -35,6 +35,10 @@ export class CafeinaService {
       where: { client_id: dto.client_id },
     });
     if (existente) {
+      // Un client_id de otro usuario no debe devolver su ingesta.
+      if (existente.id_usuario !== dto.id_usuario) {
+        throw new ConflictException('client_id ya usado');
+      }
       return {
         id_ingesta: existente.id_ingesta,
         id_usuario: existente.id_usuario,
@@ -128,10 +132,10 @@ export class CafeinaService {
     }));
   }
 
-  async eliminarIngesta(idIngesta: number): Promise<void> {
+  async eliminarIngesta(idIngesta: number, idUsuario: string): Promise<void> {
     try {
       await this.prisma.ingestaCafeina.delete({
-        where: { id_ingesta: idIngesta },
+        where: { id_ingesta: idIngesta, id_usuario: idUsuario },
       });
     } catch {
       throw new NotFoundException(`Ingesta con ID ${idIngesta} no encontrada`);
