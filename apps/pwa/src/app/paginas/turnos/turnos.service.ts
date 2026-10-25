@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, catchError, of, tap } from 'rxjs';
-import { OfflineStoreService } from './offline-store.service';
+import { Observable, from, catchError, of, switchMap, tap } from 'rxjs';
+import { OfflineStoreService } from '../../core/offline/offline-store.service';
 
 @Injectable({
   providedIn: 'root',
@@ -13,10 +13,10 @@ export class TurnosService {
 
   listarRutas(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/rutas`).pipe(
-      tap((r) => this.offlineStore.setItem('rutas', r)),
       catchError(() => {
-        const cached = this.offlineStore.getItem<any[]>('rutas');
-        return of(cached || []);
+        // Nota: Si las rutas requieren almacenamiento offline específico, 
+        // se pueden gestionar por el store o retornar un array vacío en caso de fallo de red.
+        return of([]);
       })
     );
   }
@@ -25,12 +25,21 @@ export class TurnosService {
     let params = new HttpParams();
     if (idUsuario) params = params.set('idUsuario', idUsuario);
     if (fecha) params = params.set('fecha', fecha);
+    
     return this.http.get<any[]>(`${this.baseUrl}/turnos`, { params }).pipe(
-      tap((t) => this.offlineStore.setItem('turnos_all', t)),
-      catchError(() => {
-        const cached = this.offlineStore.getItem<any[]>('turnos_all');
-        return of(cached || []);
-      })
+      tap(async (turnos) => {
+        if (Array.isArray(turnos)) {
+          for (const t of turnos) {
+            // Aseguramos que cada turno cumpla con el formato requerido por el upsert de Dexie
+            await this.offlineStore.addTurno(t);
+          }
+        }
+      }),
+      catchError(() => 
+        from(this.offlineStore.getMyTurnos()).pipe(
+          switchMap((cached) => of(cached || []))
+        )
+      )
     );
   }
 
@@ -39,12 +48,20 @@ export class TurnosService {
     if (desde) params = params.set('desde', desde);
     if (hasta) params = params.set('hasta', hasta);
     if (idUsuario) params = params.set('idUsuario', idUsuario);
+    
     return this.http.get<any[]>(`${this.baseUrl}/turnos/me`, { params }).pipe(
-      tap((t) => this.offlineStore.setItem('turnos_me', t)),
-      catchError(() => {
-        const cached = this.offlineStore.getItem<any[]>('turnos_me');
-        return of(cached || []);
-      })
+      tap(async (turnos) => {
+        if (Array.isArray(turnos)) {
+          for (const t of turnos) {
+            await this.offlineStore.addTurno(t);
+          }
+        }
+      }),
+      catchError(() => 
+        from(this.offlineStore.getMyTurnos()).pipe(
+          switchMap((cached) => of(cached || []))
+        )
+      )
     );
   }
 
@@ -70,4 +87,3 @@ export class TurnosService {
     return this.http.post<any>(`${this.baseUrl}/turnos/importar`, formData);
   }
 }
-
