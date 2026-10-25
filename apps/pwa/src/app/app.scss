@@ -1,3 +1,4 @@
+// Shell PWA (CLAUDE.md §14): cabecera, contenido y tab bar inferior de 4 pestañas.
 :host {
   display: block;
   min-height: 100dvh;
@@ -5,12 +6,22 @@
   background: var(--color-fondo);
 }
 
+svg {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .shell {
   display: flex;
   flex-direction: column;
   width: 100%;
   min-height: 100dvh;
-  margin-inline: auto;
 }
 
 .cabecera {
@@ -18,8 +29,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  width: 100%;
-  padding: 0.75rem max(1rem, env(safe-area-inset-left));
+  padding: 0.75rem max(1.25rem, env(safe-area-inset-left));
   border-bottom: 1px solid var(--color-borde);
   background: var(--color-superficie);
 }
@@ -27,16 +37,21 @@
 .marca {
   display: inline-flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.625rem;
   min-width: 0;
+  min-height: var(--alto-tactil);
   color: var(--color-texto);
-  font-size: 1.05rem;
+  font-size: 1.0625rem;
   font-weight: 700;
   text-decoration: none;
 
   &__icono {
-    color: var(--color-acento);
-    font-size: 1.5rem;
+    color: var(--color-primario);
+  }
+
+  .relleno {
+    fill: currentColor;
+    stroke: none;
   }
 }
 
@@ -44,16 +59,22 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  min-width: 2.75rem;
-  min-height: 2.75rem;
-  padding: 0.5rem 0.75rem;
+  gap: 0.5rem;
+  min-width: var(--alto-tactil);
+  min-height: var(--alto-tactil);
+  padding: 0 0.875rem;
   border: 1px solid var(--color-borde);
-  border-radius: 0.75rem;
+  border-radius: var(--radio-boton);
   background: var(--color-superficie);
   color: var(--color-texto);
   font: inherit;
+  font-size: 0.9375rem;
   cursor: pointer;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
 }
 
 main {
@@ -62,7 +83,8 @@ main {
   max-width: 72rem;
   margin-inline: auto;
   padding: clamp(1rem, 3vw, 2rem);
-  padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+  // La tab bar fija mide 64 px más el área segura: el contenido nunca queda debajo.
+  padding-bottom: calc(64px + 1.5rem + env(safe-area-inset-bottom));
   overflow-wrap: anywhere;
 }
 
@@ -72,59 +94,36 @@ main {
   inset-inline: 0;
   bottom: 0;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.25rem;
-  width: 100%;
-  padding: 0.4rem max(0.4rem, env(safe-area-inset-right)) calc(0.4rem + env(safe-area-inset-bottom)) max(0.4rem, env(safe-area-inset-left));
-.navegacion {
-  display: flex;
-  justify-content: space-around;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  background: var(--color-superficie-nav);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  min-height: calc(64px + env(safe-area-inset-bottom));
+  padding: 0 max(0.5rem, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(0.5rem, env(safe-area-inset-left));
   border-top: 1px solid var(--color-borde);
-  background: var(--color-superficie);
-  box-shadow: 0 -0.25rem 1rem rgb(15 23 42 / 8%);
+  background: var(--color-superficie-nav);
 
   a {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 0.25rem;
     min-width: 0;
-    min-height: 3.25rem;
-    padding: 0.45rem 0.2rem;
-    border-radius: 0.65rem;
-    color: var(--color-texto-secundario);
-    font-size: clamp(0.65rem, 2.5vw, 0.85rem);
-    font-weight: 600;
+    min-height: 64px;
+    color: var(--color-texto-3);
+    font-size: 0.8125rem;
+    font-weight: 500;
     line-height: 1.2;
     text-align: center;
     text-decoration: none;
-    overflow-wrap: anywhere;
 
     &.activo {
-      background: var(--color-acento-fondo);
-      color: var(--color-acento-texto);
+      color: var(--color-primario);
+      font-weight: 600;
     }
 
     &:focus-visible {
-      outline: 3px solid var(--color-acento);
-      outline-offset: 2px;
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 44px;
-    padding: 0.5rem 0.25rem;
-    text-align: center;
-    text-decoration: none;
-    font-size: 0.6875rem;
-    color: var(--color-texto-3);
-    border-radius: 0.5rem;
-
-    &.activo {
-      font-weight: 600;
-      color: var(--color-primario);
+      outline: 3px solid var(--color-primario);
+      outline-offset: -3px;
+      border-radius: var(--radio-boton);
     }
   }
 }
@@ -132,17 +131,22 @@ main {
 @media (min-width: 760px) {
   .shell {
     max-width: 90rem;
+    margin-inline: auto;
   }
 
   .bottom-nav {
     position: static;
+    display: flex;
     justify-content: center;
     gap: 0.5rem;
+    min-height: auto;
     padding: 0.5rem 1rem;
 
     a {
       flex: 0 1 10rem;
-      font-size: 0.9rem;
+      flex-direction: row;
+      min-height: var(--alto-tactil);
+      font-size: 0.9375rem;
     }
   }
 
@@ -154,28 +158,17 @@ main {
 @media (max-width: 390px) {
   .cabecera {
     gap: 0.5rem;
-    padding-inline: 0.65rem;
-  }
-
-  .marca {
-    gap: 0.35rem;
-    font-size: 0.9rem;
-  }
-
-  .boton-tema {
-    padding-inline: 0.55rem;
+    padding-inline: 1rem;
   }
 
   .boton-tema__texto {
     position: absolute;
     width: 1px;
     height: 1px;
-    padding: 0;
     margin: -1px;
     overflow: hidden;
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
-    border: 0;
   }
 }
 
@@ -185,8 +178,6 @@ main {
   .bottom-nav,
   .bottom-nav a,
   .boton-tema {
-    transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+    transition: background-color 180ms ease-out, color 180ms ease-out, border-color 180ms ease-out;
   }
-}
-}
 }

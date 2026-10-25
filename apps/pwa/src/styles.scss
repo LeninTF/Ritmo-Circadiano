@@ -1,81 +1,83 @@
-// Tokens del Figma (CLAUDE.md §14). Claro por defecto; oscuro automatico o manual con data-tema.
+// Tokens de CLAUDE.md §14 y design-system/gestor-circadiano/MASTER.md.
+// Claro por defecto; nocturno de bajo brillo automatico (prefers-color-scheme) o manual con data-tema.
 @mixin tema-oscuro {
   color-scheme: dark;
-  --color-fondo: #0a0f1e;
-  --fondo-degradado: linear-gradient(180deg, #131c36, #0a0f1e);
-  --color-superficie: #141c2f;
-  --color-superficie-2: #1b2438;
-  --color-superficie-nav: #0d1425;
-  --color-borde: #273049;
-  --color-texto: #f8fafc;
-  --color-texto-2: #a8b3c7;
-  --color-texto-3: #6b7794;
-  --color-primario: #818cf8;
-  --color-primario-fondo: #1e1b4b;
-  --color-ok: #34d399;
-  --color-alerta: #fbbf24;
-  --color-alerta-fondo: #2a1f08;
-  --color-peligro: #f87171;
+  --color-fondo: #0e1320;
+  --color-superficie: #161d2e;
+  --color-superficie-2: #1d2539;
+  --color-superficie-nav: #121828;
+  --color-borde: #232c42;
+  --color-texto: #e4e7ee;
+  --color-texto-2: #a9b2c6;
+  --color-texto-3: #8590a8;
+  --color-primario: #8e96ec;
+  --color-primario-fondo: #1f2547;
+  --color-sobre-primario: #0e1320;
+  --color-ok: #4fc08f;
+  --color-ok-texto: #4fc08f;
+  --color-alerta: #e2a83f;
+  --color-alerta-texto: #e2a83f;
+  --color-alerta-fondo: #2a2316;
+  --color-peligro: #e57b74;
+  --color-peligro-texto: #e57b74;
   --color-peligro-fondo: #2a1215;
-  --sombra-tarjeta: 0 8px 24px rgba(0, 0, 0, 0.35);
+  // Las paginas ponen texto blanco encima: indigo profundo (8.1:1) en vez de un fondo claro.
+  --color-boton-fuerte: #3538cd;
+  --color-barra-inactiva: #3b4468;
+  --sombra-hoja: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 :root {
   color-scheme: light;
-  --color-fondo: #f8fafc;
-  --color-superficie: #ffffff;
-  --color-texto: #172033;
-  --color-texto-secundario: #465268;
-  --color-borde: #cbd5e1;
-  --color-acento: #1d4ed8;
-  --color-acento-texto: #173b82;
-  --color-acento-fondo: #e8efff;
-  background: var(--color-fondo);
-  color: var(--color-texto);
-  font-family: system-ui, sans-serif;
-  line-height: 1.5;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-text-size-adjust: 100%;
-}
-
-:root[data-tema='oscuro'] {
-  color-scheme: dark;
-  --color-fondo: #0f172a;
-  --color-superficie: #172033;
-  --color-texto: #f1f5f9;
-  --color-texto-secundario: #d1d9e6;
-  --color-borde: #64748b;
-  --color-acento: #93c5fd;
-  --color-acento-texto: #dbeafe;
-  --color-acento-fondo: #263b5c;
   --color-fondo: #f2f4f7;
-  --fondo-degradado: none;
   --color-superficie: #ffffff;
   --color-superficie-2: #eaecf0;
   --color-superficie-nav: #ffffff;
   --color-borde: #d0d5dd;
   --color-texto: #101828;
   --color-texto-2: #475467;
-  --color-texto-3: #98a2b3;
+  --color-texto-3: #667085;
   --color-primario: #3538cd;
   --color-primario-fondo: #eef0ff;
+  --color-sobre-primario: #ffffff;
+  // ok/alerta/peligro claros fallan AA como texto: solo rellenos, iconos y barras.
   --color-ok: #12b76a;
+  --color-ok-texto: #067647;
   --color-alerta: #f79009;
+  --color-alerta-texto: #b54708;
   --color-alerta-fondo: #fffaeb;
   --color-peligro: #f04438;
+  --color-peligro-texto: #b42318;
   --color-peligro-fondo: #fef3f2;
   --color-boton-fuerte: #101828;
-  --sombra-tarjeta: none;
+  --color-barra-inactiva: #d0d5dd;
+  --sombra-hoja: 0 -4px 24px rgba(16, 24, 40, 0.12);
 
   --radio-tarjeta: 16px;
-  --radio-tile: 14px;
-  --radio-boton: 12px;
+  --radio-tile: 16px;
+  --radio-boton: 14px;
   --radio-chip: 20px;
-  --radio-barra: 4px;
+  --radio-hoja: 24px;
+  --radio-barra: 6px;
+  --alto-boton-primario: 56px;
+  --alto-boton-secundario: 52px;
+  --alto-tactil: 48px;
 
-  // alias de los tokens previos, para no romper las paginas actuales
+  // Alias de tokens previos, para no romper las paginas actuales.
+  --color-texto-secundario: var(--color-texto-2);
+  --color-acento: var(--color-primario);
+  --color-acento-texto: var(--color-primario);
   --color-acento-fondo: var(--color-primario-fondo);
+  --fondo-degradado: none;
+  --sombra-tarjeta: none;
+
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  font-family: Inter, system-ui, sans-serif;
+  line-height: 1.5;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-text-size-adjust: 100%;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -100,8 +102,6 @@ body {
   margin: 0;
   overflow-x: clip;
   background: var(--color-fondo);
-  background: var(--fondo-degradado), var(--color-fondo);
-  background-attachment: fixed;
   color: var(--color-texto);
   font-family: Inter, system-ui, sans-serif;
   line-height: 1.5;
@@ -113,11 +113,11 @@ a {
 }
 
 :focus-visible {
-  outline: 3px solid var(--color-acento);
-  outline-offset: 3px;
+  outline: 3px solid var(--color-primario);
+  outline-offset: 2px;
 }
 
 ::selection {
-  background: var(--color-acento);
-  color: #ffffff;
+  background: var(--color-primario);
+  color: var(--color-sobre-primario);
 }

@@ -1,0 +1,493 @@
+openapi: 3.1.0
+info:
+  title: CircaRuta API — Slice 01 (Cuenta + Cafeína)
+  version: 0.2.0
+  description: |
+    Endpoints del flujo registro → login → registrar café → ver mi consumo, tal como están
+    implementados. Las reglas de negocio están en SPEC.md; CLAUDE.md prevalece sobre ambos.
+    - Sin prefijo global; rutas de CLAUDE.md §4. La fuente viva es Swagger en /docs.
+    - Fechas en ISO 8601 con zona, guardadas en UTC. Zona de negocio: America/Lima.
+    - Errores con el formato por defecto de NestJS (ErrorResponse).
+    - Auth, áreas y /sync/lote son de otros slices (I1, I5); se documentan aquí solo en lo que usa este flujo.
+servers:
+  - url: http://localhost:3000
+    description: Desarrollo local
+
+tags:
+  - name: Auth
+    description: I1 (existente)
+  - name: Catalogos
+  - name: Cafeina
+    description: I4
+  - name: Sync
+    description: I5; la operación `ingesta` la atiende I4
+
+paths:
+  /auth/registro:
+    post:
+      tags: [Auth]
+      summary: Registrar un participante con consentimiento (RN11)
+      operationId: registrar
+      description: Público. Límite de 5 por minuto. No inicia sesión; la PWA lleva a /ingresar.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegistroDto' }
+            example:
+              correo: juan.perez@transportecueva.pe
+              clave: Ruta2026x
+              idArea: 2f6d1c3a-0b1e-4c8d-9a7f-3e5b6c7d8e90
+              cargo: Conductor
+              rangoEdad: 35–44
+              sexo: Masculino
+              consentimiento: true
+      responses:
+        '201':
+          description: Cuenta creada; devuelve el perfil con el código de participante
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UsuarioDto' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '409':
+          description: El correo ya tiene una cuenta
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesión y obtener tokens
+      operationId: iniciarSesion
+      description: Público. Límite de 10 por minuto. Auditado (`login`). Mismo error si el correo no existe.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginDto' }
+      responses:
+        '200':
+          description: Sesión iniciada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthTokens' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401':
+          description: Credenciales inválidas
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Renovar tokens con el token de refresco
+      operationId: refrescar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken: { type: string }
+      responses:
+        '200':
+          description: Tokens nuevos
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthTokens' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /me:
+    get:
+      tags: [Auth]
+      summary: Perfil del usuario autenticado
+      operationId: perfil
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Perfil (nunca incluye correo ni hash de clave)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UsuarioDto' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /areas:
+    get:
+      tags: [Catalogos]
+      summary: Áreas de la empresa para el registro (público)
+      operationId: listarAreas
+      responses:
+        '200':
+          description: Áreas
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AreaDto' }
+
+  /bebidas:
+    get:
+      tags: [Catalogos]
+      summary: Catálogo de bebidas con cafeína
+      operationId: obtenerBebidas
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Bebidas ordenadas por nombre
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/BebidaDto' }
+              example:
+                - { id_bebida: 1, nombre: Bebida energizante, cafeina_mg: 80, volumen_ml: 250 }
+                - { id_bebida: 2, nombre: Café pasado, cafeina_mg: 95, volumen_ml: 240 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /cafeina:
+    post:
+      tags: [Cafeina]
+      summary: Registrar una ingesta (idempotente por client_id)
+      operationId: registrarIngesta
+      description: |
+        - El dueño sale del token; `id_usuario` en el cuerpo se rechaza (400).
+        - Mismo `client_id` del mismo usuario: devuelve lo guardado sin crear otro. De otro usuario: 409.
+        - Con `id_bebida`, el servidor calcula `cafeina_mg` = mg por porción × `porciones` y descarta lo enviado.
+        - Sin `id_bebida`, `cafeina_mg` es obligatorio (1 a 1000).
+        - `fecha_hora` entre ahora − 7 días y ahora + 5 minutos.
+        - La PWA no lo llama directo: encola la operación `ingesta` de `POST /sync/lote`.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CrearIngestaCafeinaBodyDto' }
+            examples:
+              catalogo:
+                summary: Bebida del catálogo
+                value: { id_bebida: 2, porciones: 2, fecha_hora: '2026-10-24T13:30:00.000Z', client_id: 3f1c2b9e-8a4d-4c1e-9b7a-2d5e6f708192 }
+              otro:
+                summary: Otro (indico los mg)
+                value: { cafeina_mg: 150, fecha_hora: '2026-10-24T15:00:00.000Z', client_id: 7a2d4e1f-0b3c-4d5e-8f9a-1b2c3d4e5f60 }
+      responses:
+        '201':
+          description: Ingesta registrada, o la ya guardada con ese client_id
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IngestaCafeinaRespuestaDto' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409':
+          description: El client_id pertenece a otro usuario
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    get:
+      tags: [Cafeina]
+      summary: Ingestas propias de un día de Lima
+      operationId: listarIngestas
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: fecha
+          in: query
+          required: true
+          description: Día en hora de Lima (de 00:00 a 23:59:59.999, UTC−5).
+          schema: { type: string, format: date }
+          example: '2026-10-24'
+      responses:
+        '200':
+          description: Ingestas ordenadas por hora
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/IngestaCafeinaRespuestaDto' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /cafeina/{id}:
+    delete:
+      tags: [Cafeina]
+      summary: Eliminar una ingesta propia
+      operationId: eliminarIngesta
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+          description: id_ingesta
+      responses:
+        '200': { description: Eliminada }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404':
+          description: No existe o es de otro usuario (no se distingue)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /cafeina/resumen:
+    get:
+      tags: [Cafeina]
+      summary: Consumo por día (hora de Lima) y cafeína activa estimada (RF09)
+      operationId: obtenerResumen
+      description: |
+        - Rol `trabajador`.
+        - `dias` trae exactamente N elementos, del más antiguo al más reciente; el último es hoy. Días sin consumo en 0.
+        - `cafeinaActiva` usa semivida de 5 h, ventana de 24 h y el umbral de `parametro_sistema` (SPEC.md §7.1).
+        - La hora de corte no viene aquí: sale del plan de I3 (`PlanDiarioDto.horaCorteCafeina`).
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: dias
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 30, default: 7 }
+      responses:
+        '200':
+          description: Resumen
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResumenCafeinaDto' }
+              example:
+                zonaHoraria: America/Lima
+                dias:
+                  - { fecha: '2026-10-18', totalMg: 95, conteo: 1 }
+                  - { fecha: '2026-10-19', totalMg: 0, conteo: 0 }
+                  - { fecha: '2026-10-20', totalMg: 158, conteo: 2 }
+                  - { fecha: '2026-10-21', totalMg: 190, conteo: 1 }
+                  - { fecha: '2026-10-22', totalMg: 63, conteo: 1 }
+                  - { fecha: '2026-10-23', totalMg: 0, conteo: 0 }
+                  - { fecha: '2026-10-24', totalMg: 158, conteo: 2 }
+                hoy: { fecha: '2026-10-24', totalMg: 158, conteo: 2 }
+                cafeinaActiva:
+                  mg: 87
+                  calculadoEn: '2026-10-24T20:00:00.000Z'
+                  horaNivelBajo: '2026-10-24T23:58:29.000Z'
+                  semividaH: 5
+                  umbralMg: 50
+                  esEstimacion: true
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403':
+          description: Rol distinto de trabajador
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /sync/lote:
+    post:
+      tags: [Sync]
+      summary: Sincronización offline por lote (RNF03)
+      operationId: sincronizarLote
+      description: |
+        Lo usa el OutboxService de la PWA. Para este flujo, `operation: ingesta` con el payload de
+        CrearIngestaCafeinaBodyDto **sin** `client_id` (el del sobre manda). Payload inválido o
+        client_id de otro usuario → `rejected`; error inesperado → `retryable_failure`.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SyncLoteWireDto' }
+            example:
+              operations:
+                - client_id: 3f1c2b9e-8a4d-4c1e-9b7a-2d5e6f708192
+                  created_at: '2026-10-24T13:30:05.000Z'
+                  operation: ingesta
+                  payload: { id_bebida: 2, porciones: 2, fecha_hora: '2026-10-24T13:30:00.000Z' }
+      responses:
+        '200':
+          description: Resultado por operación
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SyncLoteResultadoWireDto' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'JWT de I1 (≤ 24 h). Payload: sub (id de usuario), rol, codigoParticipante.'
+
+  responses:
+    ValidationError:
+      description: Datos inválidos
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            statusCode: 400
+            message: ['La hora no puede estar en el futuro.']
+            error: Bad Request
+    Unauthorized:
+      description: Falta el token, es inválido o expiró
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  schemas:
+    RegistroDto:
+      type: object
+      required: [correo, clave, idArea, consentimiento]
+      properties:
+        correo: { type: string, format: email }
+        clave: { type: string, minLength: 8 }
+        idArea: { type: string, format: uuid }
+        cargo: { type: string }
+        rangoEdad: { type: string }
+        sexo: { type: string }
+        consentimiento: { type: boolean, description: Debe ser true (RN11). }
+
+    LoginDto:
+      type: object
+      required: [correo, clave]
+      properties:
+        correo: { type: string, format: email }
+        clave: { type: string }
+
+    AuthTokens:
+      type: object
+      required: [accessToken, refreshToken, expiraEnSegundos]
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        expiraEnSegundos: { type: integer }
+
+    UsuarioDto:
+      type: object
+      description: Nunca incluye correo ni hash de clave (CLAUDE.md §6).
+      required: [id, codigoParticipante, rol, idArea, cargo, consentimiento, semividaH, fuma]
+      properties:
+        id: { type: string, format: uuid }
+        codigoParticipante: { type: string, example: P01 }
+        rol: { type: string, enum: [trabajador, jefe_operaciones, despachador, administrador] }
+        idArea: { type: string, format: uuid }
+        cargo: { type: [string, 'null'] }
+        consentimiento: { type: boolean }
+        semividaH: { type: number }
+        fuma: { type: boolean }
+
+    AreaDto:
+      type: object
+      required: [id, nombre]
+      properties:
+        id: { type: string, format: uuid }
+        nombre: { type: string }
+
+    BebidaDto:
+      type: object
+      required: [id_bebida, nombre, cafeina_mg, volumen_ml]
+      properties:
+        id_bebida: { type: integer }
+        nombre: { type: string }
+        cafeina_mg: { type: number, description: mg por porción }
+        volumen_ml: { type: integer }
+
+    CrearIngestaCafeinaBodyDto:
+      type: object
+      additionalProperties: false
+      required: [fecha_hora, client_id]
+      properties:
+        id_bebida: { type: [integer, 'null'], minimum: 1, description: Bebida del catálogo; el servidor calcula los mg. }
+        porciones: { type: integer, minimum: 1, maximum: 4, default: 1, description: Solo con id_bebida. }
+        cafeina_mg: { type: integer, minimum: 1, maximum: 1000, description: Solo sin id_bebida (obligatorio en ese caso). }
+        fecha_hora: { type: string, format: date-time, description: Entre ahora − 7 días y ahora + 5 minutos. }
+        client_id: { type: string, format: uuid, description: Generado por el cliente; se reutiliza en los reintentos. }
+
+    IngestaCafeinaRespuestaDto:
+      type: object
+      required: [id_ingesta, id_usuario, id_bebida, cafeina_mg, fecha_hora, residual_estimado_mg, client_id]
+      properties:
+        id_ingesta: { type: integer }
+        id_usuario: { type: string, format: uuid }
+        id_bebida: { type: [integer, 'null'] }
+        cafeina_mg: { type: number, description: Total del registro. }
+        fecha_hora: { type: string, format: date-time }
+        residual_estimado_mg: { type: number }
+        client_id: { type: string, format: uuid }
+
+    ConsumoDiaDto:
+      type: object
+      required: [fecha, totalMg, conteo]
+      properties:
+        fecha: { type: string, format: date, description: Día en America/Lima. }
+        totalMg: { type: integer, minimum: 0 }
+        conteo: { type: integer, minimum: 0 }
+
+    CafeinaActivaDto:
+      type: object
+      required: [mg, calculadoEn, horaNivelBajo, semividaH, umbralMg, esEstimacion]
+      properties:
+        mg: { type: integer, minimum: 0, description: Estimada y redondeada. }
+        calculadoEn: { type: string, format: date-time }
+        horaNivelBajo:
+          type: [string, 'null']
+          format: date-time
+          description: Cuándo baja del umbral; null si ya está en nivel bajo.
+        semividaH: { type: number }
+        umbralMg: { type: number }
+        esEstimacion: { type: boolean, const: true }
+
+    ResumenCafeinaDto:
+      type: object
+      required: [zonaHoraria, dias, hoy, cafeinaActiva]
+      properties:
+        zonaHoraria: { type: string, example: America/Lima }
+        dias:
+          type: array
+          items: { $ref: '#/components/schemas/ConsumoDiaDto' }
+        hoy: { $ref: '#/components/schemas/ConsumoDiaDto' }
+        cafeinaActiva: { $ref: '#/components/schemas/CafeinaActivaDto' }
+
+    SyncLoteWireDto:
+      type: object
+      required: [operations]
+      properties:
+        operations:
+          type: array
+          items:
+            type: object
+            required: [client_id, created_at, operation, payload]
+            properties:
+              client_id: { type: string, format: uuid }
+              created_at: { type: string, format: date-time }
+              operation: { type: string, example: ingesta }
+              payload: { type: object }
+
+    SyncLoteResultadoWireDto:
+      type: object
+      required: [results]
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            required: [client_id, status]
+            properties:
+              client_id: { type: string, format: uuid }
+              status: { type: string, enum: [confirmed, duplicate, rejected, retryable_failure] }
+              error:
+                type: object
+                properties:
+                  code: { type: string, example: SYNC_INVALID_PAYLOAD }
+                  message: { type: string }
+
+    ErrorResponse:
+      type: object
+      description: Formato por defecto de NestJS.
+      required: [statusCode, message]
+      properties:
+        statusCode: { type: integer }
+        message:
+          oneOf:
+            - type: string
+            - type: array
+              items: { type: string }
+        error: { type: string }

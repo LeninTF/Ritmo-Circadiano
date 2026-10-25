@@ -129,6 +129,21 @@ describe('OfflineStoreService', () => {
     expect(await service.getMyDiarios()).toHaveLength(1);
   });
 
+  it('borra solo las ingestas propias con ese clientId', async () => {
+    session.login('alice');
+    await service.addIngesta({ fecha: '2026-10-20T13:00:00.000Z', data: { clientId: 'a' } });
+    await service.addIngesta({ fecha: '2026-10-20T14:00:00.000Z', data: { clientId: 'b' } });
+    session.login('bob');
+    await service.addIngesta({ fecha: '2026-10-20T13:00:00.000Z', data: { clientId: 'a' } });
+
+    session.login('alice');
+    await service.removeIngestaPorClientId('a');
+
+    expect((await service.getMyIngestas()).map((i) => i.data)).toEqual([{ clientId: 'b' }]);
+    session.login('bob');
+    expect(await service.getMyIngestas()).toHaveLength(1);
+  });
+
   it('aísla los datos de cada trabajador', async () => {
     session.login('alice');
 

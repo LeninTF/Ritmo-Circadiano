@@ -334,8 +334,11 @@ describe('Contrato registro_sueno (Slice I5)', () => {
   });
 
   describe('10. Ausencia de dependencias ficticias con otros modelos', () => {
-    it('no define relaciones ficticias @relation en i5-trabajador.prisma', () => {
-      expect(contenidoSchema).not.toContain('@relation');
+    // aptitud_presalida si declara FK reales (RF12); la regla aplica solo a registro_sueno.
+    it('no define relaciones @relation en el modelo RegistroSueno', () => {
+      const modelo = contenidoSchema.match(/model\s+RegistroSueno\s+\{[^}]*\}/)?.[0];
+      expect(modelo).toBeDefined();
+      expect(modelo).not.toContain('@relation');
     });
 
     it('no importa ni contamina schemas ajenos a I5', () => {

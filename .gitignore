@@ -10,6 +10,8 @@ coverage/
 .env
 .env.*
 !.env.example
+# Puerto de la PWA en desarrollo; no es secreto.
+!apps/pwa/.env.serve
 
 # herramientas locales
 .qodo/
@@ -34,3 +36,4 @@ graphify-out/.graphify_root
 graphify-out/.graphify_detect.json
 graphify-out/.graphify_labels.pending.json
 graphify-out/.graphify_analysis.json
+respaldos/
