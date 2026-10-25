@@ -41,6 +41,8 @@ model TurnoLaboral {
 
   ruta Ruta @relation(fields: [idRuta], references: [id])
   excesosAuditoria    ExcesoJornadaAuditoria[]
+  /// Inversa de la FK de I5 (RF12).
+  aptitudes           AptitudPresalida[]
 
   @@map("turno_laboral")
 }

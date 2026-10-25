@@ -76,6 +76,6 @@ describe('AptitudController con guards reales (RNF04, RN10)', () => {
       await http.get(url).set('Authorization', await token(rol)).expect(403);
     }
     await http.get(url).set('Authorization', await token('despachador')).expect(200);
-    expect(aptitud.consultarDespacho).toHaveBeenCalledWith('P01', '2026-10-24');
+    expect(aptitud.consultarDespacho).toHaveBeenCalledWith('2026-10-24', 'P01');
   });
 });
