@@ -94,22 +94,36 @@ describe('MiConsumoComponent (HU-04, HU-05)', () => {
     expect(filas[1].querySelector('button.eliminar')?.getAttribute('aria-label')).toBe('Eliminar Café pasado de las 10:00');
   });
 
-  it('eliminar pide confirmación, borra y recarga', async () => {
-    jest.spyOn(window, 'confirm').mockReturnValue(true);
+  it('eliminar pide confirmación en la misma fila, mueve el foco, borra y recarga', async () => {
     await montar();
     el.querySelector<HTMLButtonElement>('button.eliminar')?.click();
     await refrescar();
 
+    expect(cafeina.eliminar).not.toHaveBeenCalled();
+    const si = el.querySelector<HTMLButtonElement>('.confirmar .si');
+    expect(el.querySelector('.confirmar')?.textContent).toContain('¿Eliminar este registro?');
+    expect(document.activeElement).toBe(si);
+
+    si?.click();
+    await refrescar();
     expect(cafeina.eliminar).toHaveBeenCalledWith(ENVIADO);
     expect(cafeina.obtenerMiConsumo).toHaveBeenCalledTimes(2);
     expect(texto('.aviso')).toBe('Registro eliminado.');
   });
 
-  it('si no confirma, no borra', async () => {
-    jest.spyOn(window, 'confirm').mockReturnValue(false);
+  it('«Cancelar» o Escape cierran la confirmación sin borrar', async () => {
     await montar();
     el.querySelector<HTMLButtonElement>('button.eliminar')?.click();
     await refrescar();
+    el.querySelector<HTMLButtonElement>('.confirmar .no')?.click();
+    await refrescar();
+    expect(el.querySelector('.confirmar')).toBeNull();
+
+    el.querySelector<HTMLButtonElement>('button.eliminar')?.click();
+    await refrescar();
+    el.querySelector('.confirmar')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await refrescar();
+    expect(el.querySelector('.confirmar')).toBeNull();
     expect(cafeina.eliminar).not.toHaveBeenCalled();
   });
 
