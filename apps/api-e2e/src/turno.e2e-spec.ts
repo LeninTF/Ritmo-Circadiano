@@ -5,7 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import request from 'supertest';
 import { AppModule } from 'api/app.module';
 import { PrismaService } from 'api/prisma/prisma.service';
-import { RolesGuard } from '../../api/src/modulos/plataforma/auth/roles.guard';
+import { RolesGuard } from 'api/modulos/plataforma/auth/roles.guard';
 import { TURNO_ASIGNADO } from '@circadiano/contracts';
 
 describe('Turnos e2e (Transporte Cueva S.A.C.)', () => {
