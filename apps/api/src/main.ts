@@ -13,6 +13,11 @@ async function arrancar(): Promise<void> {
   app.set('trust proxy', 1);
 
   app.use(helmet());
+  // Las respuestas tienen datos personales: ni el navegador ni un proxy deben guardarlas (ZAP 10049).
+  app.use((_solicitud: unknown, respuesta: { setHeader(n: string, v: string): void }, siguiente: () => void) => {
+    respuesta.setHeader('Cache-Control', 'no-store');
+    siguiente();
+  });
   // Un origen distinto a CORS_ORIGIN no recibe cabeceras CORS (el navegador lo bloquea).
   const origenPermitido = process.env['CORS_ORIGIN'];
   app.enableCors({
