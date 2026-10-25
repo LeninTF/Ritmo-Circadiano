@@ -75,6 +75,14 @@ export const appRoutes: Route[] = [
     path: 'cafeina',
     canActivate: [autenticadoGuard],
     loadComponent: () =>
+      import('./paginas/cafeina/mi-consumo.component').then(
+        (m) => m.MiConsumoComponent,
+      ),
+  },
+  {
+    path: 'cafeina/nuevo',
+    canActivate: [autenticadoGuard],
+    loadComponent: () =>
       import('./paginas/cafeina/cafeina.component').then(
         (m) => m.CafeinaComponent,
       ),
@@ -85,6 +93,14 @@ export const appRoutes: Route[] = [
     loadComponent: () =>
       import('./paginas/aptitud/aptitud.component').then(
         (m) => m.AptitudComponent,
+      ),
+  },
+  {
+    path: 'despacho',
+    canActivate: [rolGuard('despachador')],
+    loadComponent: () =>
+      import('./paginas/despacho/despacho-aptitud.component').then(
+        (m) => m.DespachoAptitudComponent,
       ),
   },
   {

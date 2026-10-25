@@ -1,12 +1,14 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import type { BebidaDto } from '@circadiano/contracts';
 import { CafeinaService, errorRegistro, totalMg, type RegistroCafeina } from './cafeina.service';
 
 type Icono = 'cafe' | 'te' | 'energia' | 'gaseosa';
 /** Icono por nombre de bebida; las bebidas nuevas caen en «cafe». */
 const ICONOS: readonly [RegExp, Icono][] = [
-  [/\bt[eé]\b|infusi/i, 'te'],
+  // Sin \b: en JS «é» no cuenta como letra y «Té» no coincidiría.
+  [/(?:^|\s)t[eé](?:\s|$)|infusi/i, 'te'],
   [/energ/i, 'energia'],
   [/cola|gaseosa/i, 'gaseosa'],
 ];
@@ -22,6 +24,10 @@ const horaActual = (ahora = new Date()) =>
   template: `
     <main class="pagina" aria-labelledby="titulo-cafeina">
       <header>
+        <a class="volver" routerLink="/cafeina">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+          Mi consumo
+        </a>
         <h1 id="titulo-cafeina">Registrar café</h1>
         <p class="texto-2">Elige lo que tomaste.</p>
       </header>
@@ -95,7 +101,6 @@ const horaActual = (ahora = new Date()) =>
             {{ guardando() ? 'Guardando…' : 'Guardar' }}
           </button>
         }
-        <p class="aviso" role="status">{{ aviso() }}</p>
       }
     </main>
 
@@ -116,10 +121,14 @@ const horaActual = (ahora = new Date()) =>
       }
     </ng-template>
   `,
-  imports: [NgTemplateOutlet],
+  imports: [NgTemplateOutlet, RouterLink],
   styles: `
     .pagina { max-width: 480px; margin: 0 auto; padding: 24px 20px 32px; display: grid; gap: 16px; }
     h1 { margin: 0; font-size: 1.5rem; line-height: 2rem; font-weight: 700; }
+    .volver {
+      display: inline-flex; align-items: center; gap: 4px; min-height: var(--alto-tactil); margin-left: -8px;
+      padding: 0 8px; font-weight: 600; text-decoration: none; color: var(--color-primario);
+    }
     .texto-2 { margin: 4px 0 0; color: var(--color-texto-2); }
     fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 12px; }
     .micro, .etiqueta, label {
@@ -131,9 +140,11 @@ const horaActual = (ahora = new Date()) =>
       position: relative; display: grid; gap: 8px; justify-items: start; min-height: 104px; padding: 16px;
       text-align: left; font: inherit; color: var(--color-texto); cursor: pointer;
       background: var(--color-superficie); border: 1px solid var(--color-borde); border-radius: var(--radio-tile);
-      transition: border-color 150ms ease-out, transform 100ms ease-out;
     }
-    .tile:active { transform: scale(0.98); }
+    @media (prefers-reduced-motion: no-preference) {
+      .tile { transition: border-color 150ms ease-out, transform 100ms ease-out; }
+      .tile:active { transform: scale(0.98); }
+    }
     .tile[aria-pressed='true'] { border: 2px solid var(--color-primario); padding: 15px; }
     .icono {
       display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%;
@@ -170,12 +181,11 @@ const horaActual = (ahora = new Date()) =>
       border: 0; border-radius: var(--radio-boton);
     }
     .primario:disabled { opacity: 0.5; cursor: not-allowed; }
-    .aviso { margin: 0; text-align: center; color: var(--color-ok-texto); font-weight: 500; }
-    .aviso:empty { display: none; }
   `,
 })
 export class CafeinaComponent implements OnInit {
   private readonly cafeina = inject(CafeinaService);
+  private readonly router = inject(Router);
 
   readonly porcionesMax = PORCIONES_MAX;
   readonly bebidas = signal<BebidaDto[]>([]);
@@ -185,7 +195,6 @@ export class CafeinaComponent implements OnInit {
   readonly cafeinaMg = signal<number | null>(null);
   readonly hora = signal(horaActual());
   readonly guardando = signal(false);
-  readonly aviso = signal('');
   readonly errorGuardado = signal('');
   /** El error de mg se muestra al salir del campo, no apenas se elige «Otro». */
   readonly mgTocado = signal(false);
@@ -216,7 +225,6 @@ export class CafeinaComponent implements OnInit {
     this.seleccion.set(opcion);
     this.porciones.set(1);
     this.mgTocado.set(false);
-    this.aviso.set('');
     this.errorGuardado.set('');
   }
 
@@ -235,10 +243,8 @@ export class CafeinaComponent implements OnInit {
     this.errorGuardado.set('');
     try {
       await this.cafeina.registrar(this.registro());
-      this.aviso.set(navigator.onLine ? 'Café registrado.' : 'Guardado en tu teléfono. Se enviará cuando tengas señal.');
-      this.seleccion.set(null);
-      this.cafeinaMg.set(null);
-      this.hora.set(horaActual());
+      const aviso = navigator.onLine ? 'Café registrado.' : 'Guardado en tu teléfono. Se enviará cuando tengas señal.';
+      void this.router.navigate(['/cafeina'], { state: { aviso } });
     } catch {
       // Solo falla si no se pudo encolar en el teléfono (sin sesión o sin almacenamiento).
       this.errorGuardado.set('No se pudo guardar. Intenta de nuevo.');

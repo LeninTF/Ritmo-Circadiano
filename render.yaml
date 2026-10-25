@@ -19,6 +19,8 @@ services:
         generateValue: true
       - key: JWT_EXPIRA
         value: 8h
+      - key: SWAGGER_HABILITADO # solo staging; en produccion no se define
+        value: 'true'
       - key: VAPID_PUBLIC_KEY
         sync: false
       - key: VAPID_PRIVATE_KEY
