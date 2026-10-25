@@ -100,6 +100,7 @@ const horaActual = (ahora = new Date()) =>
             {{ guardando() ? 'Guardando…' : 'Guardar' }}
           </button>
         }
+        <p class="aviso" role="status">{{ aviso() }}</p>
       }
     </main>
 
@@ -178,6 +179,8 @@ const horaActual = (ahora = new Date()) =>
       border: 0; border-radius: var(--radio-boton);
     }
     .primario:disabled { opacity: 0.5; cursor: not-allowed; }
+    .aviso { margin: 0; text-align: center; color: var(--color-ok-texto); font-weight: 500; }
+    .aviso:empty { display: none; }
   `,
 })
 export class CafeinaComponent implements OnInit {
@@ -192,6 +195,7 @@ export class CafeinaComponent implements OnInit {
   readonly cafeinaMg = signal<number | null>(null);
   readonly hora = signal(horaActual());
   readonly guardando = signal(false);
+  readonly aviso = signal('');
   readonly errorGuardado = signal('');
   /** El error de mg se muestra al salir del campo, no apenas se elige «Otro». */
   readonly mgTocado = signal(false);
@@ -222,6 +226,7 @@ export class CafeinaComponent implements OnInit {
     this.seleccion.set(opcion);
     this.porciones.set(1);
     this.mgTocado.set(false);
+    this.aviso.set('');
     this.errorGuardado.set('');
   }
 
@@ -242,6 +247,10 @@ export class CafeinaComponent implements OnInit {
       await this.cafeina.registrar(this.registro());
       const aviso = navigator.onLine ? 'Café registrado.' : 'Guardado en tu teléfono. Se enviará cuando tengas señal.';
       void this.router.navigate(['/cafeina'], { state: { aviso } });
+      this.aviso.set(navigator.onLine ? 'Café registrado.' : 'Guardado en tu teléfono. Se enviará cuando tengas señal.');
+      this.seleccion.set(null);
+      this.cafeinaMg.set(null);
+      this.hora.set(horaActual());
     } catch {
       // Solo falla si no se pudo encolar en el teléfono (sin sesión o sin almacenamiento).
       this.errorGuardado.set('No se pudo guardar. Intenta de nuevo.');
