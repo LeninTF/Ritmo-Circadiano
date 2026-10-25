@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Injector,
+  OnInit,
+  afterNextRender,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import type { PlanDiarioDto } from '@circadiano/contracts';
 import { PlanService } from '../plan/plan.service';
@@ -78,10 +87,20 @@ const diaSemana = (fecha: string) => new Date(`${fecha}T12:00:00Z`).getUTCDay();
                     <span class="texto-2">{{ item.cafeinaMg }} mg{{ item.pendiente ? ' · Pendiente de enviar' : '' }}</span>
                   </span>
                   @if (item.idIngesta !== null) {
-                    <button type="button" class="eliminar" (click)="eliminar(item)" [disabled]="eliminando() === item.clientId"
+                    <button type="button" class="eliminar" (click)="pedirConfirmacion(item)"
+                      [disabled]="eliminando() === item.clientId" [attr.aria-expanded]="confirmando() === item.clientId"
                       [attr.aria-label]="'Eliminar ' + item.nombre + ' de las ' + hora(item.fechaHora)">
                       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                     </button>
+                  }
+                  @if (confirmando() === item.clientId) {
+                    <div class="confirmar" role="group" [attr.aria-label]="'Confirmar eliminación de ' + item.nombre"
+                      (keydown.escape)="cancelarConfirmacion()">
+                      <span>¿Eliminar este registro?</span>
+                      <button type="button" class="si" [id]="'confirmar-' + item.clientId" (click)="eliminar(item)"
+                        [disabled]="eliminando() === item.clientId">Sí, eliminar</button>
+                      <button type="button" class="no" (click)="cancelarConfirmacion()">Cancelar</button>
+                    </div>
                   }
                 </li>
               }
@@ -142,6 +161,17 @@ const diaSemana = (fecha: string) => new Date(`${fecha}T12:00:00Z`).getUTCDay();
     }
     .eliminar svg { width: 22px; height: 22px; }
     .eliminar:disabled { opacity: 0.4; cursor: not-allowed; }
+    .confirmar {
+      grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+      padding-top: 8px; border-top: 1px solid var(--color-borde); font-weight: 500;
+    }
+    .confirmar span { flex: 1 1 100%; }
+    .confirmar button {
+      flex: 1 1 0; min-height: var(--alto-tactil); font: inherit; font-weight: 600; cursor: pointer;
+      border: 0; border-radius: var(--radio-boton);
+    }
+    .confirmar .si { color: var(--color-peligro-texto); background: var(--color-peligro-fondo); }
+    .confirmar .no { color: var(--color-texto); background: var(--color-superficie-2); }
     .vacio { margin: 8px 0 0; color: var(--color-texto-2); }
     .nota { margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--color-superficie-2); color: var(--color-texto-2); }
     .aviso { margin: 0; color: var(--color-ok-texto); font-weight: 500; }
@@ -158,11 +188,13 @@ const diaSemana = (fecha: string) => new Date(`${fecha}T12:00:00Z`).getUTCDay();
 export class MiConsumoComponent implements OnInit {
   private readonly cafeina = inject(CafeinaService);
   private readonly planes = inject(PlanService);
+  private readonly injector = inject(Injector);
 
   readonly estado = signal<'cargando' | 'listo' | 'error'>('cargando');
   readonly datos = signal<MiConsumo | null>(null);
   readonly plan = signal<PlanDiarioDto | null>(null);
   readonly eliminando = signal<string | null>(null);
+  readonly confirmando = signal<string | null>(null);
   readonly errorEliminar = signal('');
   /** Lo deja /cafeina/nuevo al guardar («Café registrado»). */
   readonly aviso = signal<string>(inject(Router).currentNavigation()?.extras.state?.['aviso'] ?? '');
@@ -207,12 +239,25 @@ export class MiConsumoComponent implements OnInit {
     return horaLima(iso);
   }
 
+  /** Confirmación en la misma fila: el foco pasa a «Sí, eliminar»; Escape o «Cancelar» la cierran. */
+  pedirConfirmacion(item: ConsumoItem): void {
+    this.confirmando.set(item.clientId);
+    this.errorEliminar.set('');
+    afterNextRender(() => document.getElementById(`confirmar-${item.clientId}`)?.focus(), {
+      injector: this.injector,
+    });
+  }
+
+  cancelarConfirmacion(): void {
+    this.confirmando.set(null);
+  }
+
   async eliminar(item: ConsumoItem): Promise<void> {
-    if (!confirm(`¿Eliminar ${item.nombre} de las ${horaLima(item.fechaHora)}?`)) return;
     this.eliminando.set(item.clientId);
     this.errorEliminar.set('');
     try {
       await this.cafeina.eliminar(item);
+      this.confirmando.set(null);
       this.aviso.set('Registro eliminado.');
       await this.cargar();
     } catch {

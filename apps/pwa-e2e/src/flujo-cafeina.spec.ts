@@ -47,8 +47,8 @@ test('flujo feliz: registrar 2 cafés, verlos en «Mi consumo» y eliminarlos', 
   await expect(page.getByRole('listitem', { name: 'Hoy: 190 mg' })).toBeVisible();
   await expect(page.getByText(/de cafeína activa/)).toBeVisible();
 
-  page.once('dialog', (dialogo) => void dialogo.accept());
   await page.getByRole('button', { name: /^Eliminar Café pasado/ }).click();
+  await page.getByRole('button', { name: 'Sí, eliminar' }).click();
 
   await expect(page.getByText('Registro eliminado.')).toBeVisible();
   await expect(page.getByText('Aún no registras consumos. Empieza con tu primer café.')).toBeVisible();

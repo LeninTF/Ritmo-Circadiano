@@ -7,7 +7,8 @@ import { CafeinaService, errorRegistro, totalMg, type RegistroCafeina } from './
 type Icono = 'cafe' | 'te' | 'energia' | 'gaseosa';
 /** Icono por nombre de bebida; las bebidas nuevas caen en «cafe». */
 const ICONOS: readonly [RegExp, Icono][] = [
-  [/\bt[eé]\b|infusi/i, 'te'],
+  // Sin \b: en JS «é» no cuenta como letra y «Té» no coincidiría.
+  [/(?:^|\s)t[eé](?:\s|$)|infusi/i, 'te'],
   [/energ/i, 'energia'],
   [/cola|gaseosa/i, 'gaseosa'],
 ];
@@ -139,9 +140,11 @@ const horaActual = (ahora = new Date()) =>
       position: relative; display: grid; gap: 8px; justify-items: start; min-height: 104px; padding: 16px;
       text-align: left; font: inherit; color: var(--color-texto); cursor: pointer;
       background: var(--color-superficie); border: 1px solid var(--color-borde); border-radius: var(--radio-tile);
-      transition: border-color 150ms ease-out, transform 100ms ease-out;
     }
-    .tile:active { transform: scale(0.98); }
+    @media (prefers-reduced-motion: no-preference) {
+      .tile { transition: border-color 150ms ease-out, transform 100ms ease-out; }
+      .tile:active { transform: scale(0.98); }
+    }
     .tile[aria-pressed='true'] { border: 2px solid var(--color-primario); padding: 15px; }
     .icono {
       display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%;
