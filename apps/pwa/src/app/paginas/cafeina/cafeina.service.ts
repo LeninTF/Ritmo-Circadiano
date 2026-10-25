@@ -25,21 +25,24 @@ export function totalMg(registro: RegistroCafeina): number {
   return registro.cafeinaMg ?? 0;
 }
 
-export function aFechaHoy(hora: string, ahora: Date): Date {
+/**
+ * La última vez que fue esa hora: hoy, o ayer si hoy todavía no llega.
+ * Así, a las 00:05, «23:50» es el café de anoche (turnos nocturnos) y nunca queda en el futuro.
+ */
+export function aFechaReciente(hora: string, ahora: Date): Date {
   const [h, m] = hora.split(':').map(Number);
-  return new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), h, m);
+  const fecha = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), h, m);
+  if (fecha.getTime() > ahora.getTime() + MARGEN_FUTURO_MS) fecha.setDate(fecha.getDate() - 1);
+  return fecha;
 }
 
 /** Mismas reglas que valida la API, para mostrar el error junto al campo antes de enviar. */
-export function errorRegistro(registro: RegistroCafeina, ahora: Date): string | null {
+export function errorRegistro(registro: RegistroCafeina): string | null {
   const mg = registro.cafeinaMg;
   if (!registro.bebida && (mg === null || !Number.isInteger(mg) || mg < 1 || mg > 1000)) {
     return 'Indica los mg (entre 1 y 1000).';
   }
   if (!/^\d{2}:\d{2}$/.test(registro.hora)) return 'Indica la hora.';
-  if (aFechaHoy(registro.hora, ahora).getTime() > ahora.getTime() + MARGEN_FUTURO_MS) {
-    return 'La hora no puede estar en el futuro.';
-  }
   return null;
 }
 
@@ -70,16 +73,20 @@ export class CafeinaService {
 
   /** Encola la ingesta (RNF03); OutboxService la envía a POST /sync/lote al haber red. Devuelve el client_id. */
   async registrar(registro: RegistroCafeina, ahora = new Date()): Promise<string> {
-    const fechaHora = aFechaHoy(registro.hora, ahora).toISOString();
+    const fechaHora = aFechaReciente(registro.hora, ahora).toISOString();
     const payload: Omit<CrearIngestaCafeinaDto, 'id_usuario' | 'client_id'> = registro.bebida
       ? { id_bebida: registro.bebida.id_bebida, porciones: registro.porciones, fecha_hora: fechaHora }
       : { cafeina_mg: registro.cafeinaMg ?? undefined, fecha_hora: fechaHora };
     const clientId = await this.outbox.enqueue({ operation: 'ingesta', payload });
-    // El plan offline de I3 lee este store para el corte de cafeína (shortcut en plan.service.ts).
-    await this.store.addIngesta({
-      fecha: fechaHora,
-      data: { clientId, cafeinaMg: totalMg(registro), nombre: registro.bebida?.nombre ?? 'Otro' },
-    });
+    try {
+      // El plan offline de I3 lee este store para el corte de cafeína (shortcut en plan.service.ts).
+      await this.store.addIngesta({
+        fecha: fechaHora,
+        data: { clientId, cafeinaMg: totalMg(registro), nombre: registro.bebida?.nombre ?? 'Otro' },
+      });
+    } catch {
+      // Ya está en la cola: fallar aquí haría que el trabajador reintente y la duplique.
+    }
     void this.outbox.sync().catch(() => undefined);
     return clientId;
   }
