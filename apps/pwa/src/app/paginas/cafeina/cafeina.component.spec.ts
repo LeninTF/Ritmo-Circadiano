@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router, provideRouter } from '@angular/router';
 import type { BebidaDto } from '@circadiano/contracts';
 import { CafeinaComponent } from './cafeina.component';
 import { CafeinaService } from './cafeina.service';
@@ -28,7 +29,7 @@ describe('CafeinaComponent (HU-03)', () => {
     servicio.registrar.mockResolvedValue('cid-1');
     await TestBed.configureTestingModule({
       imports: [CafeinaComponent],
-      providers: [{ provide: CafeinaService, useValue: servicio }],
+      providers: [provideRouter([]), { provide: CafeinaService, useValue: servicio }],
     }).compileComponents();
     fixture = TestBed.createComponent(CafeinaComponent);
     el = fixture.nativeElement;
@@ -70,13 +71,17 @@ describe('CafeinaComponent (HU-03)', () => {
     expect(boton('Guardar')?.disabled).toBe(false);
   });
 
-  it('guardar registra lo elegido, avisa y limpia la selección', async () => {
+  it('guardar registra lo elegido y vuelve a «Mi consumo» con el aviso', async () => {
+    const navegar = jest.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     tiles()[0].click();
     await render();
     boton('Guardar')?.click();
     await render();
 
     expect(servicio.registrar).toHaveBeenCalledWith(expect.objectContaining({ bebida: BEBIDAS[0], porciones: 1 }));
+    expect(navegar).toHaveBeenCalledWith(['/cafeina'], {
+      state: { aviso: expect.stringMatching(/Café registrado|Guardado en tu teléfono/) },
+    });
     expect(el.querySelector('.aviso')?.textContent).toMatch(/Café registrado|Guardado en tu teléfono/);
     expect(boton('Guardar')).toBeUndefined();
   });

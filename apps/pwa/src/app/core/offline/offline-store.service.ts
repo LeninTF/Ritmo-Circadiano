@@ -88,6 +88,15 @@ export class OfflineStoreService {
     const user = this.getUserId();
     return this.tables.ingestas.put({ ...ingesta, usuario: user });
   }
+  /** Borra las copias locales de una ingesta eliminada en el servidor (I4 guarda el clientId en `data`). */
+  async removeIngestaPorClientId(clientId: string): Promise<void> {
+    const ids = (await this.getMyIngestas())
+      .filter((i) => (i.data as { clientId?: unknown } | undefined)?.clientId === clientId)
+      .map((i) => i.id)
+      .filter((id): id is number => id !== undefined);
+    await this.tables.ingestas.bulkDelete(ids);
+  }
+
   async getMyIngestas(): Promise<Ingesta[]> {
     return this.tables.ingestas
       .where('usuario')
