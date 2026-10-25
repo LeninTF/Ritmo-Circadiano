@@ -1,5 +1,6 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import type { BebidaDto } from '@circadiano/contracts';
 import { CafeinaService, errorRegistro, totalMg, type RegistroCafeina } from './cafeina.service';
 
@@ -22,6 +23,10 @@ const horaActual = (ahora = new Date()) =>
   template: `
     <main class="pagina" aria-labelledby="titulo-cafeina">
       <header>
+        <a class="volver" routerLink="/cafeina">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+          Mi consumo
+        </a>
         <h1 id="titulo-cafeina">Registrar café</h1>
         <p class="texto-2">Elige lo que tomaste.</p>
       </header>
@@ -95,7 +100,6 @@ const horaActual = (ahora = new Date()) =>
             {{ guardando() ? 'Guardando…' : 'Guardar' }}
           </button>
         }
-        <p class="aviso" role="status">{{ aviso() }}</p>
       }
     </main>
 
@@ -116,10 +120,14 @@ const horaActual = (ahora = new Date()) =>
       }
     </ng-template>
   `,
-  imports: [NgTemplateOutlet],
+  imports: [NgTemplateOutlet, RouterLink],
   styles: `
     .pagina { max-width: 480px; margin: 0 auto; padding: 24px 20px 32px; display: grid; gap: 16px; }
     h1 { margin: 0; font-size: 1.5rem; line-height: 2rem; font-weight: 700; }
+    .volver {
+      display: inline-flex; align-items: center; gap: 4px; min-height: var(--alto-tactil); margin-left: -8px;
+      padding: 0 8px; font-weight: 600; text-decoration: none; color: var(--color-primario);
+    }
     .texto-2 { margin: 4px 0 0; color: var(--color-texto-2); }
     fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 12px; }
     .micro, .etiqueta, label {
@@ -170,12 +178,11 @@ const horaActual = (ahora = new Date()) =>
       border: 0; border-radius: var(--radio-boton);
     }
     .primario:disabled { opacity: 0.5; cursor: not-allowed; }
-    .aviso { margin: 0; text-align: center; color: var(--color-ok-texto); font-weight: 500; }
-    .aviso:empty { display: none; }
   `,
 })
 export class CafeinaComponent implements OnInit {
   private readonly cafeina = inject(CafeinaService);
+  private readonly router = inject(Router);
 
   readonly porcionesMax = PORCIONES_MAX;
   readonly bebidas = signal<BebidaDto[]>([]);
@@ -185,7 +192,6 @@ export class CafeinaComponent implements OnInit {
   readonly cafeinaMg = signal<number | null>(null);
   readonly hora = signal(horaActual());
   readonly guardando = signal(false);
-  readonly aviso = signal('');
   readonly errorGuardado = signal('');
   /** El error de mg se muestra al salir del campo, no apenas se elige «Otro». */
   readonly mgTocado = signal(false);
@@ -216,7 +222,6 @@ export class CafeinaComponent implements OnInit {
     this.seleccion.set(opcion);
     this.porciones.set(1);
     this.mgTocado.set(false);
-    this.aviso.set('');
     this.errorGuardado.set('');
   }
 
@@ -235,10 +240,8 @@ export class CafeinaComponent implements OnInit {
     this.errorGuardado.set('');
     try {
       await this.cafeina.registrar(this.registro());
-      this.aviso.set(navigator.onLine ? 'Café registrado.' : 'Guardado en tu teléfono. Se enviará cuando tengas señal.');
-      this.seleccion.set(null);
-      this.cafeinaMg.set(null);
-      this.hora.set(horaActual());
+      const aviso = navigator.onLine ? 'Café registrado.' : 'Guardado en tu teléfono. Se enviará cuando tengas señal.';
+      void this.router.navigate(['/cafeina'], { state: { aviso } });
     } catch {
       // Solo falla si no se pudo encolar en el teléfono (sin sesión o sin almacenamiento).
       this.errorGuardado.set('No se pudo guardar. Intenta de nuevo.');
