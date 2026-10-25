@@ -5,18 +5,30 @@ import {
   CrearIngestaCafeinaDto,
   IngestaCafeinaRespuestaDto,
   ResidualCafeinaRespuestaDto,
+  ResumenCafeinaDto,
 } from '@circadiano/contracts';
 import {
   residual,
+  calcularCafeinaActiva,
   calcularHoraCorte,
+  resumirConsumoPorDia,
   IngestaCafeina as DominioIngesta,
   UMBRAL_CAFEINA_MG_DEFECTO,
   SEMIVIDA_H_DEFECTO,
+  ZONA_HORARIA_EMPRESA,
 } from '@circadiano/domain';
+import { ParametrosService } from '../plataforma/parametros/parametros.service';
+
+const MS_H = 3_600_000;
+// America/Lima es UTC-5 todo el año.
+const ZONA_LIMA = '-05:00';
 
 @Injectable()
 export class CafeinaService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly parametros: ParametrosService,
+  ) {}
 
   async obtenerBebidas(): Promise<BebidaDto[]> {
     const bebidas = await this.prisma.bebida.findMany({
@@ -107,8 +119,9 @@ export class CafeinaService {
   }
 
   async listarIngestas(idUsuario: string, fecha: string): Promise<IngestaCafeinaRespuestaDto[]> {
-    const inicio = new Date(`${fecha}T00:00:00.000Z`);
-    const fin = new Date(`${fecha}T23:59:59.999Z`);
+    // El día es el de Lima, no el de UTC: un café a las 20:00 en Lima sigue siendo de ese día.
+    const inicio = new Date(`${fecha}T00:00:00.000${ZONA_LIMA}`);
+    const fin = new Date(`${fecha}T23:59:59.999${ZONA_LIMA}`);
 
     const ingestas = await this.prisma.ingestaCafeina.findMany({
       where: {
@@ -178,6 +191,54 @@ export class CafeinaService {
       hora_corte: horaCorte !== null ? Number(horaCorte.toFixed(2)) : null,
       sugerencia,
     };
+  }
+
+  /** GET /cafeina/resumen: consumo por día y cafeína activa estimada (RF09). */
+  async obtenerResumen(idUsuario: string, dias: number, ahora = new Date()): Promise<ResumenCafeinaDto> {
+    // Cubre los `dias` días de Lima y la ventana de 24 h de la cafeína activa.
+    const desde = new Date(ahora.getTime() - (dias + 1) * 24 * MS_H);
+    const [filas, umbral] = await Promise.all([
+      this.prisma.ingestaCafeina.findMany({
+        where: { id_usuario: idUsuario, fecha_hora: { gte: desde, lte: ahora } },
+        select: { cafeina_mg: true, fecha_hora: true },
+      }),
+      this.leerUmbralCafeina(),
+    ]);
+    const ingestas: DominioIngesta[] = filas.map((f) => ({
+      dosisMg: Number(f.cafeina_mg),
+      hora: f.fecha_hora.getTime() / MS_H,
+    }));
+    const ahoraH = ahora.getTime() / MS_H;
+    // shortcut: semivida por defecto (RN03) como en PlanesService; leer usuario.semivida_h cuando I1 lo exponga.
+    const semivida = SEMIVIDA_H_DEFECTO;
+
+    const consumo = resumirConsumoPorDia(ingestas, ahoraH, dias).map((d) => ({
+      ...d,
+      totalMg: Math.round(d.totalMg),
+    }));
+    const activa = calcularCafeinaActiva(ingestas, ahoraH, semivida, umbral);
+
+    return {
+      zonaHoraria: ZONA_HORARIA_EMPRESA,
+      dias: consumo,
+      hoy: consumo[consumo.length - 1],
+      cafeinaActiva: {
+        mg: Math.round(activa.mg),
+        calculadoEn: ahora.toISOString(),
+        horaNivelBajo: activa.horaNivelBajo === null
+          ? null
+          : new Date(activa.horaNivelBajo * MS_H).toISOString(),
+        semividaH: semivida,
+        umbralMg: umbral,
+        esEstimacion: true,
+      },
+    };
+  }
+
+  private async leerUmbralCafeina(): Promise<number> {
+    const parametros = await this.parametros.listar();
+    const valor = Number(parametros.find((p) => p.clave === 'umbral_cafeina_mg')?.valor);
+    return Number.isFinite(valor) && valor > 0 ? valor : UMBRAL_CAFEINA_MG_DEFECTO;
   }
 
   async sincronizarLote(lote: CrearIngestaCafeinaDto[]): Promise<IngestaCafeinaRespuestaDto[]> {
