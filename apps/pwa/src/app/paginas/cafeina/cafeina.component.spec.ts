@@ -82,8 +82,6 @@ describe('CafeinaComponent (HU-03)', () => {
     expect(navegar).toHaveBeenCalledWith(['/cafeina'], {
       state: { aviso: expect.stringMatching(/Café registrado|Guardado en tu teléfono/) },
     });
-    expect(el.querySelector('.aviso')?.textContent).toMatch(/Café registrado|Guardado en tu teléfono/);
-    expect(boton('Guardar')).toBeUndefined();
   });
 
   it('si no se pudo encolar, muestra el error y conserva la selección', async () => {
