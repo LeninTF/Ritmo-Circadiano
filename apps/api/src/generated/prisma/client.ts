@@ -55,6 +55,23 @@ export type Area = Prisma.AreaModel
  */
 export type Usuario = Prisma.UsuarioModel
 /**
+ * Model Evaluacion
+ * Aplicacion de un instrumento (PSQI, ESE-VP, ficha) en el pretest o postest (Figura 9).
+ * Cascada: DELETE /me borra las evaluaciones del participante (Ley 29733).
+ */
+export type Evaluacion = Prisma.EvaluacionModel
+/**
+ * Model ResultadoIndicador
+ * Valor de un indicador del estudio; codigo_indicador en CODIGOS_INDICADOR (libs/contracts).
+ */
+export type ResultadoIndicador = Prisma.ResultadoIndicadorModel
+/**
+ * Model AuditLog
+ * ERD03: acciones sensibles (login, exportacion, turno forzado, borrado).
+ * Sin FK a usuario: la fila sobrevive al borrado del participante (solo queda el UUID).
+ */
+export type AuditLog = Prisma.AuditLogModel
+/**
  * Model Ruta
  * Ruta de viaje interprovincial (p. ej. Lima – Nasca).
  */
@@ -69,6 +86,26 @@ export type TurnoLaboral = Prisma.TurnoLaboralModel
  * Auditoría de excesos de jornada laboral aprobados (RF14).
  */
 export type ExcesoJornadaAuditoria = Prisma.ExcesoJornadaAuditoriaModel
+/**
+ * Model Ubicacion
+ * Punto donde se calculan los eventos solares (RF06). Se usa la ultima registrada.
+ */
+export type Ubicacion = Prisma.UbicacionModel
+/**
+ * Model EventoSolar
+ * Cache de amanecer, mediodia y atardecer por ubicacion y dia (RF06, 7 dias por consulta).
+ */
+export type EventoSolar = Prisma.EventoSolarModel
+/**
+ * Model PerfilCronotipo
+ * Resultado del rMEQ de 5 items (RF03, RN07). Una fila por usuario.
+ */
+export type PerfilCronotipo = Prisma.PerfilCronotipoModel
+/**
+ * Model PlanDiario
+ * Plan circadiano diario (RF07). Se regenera con upsert por usuario y fecha.
+ */
+export type PlanDiario = Prisma.PlanDiarioModel
 /**
  * Model Bebida
  * 
@@ -89,3 +126,32 @@ export type SuscripcionPush = Prisma.SuscripcionPushModel
  * 
  */
 export type Notificacion = Prisma.NotificacionModel
+/**
+ * Model RegistroSueno
+ * Registro diario de sueno del trabajador (RF11, RF12, ERD06).
+ * Sincronizado offline mediante OutboxService con idempotencia por client_id.
+ * 
+ * NOTA DE INTEGRACION:
+ * La referencia logica es `id_usuario -> usuario(id)`.
+ * Dado que el modelo `Usuario` pertenece al slice I1 (i1-plataforma.prisma),
+ * y conforme a las reglas de colaboracion que prohiben modificar schemas
+ * ajenos (lo que requeriria agregar el campo inverso en el modelo Usuario de I1),
+ * se define `idUsuario` como campo escalar UUID con restriccion de unicidad
+ * compuesta @@unique([idUsuario, fecha]).
+ * La relacion foranea Prisma podra formalizarse cuando I1 exponga la relacion.
+ */
+export type RegistroSueno = Prisma.RegistroSuenoModel
+/**
+ * Model AptitudPresalida
+ * ERD04: autoevaluacion de aptitud pre-salida (RF12, RN09, RN10).
+ * 
+ * FK `id_usuario -> usuario(id)` (I1) e `id_turno -> turno_laboral(id)` (I2),
+ * ambas ON DELETE CASCADE: sin el usuario o el turno la evaluacion no tiene
+ * sentido y no debe quedar huerfana. El listener de DELETE /me se mantiene.
+ * 
+ * `compartido` es independiente del color: el calculo no exige consentimiento
+ * y el valor por defecto es false (sin divulgacion automatica, RN10).
+ * No se guardan sintomas ni otro detalle clinico: el despachador solo podra
+ * leer `color` cuando `compartido = true`.
+ */
+export type AptitudPresalida = Prisma.AptitudPresalidaModel

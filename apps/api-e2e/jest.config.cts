@@ -1,3 +1,6 @@
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'a'.repeat(32);
+process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://x';
+
 module.exports = {
   displayName: 'api-e2e',
   preset: '../../jest.preset.js',

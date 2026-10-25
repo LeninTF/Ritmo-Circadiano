@@ -34,3 +34,23 @@ export const EstadoConfirmacion = {
 } as const
 
 export type EstadoConfirmacion = (typeof EstadoConfirmacion)[keyof typeof EstadoConfirmacion]
+
+
+export const CategoriaCronotipo = {
+  vespertino_definido: 'vespertino_definido',
+  vespertino_moderado: 'vespertino_moderado',
+  intermedio: 'intermedio',
+  matutino_moderado: 'matutino_moderado',
+  matutino_definido: 'matutino_definido'
+} as const
+
+export type CategoriaCronotipo = (typeof CategoriaCronotipo)[keyof typeof CategoriaCronotipo]
+
+
+export const ColorAptitud = {
+  verde: 'verde',
+  ambar: 'ambar',
+  rojo: 'rojo'
+} as const
+
+export type ColorAptitud = (typeof ColorAptitud)[keyof typeof ColorAptitud]

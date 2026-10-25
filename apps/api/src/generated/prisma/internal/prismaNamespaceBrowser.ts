@@ -54,13 +54,22 @@ export const ModelName = {
   ParametroSistema: 'ParametroSistema',
   Area: 'Area',
   Usuario: 'Usuario',
+  Evaluacion: 'Evaluacion',
+  ResultadoIndicador: 'ResultadoIndicador',
+  AuditLog: 'AuditLog',
   Ruta: 'Ruta',
   TurnoLaboral: 'TurnoLaboral',
   ExcesoJornadaAuditoria: 'ExcesoJornadaAuditoria',
+  Ubicacion: 'Ubicacion',
+  EventoSolar: 'EventoSolar',
+  PerfilCronotipo: 'PerfilCronotipo',
+  PlanDiario: 'PlanDiario',
   Bebida: 'Bebida',
   IngestaCafeina: 'IngestaCafeina',
   SuscripcionPush: 'SuscripcionPush',
-  Notificacion: 'Notificacion'
+  Notificacion: 'Notificacion',
+  RegistroSueno: 'RegistroSueno',
+  AptitudPresalida: 'AptitudPresalida'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -116,6 +125,42 @@ export const UsuarioScalarFieldEnum = {
 export type UsuarioScalarFieldEnum = (typeof UsuarioScalarFieldEnum)[keyof typeof UsuarioScalarFieldEnum]
 
 
+export const EvaluacionScalarFieldEnum = {
+  id: 'id',
+  idUsuario: 'idUsuario',
+  fase: 'fase',
+  instrumento: 'instrumento',
+  fechaAplicacion: 'fechaAplicacion',
+  puntajeTotal: 'puntajeTotal',
+  respuestas: 'respuestas'
+} as const
+
+export type EvaluacionScalarFieldEnum = (typeof EvaluacionScalarFieldEnum)[keyof typeof EvaluacionScalarFieldEnum]
+
+
+export const ResultadoIndicadorScalarFieldEnum = {
+  id: 'id',
+  idEvaluacion: 'idEvaluacion',
+  codigoIndicador: 'codigoIndicador',
+  valor: 'valor',
+  unidad: 'unidad'
+} as const
+
+export type ResultadoIndicadorScalarFieldEnum = (typeof ResultadoIndicadorScalarFieldEnum)[keyof typeof ResultadoIndicadorScalarFieldEnum]
+
+
+export const AuditLogScalarFieldEnum = {
+  id: 'id',
+  idUsuario: 'idUsuario',
+  accion: 'accion',
+  recurso: 'recurso',
+  ip: 'ip',
+  fecha: 'fecha'
+} as const
+
+export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
+
+
 export const RutaScalarFieldEnum = {
   id: 'id',
   origen: 'origen',
@@ -158,6 +203,64 @@ export const ExcesoJornadaAuditoriaScalarFieldEnum = {
 } as const
 
 export type ExcesoJornadaAuditoriaScalarFieldEnum = (typeof ExcesoJornadaAuditoriaScalarFieldEnum)[keyof typeof ExcesoJornadaAuditoriaScalarFieldEnum]
+
+
+export const UbicacionScalarFieldEnum = {
+  id: 'id',
+  idUsuario: 'idUsuario',
+  lat: 'lat',
+  lng: 'lng',
+  origen: 'origen',
+  zonaHoraria: 'zonaHoraria',
+  creadoEn: 'creadoEn'
+} as const
+
+export type UbicacionScalarFieldEnum = (typeof UbicacionScalarFieldEnum)[keyof typeof UbicacionScalarFieldEnum]
+
+
+export const EventoSolarScalarFieldEnum = {
+  id: 'id',
+  idUbicacion: 'idUbicacion',
+  fecha: 'fecha',
+  amanecer: 'amanecer',
+  mediodia: 'mediodia',
+  atardecer: 'atardecer'
+} as const
+
+export type EventoSolarScalarFieldEnum = (typeof EventoSolarScalarFieldEnum)[keyof typeof EventoSolarScalarFieldEnum]
+
+
+export const PerfilCronotipoScalarFieldEnum = {
+  id: 'id',
+  idUsuario: 'idUsuario',
+  respuestasRmeq: 'respuestasRmeq',
+  puntaje: 'puntaje',
+  categoria: 'categoria',
+  actualizadoEn: 'actualizadoEn'
+} as const
+
+export type PerfilCronotipoScalarFieldEnum = (typeof PerfilCronotipoScalarFieldEnum)[keyof typeof PerfilCronotipoScalarFieldEnum]
+
+
+export const PlanDiarioScalarFieldEnum = {
+  id: 'id',
+  idUsuario: 'idUsuario',
+  idTurno: 'idTurno',
+  fecha: 'fecha',
+  inicioSueno: 'inicioSueno',
+  finSueno: 'finSueno',
+  inicioSiesta: 'inicioSiesta',
+  finSiesta: 'finSiesta',
+  picos: 'picos',
+  horaCorteCafeina: 'horaCorteCafeina',
+  ventanaLuz: 'ventanaLuz',
+  protegerLuz: 'protegerLuz',
+  categoria: 'categoria',
+  versionAlgoritmo: 'versionAlgoritmo',
+  actualizadoEn: 'actualizadoEn'
+} as const
+
+export type PlanDiarioScalarFieldEnum = (typeof PlanDiarioScalarFieldEnum)[keyof typeof PlanDiarioScalarFieldEnum]
 
 
 export const BebidaScalarFieldEnum = {
@@ -209,12 +312,61 @@ export const NotificacionScalarFieldEnum = {
 export type NotificacionScalarFieldEnum = (typeof NotificacionScalarFieldEnum)[keyof typeof NotificacionScalarFieldEnum]
 
 
+export const RegistroSuenoScalarFieldEnum = {
+  id: 'id',
+  idUsuario: 'idUsuario',
+  fecha: 'fecha',
+  horaAcostarse: 'horaAcostarse',
+  horaDespertar: 'horaDespertar',
+  latenciaMin: 'latenciaMin',
+  despertares: 'despertares',
+  calidadPercibida: 'calidadPercibida',
+  fatigaPercibida: 'fatigaPercibida',
+  esDiaLaboral: 'esDiaLaboral',
+  luzMatutinaMin: 'luzMatutinaMin',
+  clientId: 'clientId',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RegistroSuenoScalarFieldEnum = (typeof RegistroSuenoScalarFieldEnum)[keyof typeof RegistroSuenoScalarFieldEnum]
+
+
+export const AptitudPresalidaScalarFieldEnum = {
+  id: 'id',
+  idUsuario: 'idUsuario',
+  idTurno: 'idTurno',
+  fechaHora: 'fechaHora',
+  horasSueno24h: 'horasSueno24h',
+  somnolencia: 'somnolencia',
+  color: 'color',
+  compartido: 'compartido',
+  creadoEn: 'creadoEn'
+} as const
+
+export type AptitudPresalidaScalarFieldEnum = (typeof AptitudPresalidaScalarFieldEnum)[keyof typeof AptitudPresalidaScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {
@@ -231,4 +383,13 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
