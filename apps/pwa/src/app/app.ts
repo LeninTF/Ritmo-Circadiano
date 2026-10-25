@@ -3,11 +3,11 @@ import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
-  HostBinding,
   OnDestroy,
   OnInit,
   PLATFORM_ID,
   inject,
+  signal,
 } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
@@ -33,18 +33,13 @@ export class App implements OnInit, OnDestroy {
   private consultaEsquema?: MediaQueryList;
   private preferenciaTema: PreferenciaTema = 'automatico';
 
-  protected temaActual: Tema = 'claro';
-
-  @HostBinding('attr.data-tema')
-  protected get atributoTema(): Tema {
-    return this.temaActual;
-  }
+  protected readonly temaActual = signal<Tema>('claro');
 
   protected readonly enlaces = [
-    { ruta: '/plan', texto: 'Hoy' },
-    { ruta: '/cafeina', texto: 'Cafeína' },
-    { ruta: '/aptitud', texto: 'Pre-salida' },
-    { ruta: '/diario', texto: 'Diario' },
+    { ruta: '/plan', texto: 'Hoy', icono: 'hoy' },
+    { ruta: '/cafeina', texto: 'Cafeína', icono: 'cafeina' },
+    { ruta: '/aptitud', texto: 'Pre-salida', icono: 'presalida' },
+    { ruta: '/diario', texto: 'Diario', icono: 'diario' },
   ];
 
   ngOnInit(): void {
@@ -97,8 +92,9 @@ export class App implements OnInit, OnDestroy {
     const temaAutomatico: Tema = esHorarioNocturno || this.consultaEsquema?.matches
       ? 'oscuro'
       : 'claro';
-    this.temaActual = this.preferenciaTema === 'automatico'
-      ? temaAutomatico
-      : this.preferenciaTema;
+    const tema = this.preferenciaTema === 'automatico' ? temaAutomatico : this.preferenciaTema;
+    this.temaActual.set(tema);
+    // Los tokens viven en :root (styles.scss): el atributo va en <html>, no en <app-root>.
+    this.documento.documentElement.setAttribute('data-tema', tema);
   }
 }
