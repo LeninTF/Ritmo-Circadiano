@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseArrayPipe,
   ParseIntPipe,
   Post,
   Query,
@@ -11,7 +12,6 @@ import {
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CafeinaService } from './cafeina.service';
 import {
-  CrearIngestaCafeinaDto,
   IngestaCafeinaRespuestaDto,
   ResidualCafeinaRespuestaDto,
   ResumenCafeinaDto,
@@ -19,6 +19,7 @@ import {
 } from '@circadiano/contracts';
 import { Roles, UsuarioActual } from '../plataforma/auth';
 import { ConsultarResumenCafeinaDto } from './dto/consultar-resumen.dto';
+import { CrearIngestaCafeinaBodyDto } from './dto/crear-ingesta.dto';
 
 @ApiTags('cafeina')
 @Controller('cafeina')
@@ -30,7 +31,7 @@ export class CafeinaController {
   @ApiResponse({ status: 201, description: 'Ingesta registrada o recuperada correctamente.' })
   async registrarIngesta(
     @UsuarioActual() usuario: UsuarioJwtPayload,
-    @Body() dto: CrearIngestaCafeinaDto,
+    @Body() dto: CrearIngestaCafeinaBodyDto,
   ): Promise<IngestaCafeinaRespuestaDto> {
     // RNF04: el dueno siempre es el del token, nunca el id_usuario del cuerpo.
     return this.cafeinaService.registrarIngesta({ ...dto, id_usuario: usuario.sub });
@@ -85,7 +86,8 @@ export class CafeinaController {
   @ApiResponse({ status: 201, description: 'Lote sincronizado exitosamente.' })
   async sincronizarLote(
     @UsuarioActual() usuario: UsuarioJwtPayload,
-    @Body() lote: CrearIngestaCafeinaDto[],
+    @Body(new ParseArrayPipe({ items: CrearIngestaCafeinaBodyDto, whitelist: true, forbidNonWhitelisted: true }))
+    lote: CrearIngestaCafeinaBodyDto[],
   ): Promise<IngestaCafeinaRespuestaDto[]> {
     return this.cafeinaService.sincronizarLote(lote.map((dto) => ({ ...dto, id_usuario: usuario.sub })));
   }

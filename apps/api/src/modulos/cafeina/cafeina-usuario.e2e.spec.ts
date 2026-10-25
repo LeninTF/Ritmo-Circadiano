@@ -10,6 +10,8 @@ import { NotificacionesService } from '../notificaciones/notificaciones.service'
 import { CafeinaController } from './cafeina.controller';
 import { CafeinaService } from './cafeina.service';
 
+const UUID = '3f1c2b9e-8a4d-4c1e-9b7a-2d5e6f708192';
+
 describe('Cafeina y push usan el usuario del token (RNF04)', () => {
   let app: INestApplication;
   let autorizacion: string;
@@ -56,8 +58,16 @@ describe('Cafeina y push usan el usuario del token (RNF04)', () => {
 
   it('escrituras reemplazan el id_usuario del cuerpo y el borrado exige ser dueno', async () => {
     const http = request(app.getHttpServer());
-    await http.post('/cafeina').set('Authorization', autorizacion).send({ id_usuario: 'otro', client_id: 'c1', fecha_hora: 'x' });
-    await http.post('/cafeina/sync/lote').set('Authorization', autorizacion).send([{ id_usuario: 'otro', client_id: 'c2' }]);
+    const cuerpo = { id_bebida: 1, porciones: 2, fecha_hora: '2026-10-24T13:30:00.000Z', client_id: UUID };
+    await http.post('/cafeina').set('Authorization', autorizacion).send(cuerpo).expect(201);
+    await http.post('/cafeina/sync/lote').set('Authorization', autorizacion).send([cuerpo]).expect(201);
+    // Un id_usuario en el cuerpo ni siquiera se acepta.
+    await http.post('/cafeina').set('Authorization', autorizacion).send({ ...cuerpo, id_usuario: 'otro' }).expect(400);
+    await http
+      .post('/cafeina/sync/lote')
+      .set('Authorization', autorizacion)
+      .send([{ ...cuerpo, id_usuario: 'otro' }])
+      .expect(400);
     await http.delete('/cafeina/7').set('Authorization', autorizacion);
     await http
       .post('/push/suscripciones')
@@ -88,5 +98,21 @@ describe('Cafeina y push usan el usuario del token (RNF04)', () => {
     const http = request(app.getHttpServer());
     await http.get('/cafeina/resumen').expect(401);
     await http.get('/cafeina/resumen').set('Authorization', autorizacionDespachador).expect(403);
+  });
+
+  it('POST /cafeina valida el cuerpo antes de llegar al servicio (HU-03)', async () => {
+    const http = request(app.getHttpServer());
+    const base = { id_bebida: 1, fecha_hora: '2026-10-24T13:30:00.000Z', client_id: UUID };
+    cafeina.registrarIngesta.mockClear();
+    for (const malo of [
+      { ...base, client_id: 'no-uuid' },
+      { ...base, fecha_hora: 'ayer' },
+      { ...base, porciones: 5 },
+      { id_bebida: null, cafeina_mg: 0, fecha_hora: base.fecha_hora, client_id: UUID },
+      { id_bebida: null, cafeina_mg: 1001, fecha_hora: base.fecha_hora, client_id: UUID },
+    ]) {
+      await http.post('/cafeina').set('Authorization', autorizacion).send(malo).expect(400);
+    }
+    expect(cafeina.registrarIngesta).not.toHaveBeenCalled();
   });
 });
