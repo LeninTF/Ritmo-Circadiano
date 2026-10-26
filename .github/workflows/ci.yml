@@ -37,6 +37,8 @@ jobs:
           restore-keys: nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
       - uses: nrwl/nx-set-shas@e602fada7ad5987b0f7b1905e7a99ea1c661514c # v5
       - run: npx nx affected -t lint typecheck test build
+      - name: Ejecutar pruebas E2E de API
+        run: npx nx run api-e2e:e2e
       - name: Cobertura de libs/domain (>= 70 %)
         run: npm run check:coverage-domain
 
