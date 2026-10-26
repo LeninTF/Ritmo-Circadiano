@@ -1,31 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { crearCuentaEIngresar } from './soporte';
 
 /** Registro → login → registrar café → ver mi consumo (SPEC.md §10, HU-01 a HU-05). */
-
-const CLAVE = 'Ruta2026e2e';
-
-async function crearCuentaEIngresar(page: Page): Promise<void> {
-  const correo = `e2e.${Date.now()}.${Math.floor(Math.random() * 1e6)}@circaruta.test`;
-
-  await page.goto('/consentimiento');
-  await page.getByLabel('Acepto participar en el estudio').check();
-  await page.getByRole('button', { name: 'Continuar' }).click();
-
-  await expect(page.getByRole('heading', { name: 'Crear cuenta' })).toBeVisible();
-  await page.getByLabel('Correo').fill(correo);
-  await page.getByLabel('Clave').fill(CLAVE);
-  const area = page.getByLabel('Área');
-  await expect(area.locator('option')).not.toHaveCount(1);
-  await area.selectOption({ index: 1 });
-  await page.getByRole('button', { name: 'Crear cuenta' }).click();
-
-  await expect(page.getByRole('heading', { name: 'Registro listo' })).toBeVisible();
-  await page.getByRole('link', { name: 'Ingresar' }).click();
-  await page.getByLabel('Correo').fill(correo);
-  await page.getByLabel('Clave').fill(CLAVE);
-  await page.getByRole('button', { name: 'Ingresar' }).click();
-  await expect(page).toHaveURL(/\/plan$/);
-}
 
 test('flujo feliz: registrar 2 cafés, verlos en «Mi consumo» y eliminarlos', async ({ page }) => {
   await crearCuentaEIngresar(page);

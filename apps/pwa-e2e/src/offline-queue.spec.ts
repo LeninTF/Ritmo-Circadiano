@@ -1,98 +1,20 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import {
+  crearCuentaEIngresar,
+  contarOutbox,
+  obtenerClientIdsOutbox,
+  obtenerAccessToken,
+  generar10FechasLima,
+} from './soporte';
 
 /** Registro → login → 20 operaciones offline (café + diario) → verifica cola IndexedDB → reconexión → sincronización → idempotencia. */
 
-const CLAVE = 'Ruta2026e2e';
-
-async function crearCuentaEIngresar(page: Page): Promise<string> {
-  const correo = `e2e.${Date.now()}.${Math.floor(Math.random() * 1e6)}@circaruta.test`;
-
-  await page.goto('/consentimiento');
-  await page.getByLabel('Acepto participar en el estudio').check();
-  await page.getByRole('button', { name: 'Continuar' }).click();
-
-  await expect(page.getByRole('heading', { name: 'Crear cuenta' })).toBeVisible();
-  await page.getByLabel('Correo').fill(correo);
-  await page.getByLabel('Clave').fill(CLAVE);
-  const area = page.getByLabel('Área');
-  await expect(area.locator('option')).not.toHaveCount(1);
-  await area.selectOption({ index: 1 });
-  await page.getByRole('button', { name: 'Crear cuenta' }).click();
-
-  await expect(page.getByRole('heading', { name: 'Registro listo' })).toBeVisible();
-  await page.getByRole('link', { name: 'Ingresar' }).click();
-  await page.getByLabel('Correo').fill(correo);
-  await page.getByLabel('Clave').fill(CLAVE);
-  await page.getByRole('button', { name: 'Ingresar' }).click();
-  await expect(page).toHaveURL(/\/plan$/);
-
-  return correo;
-}
-
-/** Cuenta registros en la tabla outbox de IndexedDB para el usuario actual. */
-async function contarOutbox(page: Page): Promise<number> {
-  return page.evaluate(async () => {
-    const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const req = indexedDB.open('ritmo-db');
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-    const tx = db.transaction('outbox', 'readonly');
-    const store = tx.objectStore('outbox');
-    const countReq = store.count();
-    return new Promise<number>((resolve, reject) => {
-      countReq.onsuccess = () => resolve(countReq.result);
-      countReq.onerror = () => reject(countReq.error);
-    });
-  });
-}
-
-/** Obtiene todos los clientIds de la tabla outbox. */
-async function obtenerClientIdsOutbox(page: Page): Promise<string[]> {
-  return page.evaluate(async () => {
-    const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const req = indexedDB.open('ritmo-db');
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-    const tx = db.transaction('outbox', 'readonly');
-    const store = tx.objectStore('outbox');
-    const getAllReq = store.getAll();
-    return new Promise<string[]>((resolve, reject) => {
-      getAllReq.onsuccess = () =>
-        resolve(getAllReq.result.map((r: { clientId: string }) => r.clientId));
-      getAllReq.onerror = () => reject(getAllReq.error);
-    });
-  });
-}
-
-/** Obtiene el accessToken del localStorage para llamar a la API. */
-async function obtenerAccessToken(page: Page): Promise<string | null> {
-  return page.evaluate(() => {
-    try {
-      const crudo = localStorage.getItem('gestor-circadiano-sesion');
-      if (!crudo) return null;
-      const datos = JSON.parse(crudo);
-      return datos.accessToken ?? null;
-    } catch {
-      return null;
-    }
-  });
-}
-
-/** Llama a GET /cafeina para listar ingestas del día actual y cuenta cuántas hay. */
-async function contarIngestasServidor(page: Page, accessToken: string, fecha: string): Promise<number> {
-  return page.evaluate(async ({ token, fechaStr }) => {
-    const resp = await fetch(`/cafeina?fecha=${fechaStr}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!resp.ok) throw new Error(`Error ${resp.status}`);
-    const data = await resp.json();
-    return data.length;
-  }, { token: accessToken, fechaStr: fecha });
-}
 test.describe('Cola offline: 20 operaciones, persistencia, sincronización e idempotencia', () => {
-  test('registro offline de 10 cafés y 10 diarios → 20 en IndexedDB → sincroniza sin duplicados', async ({ page, context }) => {
+  test('registro offline de 10 cafés y 10 diarios → 20 en IndexedDB → sincroniza sin duplicados', async ({
+    page,
+    context,
+    request,
+  }) => {
     await crearCuentaEIngresar(page);
 
     // ---------- 1. Poner el navegador offline ----------
@@ -111,12 +33,14 @@ test.describe('Cola offline: 20 operaciones, persistencia, sincronización e ide
       await page.getByRole('link', { name: 'Cafeína' }).click();
     }
 
-    // ---------- 3. Registrar 10 diarios ----------
+    // ---------- 3. Registrar 10 diarios en fechas distintas ----------
     await page.getByRole('link', { name: 'Diario' }).click();
     await expect(page.getByRole('heading', { name: 'Diario de sueño' })).toBeVisible();
 
+    const fechasLima = generar10FechasLima();
     for (let i = 0; i < 10; i++) {
-      // Los valores por defecto ya son válidos (fecha de hoy, 22:00 / 06:00, etc.)
+      // Establecer la fecha explícitamente para cada diario
+      await page.getByLabel('Fecha de registro').fill(fechasLima[i]);
       await page.getByRole('button', { name: 'Guardar diario' }).click();
       await expect(page.locator('.estado-alerta.exito')).toBeVisible({ timeout: 5_000 });
     }
@@ -140,7 +64,7 @@ test.describe('Cola offline: 20 operaciones, persistencia, sincronización e ide
       expect(pendientes).toBe(0);
     }).toPass({ timeout: 60_000 });
 
-    // ---------- 7. Verificar resultado en el servidor (idempotencia) ----------
+    // ---------- 7. Verificar resultado en el servidor ----------
     const accessToken = await obtenerAccessToken(page);
     expect(accessToken).not.toBeNull();
     if (!accessToken) throw new Error('No se pudo obtener accessToken');
@@ -153,43 +77,103 @@ test.describe('Cola offline: 20 operaciones, persistencia, sincronización e ide
       return lima.toISOString().slice(0, 10);
     });
 
-    const ingestasEnServidor = await contarIngestasServidor(page, accessToken, fechaHoy);
-    // Deben ser exactamente 10 (los cafés); los diarios van a otro endpoint
-    expect(ingestasEnServidor).toBe(10);
+    // Verificar ingestas en el servidor usando request fixture (API en puerto 3000)
+    const respIngestas = await request.get('http://localhost:3000/cafeina', {
+      params: { fecha: fechaHoy },
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    expect(respIngestas.ok()).toBeTruthy();
+    const dataIngestas = await respIngestas.json();
+    expect(dataIngestas.totalIngestas).toBe(10);
+
+    // Verificar diarios en el servidor (rango de 10 días atrás hasta hoy)
+    const fechaDesde = fechasLima[9]; // la más antigua
+    const respDiarios = await request.get('http://localhost:3000/diario', {
+      params: { desde: fechaDesde, hasta: fechaHoy },
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    expect(respDiarios.ok()).toBeTruthy();
+    const diarios = await respDiarios.json();
+    expect(diarios.length).toBe(10);
+    // Verificar que las fechas son todas distintas
+    const fechasDiarios = new Set(diarios.map((d: { fecha: string }) => d.fecha));
+    expect(fechasDiarios.size).toBe(10);
 
     // ---------- 8. Verificar idempotencia: reintentar misma operación no duplica ----------
-    // Capturar el clientId de la primera operación de café (el primero en la cola original)
-    const primerClientId = clientIds[0];
-    // Volver a poner offline y enviar manualmente la misma operación con el mismo clientId
-    // usando fetch directo a /sync/lote simulando reintento.
-    await context.setOffline(true);
-    await page.evaluate(async (cid) => {
-      const payload = {
-        clientId: cid,
-        operation: 'ingesta',
-        payload: { id_bebida: 2, porciones: 1 }, // Café pasado
-      };
-      // El transport real usa POST /sync/lote con array de operaciones.
-      // Aquí llamamos directo al endpoint para forzar reintento con mismo clientId.
-      const token = (() => {
-        try {
-          const crudo = localStorage.getItem('gestor-circadiano-sesion');
-          return crudo ? JSON.parse(crudo).accessToken : '';
-        } catch { return ''; }
-      })();
-      await fetch('/sync/lote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ operaciones: [payload] }),
+    // Obtener una operación real de ingesta guardada en IndexedDB (filtrar por tipo 'ingesta')
+    const db = await page.evaluate(async () => {
+      const db = await new Promise<IDBDatabase>((resolve, reject) => {
+        const req = indexedDB.open('ritmo-db');
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
       });
-    }, primerClientId);
-    await context.setOffline(false);
+      const tx = db.transaction('outbox', 'readonly');
+      const store = tx.objectStore('outbox');
+      const getAllReq = store.getAll();
+      return new Promise((resolve, reject) => {
+        getAllReq.onsuccess = () => resolve(getAllReq.result);
+        getAllReq.onerror = () => reject(getAllReq.error);
+      });
+    });
 
-    // Esperar a que el reintento se procese
-    await page.waitForTimeout(3_000);
+    const operacionIngesta = (db as Array<{ operation: string; clientId: string }>).find(
+      (op) => op.operation === 'ingesta'
+    );
+    expect(operacionIngesta).toBeDefined();
+    if (!operacionIngesta) throw new Error('No se encontró operación de ingesta');
+    const clientIdIngesta = operacionIngesta.clientId;
+
+    // Reintentar la misma operación directamente contra la API (manteniendo online)
+    // Usar el DTO real: { operations: [...] } con clientId, operation, createdAt, payload
+    const operacionOriginal = (db as Array<{
+      clientId: string;
+      operation: string;
+      createdAt: string;
+      payload: Record<string, unknown>
+    }>).find((op) => op.clientId === clientIdIngesta);
+    expect(operacionOriginal).toBeDefined();
+    if (!operacionOriginal) throw new Error('No se encontró la operación original');
+
+    const reintentoResp = await request.post('http://localhost:3000/sync/lote', {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`
+      },
+      data: {
+        operations: [{
+          clientId: operacionOriginal.clientId,
+          operation: operacionOriginal.operation,
+          createdAt: operacionOriginal.createdAt,
+          payload: operacionOriginal.payload,
+        }],
+      },
+    });
+    expect(reintentoResp.ok()).toBeTruthy();
+    const reintentoData = await reintentoResp.json();
+    // Verificar que la respuesta indica 'duplicate' o 'confirmed' (idempotencia)
+    const resultado = reintentoData.results[0];
+    expect(['confirmed', 'duplicate']).toContain(resultado.status);
 
     // Volver a contar ingestas en servidor: debe seguir siendo 10 (sin duplicados)
-    const ingestasDespuesReintento = await contarIngestasServidor(page, accessToken, fechaHoy);
-    expect(ingestasDespuesReintento).toBe(10);
+    const respIngestas2 = await request.get('http://localhost:3000/cafeina', {
+      params: { fecha: fechaHoy },
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    expect(respIngestas2.ok()).toBeTruthy();
+    const dataIngestas2 = await respIngestas2.json();
+    expect(dataIngestas2.totalIngestas).toBe(10);
+
+    // Verificar que los diarios también se mantienen sin duplicados
+    const respDiarios2 = await request.get('http://localhost:3000/diario', {
+      params: { desde: fechaDesde, hasta: fechaHoy },
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    expect(respDiarios2.ok()).toBeTruthy();
+    const diarios2 = await respDiarios2.json();
+    expect(diarios2.length).toBe(10);
+
+    // Verificar que no hay operaciones pendientes en la cola
+    const pendientesFinal = await contarOutbox(page);
+    expect(pendientesFinal).toBe(0);
   });
 });
