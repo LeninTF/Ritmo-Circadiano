@@ -4,11 +4,12 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { TURNO_ASIGNADO } from '@circadiano/contracts';
 import { OperacionesService } from './operaciones.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ConfirmarTurnoDto } from './dto/confirmar-turno.dto';
 
 describe('OperacionesService', () => {
   let service: OperacionesService;
 
-  const mockPrismaService: any = {
+  const mockPrismaService = {
     ruta: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
@@ -23,7 +24,7 @@ describe('OperacionesService', () => {
     excesoJornadaAuditoria: {
       create: jest.fn(),
     },
-    $transaction: jest.fn(async (callback) => callback(mockPrismaService)),
+    $transaction: jest.fn(async (callback: (tx: unknown) => unknown): Promise<unknown> => callback(mockPrismaService)),
   };
 
   const mockEventEmitter = {
@@ -221,7 +222,7 @@ describe('OperacionesService', () => {
     it('debe lanzar BadRequestException al intentar volver a estado pendiente', async () => {
       mockPrismaService.turnoLaboral.findUnique.mockResolvedValue(turnoMock);
       await expect(
-        service.confirmarTurno('t-1', 'u-1', { estadoConfirmacion: 'pendiente' as any }),
+        service.confirmarTurno('t-1', 'u-1', { estadoConfirmacion: 'pendiente' } as unknown as ConfirmarTurnoDto),
       ).rejects.toThrow(BadRequestException);
       expect(mockPrismaService.turnoLaboral.update).not.toHaveBeenCalled();
     });
