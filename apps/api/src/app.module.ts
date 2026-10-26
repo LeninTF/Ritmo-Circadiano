@@ -18,6 +18,7 @@ import { SyncModule } from './modulos/sync/sync.module';
 import { TrabajadorModule } from './modulos/trabajador/trabajador.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SaludModule } from './salud/salud.module';
+import { HistorialModule } from './modulos/historial/historial.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { SaludModule } from './salud/salud.module';
     AptitudModule,
     SyncModule,
     IndicadoresModule,
+    HistorialModule,
   ],
   // El orden importa: limite de peticiones, luego token, luego rol.
   providers: [
