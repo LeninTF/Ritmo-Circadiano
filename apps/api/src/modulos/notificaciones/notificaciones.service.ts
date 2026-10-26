@@ -11,10 +11,13 @@ import {
   type PlanGeneradoEvento,
 } from '@circadiano/contracts';
 
-/** Calcula [inicio, fin) del día en America/Lima para la fecha YYYY-MM-DD dada.
+/** Al cambiar la lógica para cancelar notificaciones utilizando el id_plan en lugar de calcular fechas, 
+ *  la función limitesDelDiaLima quedó obsoleta
+ * 
+ *  Calcula [inicio, fin) del día en America/Lima para la fecha YYYY-MM-DD dada.
  *  UTC-5 fijo (sin horario de verano), lo que permite manejar turnos nocturnos
  *  que cruzan la medianoche UTC sin asumir T00:00:00.000Z plano.
- */
+ 
 function limitesDelDiaLima(fechaYYYYMMDD: string): { inicioDia: Date; finDia: Date } {
   // America/Lima = UTC-5 todo el año (sin DST).
   const OFFSET_LIMA_MS = 5 * 3_600_000;
@@ -24,6 +27,7 @@ function limitesDelDiaLima(fechaYYYYMMDD: string): { inicioDia: Date; finDia: Da
   const finDia = new Date(inicioDia.getTime() + 24 * 3_600_000 - 1);
   return { inicioDia, finDia };
 }
+*/
 
 @Injectable()
 export class NotificacionesService {
@@ -66,6 +70,10 @@ export class NotificacionesService {
     });
   }
 
+  async obtenerClavePublica(): Promise<{ clavePublica: string }> {
+    const clavePublica = this.configService.get<string>('VAPID_PUBLIC_KEY') ?? '';
+    return { clavePublica };
+  }
   async marcarAbierta(idNotificacion: number, idUsuario: string): Promise<NotificacionRespuestaDto> {
     // Una notificacion ajena o inexistente responde igual: 404.
     const actualizada = await this.prisma.notificacion
@@ -113,25 +121,20 @@ export class NotificacionesService {
 
   @OnEvent(EVENTO_PLAN_GENERADO)
   async handlePlanGenerado(payload: PlanGeneradoEvento): Promise<void> {
-    const { inicioDia, finDia } = limitesDelDiaLima(payload.fecha);
-
-    // Cancela notificaciones pendientes previas del mismo trabajador para ese día
-    // (evita duplicados al regenerar el plan).
+    // Cancela notificaciones pendientes previas del mismo plan (evita duplicados al regenerar el plan).
     await this.prisma.notificacion.updateMany({
       where: {
-        id_usuario: payload.id_usuario,
+        id_plan: payload.id_plan,
         estado: 'pendiente',
-        programada_para: { gte: inicioDia, lte: finDia },
       },
       data: { estado: 'cancelada' },
     });
 
     // Encola cada recordatorio derivado por derivarRecordatorios(plan) en I3.
-    // Los tipos (luz, corte_cafeina, relajacion, dormir) y las horas son exactos;
-    // si protegerLuz=true el recordatorio 'luz' simplemente no viene en el array.
     for (const recordatorio of payload.recordatorios) {
       await this.encolar({
         id_usuario: payload.id_usuario,
+        id_plan: payload.id_plan,
         tipo: recordatorio.tipo,
         programada_para: recordatorio.programadaPara,
       });

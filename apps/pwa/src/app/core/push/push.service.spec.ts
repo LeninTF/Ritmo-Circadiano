@@ -48,9 +48,16 @@ describe('PushService', () => {
     mockSwPush.requestSubscription.mockResolvedValue(subFake);
 
     const promesa = service.solicitarSuscripcion();
+    // 1. Interceptar y responder la nueva petición GET de la clave pública
+    const reqClave = httpMock.expectOne('http://localhost:3000/push/clave-publica');
+    expect(reqClave.request.method).toBe('GET');
+    reqClave.flush({ clavePublica: 'clave-falsa-servidor' });
+
+    // Avanzar el ciclo de promesas
     await Promise.resolve();
     await Promise.resolve();
 
+    // 2. Interceptar y validar el POST de la suscripción
     const req = httpMock.expectOne('http://localhost:3000/push/suscripciones');
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({

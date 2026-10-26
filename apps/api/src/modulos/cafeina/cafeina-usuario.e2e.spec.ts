@@ -25,7 +25,7 @@ describe('Cafeina y push usan el usuario del token (RNF04)', () => {
     obtenerResumen: jest.fn().mockResolvedValue({}),
     obtenerBebidas: jest.fn().mockResolvedValue([]),
   };
-  const notificaciones = { guardarSuscripcion: jest.fn(), marcarAbierta: jest.fn().mockResolvedValue({}) };
+  const notificaciones = { guardarSuscripcion: jest.fn(), marcarAbierta: jest.fn().mockResolvedValue({}), obtenerClavePublica: jest.fn().mockResolvedValue({ clavePublica: 'test' }) };
 
   beforeAll(async () => {
     const modulo = await Test.createTestingModule({
@@ -65,7 +65,7 @@ describe('Cafeina y push usan el usuario del token (RNF04)', () => {
     await http.post('/cafeina').set('Authorization', autorizacion).send({ ...cuerpo, id_usuario: 'otro' }).expect(400);
     await http.delete('/cafeina/7').set('Authorization', autorizacion);
     await http
-      .post('/push/suscripciones')
+      .post('/notificaciones/push/suscripciones')
       .set('Authorization', autorizacion)
       .send({ id_usuario: 'usr_default', endpoint: 'https://e', clave_p256dh: 'k', clave_auth: 'a' });
     await http.patch('/notificaciones/3/abierta').set('Authorization', autorizacion);

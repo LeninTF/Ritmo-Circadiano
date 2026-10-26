@@ -53,7 +53,7 @@ model Usuario {
   semividaH           Decimal       @default(5) @map("semivida_h") @db.Decimal(3, 1)
   fuma                Boolean       @default(false)
 
-  area         Area         @relation(fields: [idArea], references: [id])
+  area         Area               @relation(fields: [idArea], references: [id])
   evaluaciones Evaluacion[]
   /// Inversa de la FK de I5 (RF12).
   aptitudes    AptitudPresalida[]

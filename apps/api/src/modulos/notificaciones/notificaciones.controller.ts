@@ -1,4 +1,4 @@
-import { Body, Controller, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { NotificacionesService } from './notificaciones.service';
 import {
@@ -9,7 +9,7 @@ import {
 import { UsuarioActual } from '../plataforma/auth';
 
 @ApiTags('notificaciones')
-@Controller()
+@Controller('notificaciones')
 export class NotificacionesController {
   constructor(private readonly notificacionesService: NotificacionesService) {}
 
@@ -24,13 +24,21 @@ export class NotificacionesController {
     return this.notificacionesService.guardarSuscripcion({ ...dto, id_usuario: usuario.sub });
   }
 
-  @Patch('notificaciones/:id/abierta')
-  @ApiOperation({ summary: 'Marcar notificación como abierta (Indicador D2)' })
-  @ApiResponse({ status: 200, description: 'Notificación marcada como abierta.' })
+  @Get('push/clave-publica')
+  @ApiOperation({ summary: 'Obtener la clave VAPID pública para la PWA' })
+  @ApiResponse({ status: 200, description: 'Clave VAPID pública obtenida correctamente.' })
+  async obtenerClavePublica(): Promise<{ clavePublica: string }> {
+    return this.notificacionesService.obtenerClavePublica();
+  }
+  @Patch(':id/abierta')
+  @ApiOperation({ summary: 'Marcar una notificación como abierta' })
+  @ApiResponse({ status: 200, description: 'Notificación marcada como abierta correctamente.' })
+  @ApiResponse({ status: 404, description: 'Notificación no encontrada.' })
   async marcarAbierta(
     @UsuarioActual() usuario: UsuarioJwtPayload,
     @Param('id', ParseIntPipe) id: number,
   ): Promise<NotificacionRespuestaDto> {
     return this.notificacionesService.marcarAbierta(id, usuario.sub);
   }
+
 }

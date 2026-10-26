@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString, IsInt } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CrearSuscripcionPushDto {
@@ -31,8 +31,8 @@ export class EncolarNotificacionDto {
 
   @ApiPropertyOptional({ description: 'ID opcional del plan circadiano asociado' })
   @IsOptional()
-  @IsInt()
-  id_plan?: number;
+  @IsString()
+  id_plan?: string;
 
   @ApiProperty({ description: 'Tipo de notificación (luz, corte_cafeina, relajacion, dormir)' })
   @IsString()
@@ -53,7 +53,7 @@ export class NotificacionRespuestaDto {
   id_usuario!: string;
 
   @ApiPropertyOptional({ description: 'ID del plan' })
-  id_plan?: number | null;
+  id_plan?: string | null;
 
   @ApiProperty({ description: 'Tipo de notificación' })
   tipo!: string;

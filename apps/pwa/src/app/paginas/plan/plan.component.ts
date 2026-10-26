@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { ProximoTurnoComponent } from '../turnos/proximo-turno/proximo-turno.component';
 import { PlanHoyComponent } from './plan-hoy.component';
+import { PushService } from '../../core/push/push.service';
 
 @Component({
   selector: 'app-plan',
@@ -13,6 +14,10 @@ import { PlanHoyComponent } from './plan-hoy.component';
     <section class="pagina">
       <h1>Mi plan del día</h1>
       <p class="subtitulo-plan">Aquí ves tu plan de sueño, luz y descanso según tu turno.</p>
+
+      <button type="button" class="boton-push" (click)="solicitarPush()">
+        {{ pushService.suscrito() ? '🔔 Recordatorios activados' : '🔔 Activar recordatorios push' }}
+      </button>
 
       <!-- Tarjeta RF05: Tu próximo turno y confirmación/corrección -->
       <app-proximo-turno [idTurno]="idTurnoParam()" />
@@ -42,11 +47,27 @@ import { PlanHoyComponent } from './plan-hoy.component';
         color: var(--color-texto-2);
         margin: 0;
       }
+
+      .boton-push {
+        min-height: 44px;
+        padding: 0 16px;
+        font: inherit;
+        font-weight: 600;
+        color: var(--color-superficie);
+        background: var(--color-primario);
+        border: 0;
+        border-radius: var(--radio-boton, 8px);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
     }
   `,
 })
 export class PlanComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  readonly pushService = inject(PushService);
   readonly idTurnoParam = signal<string | null>(null);
 
   ngOnInit(): void {
@@ -63,5 +84,9 @@ export class PlanComponent implements OnInit {
         this.idTurnoParam.set(turnoIdParam);
       }
     });
+  }
+
+  async solicitarPush(): Promise<void> {
+    await this.pushService.solicitarSuscripcion();
   }
 }

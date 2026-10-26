@@ -56,7 +56,7 @@ describe('NotificacionesService', () => {
     mockPrismaService.notificacion.update.mockResolvedValue({
       id_notificacion: 1,
       id_usuario: 'usr-1',
-      id_plan: 10,
+      id_plan: '10',
       tipo: 'luz',
       programada_para: fechaMock,
       enviada_en: fechaMock,
@@ -83,7 +83,7 @@ describe('NotificacionesService', () => {
     mockPrismaService.notificacion.create.mockResolvedValue({
       id_notificacion: 2,
       id_usuario: 'usr-1',
-      id_plan: 10,
+      id_plan: '10',
       tipo: 'corte_cafeina',
       programada_para: fechaMock,
       estado: 'pendiente',
@@ -92,7 +92,7 @@ describe('NotificacionesService', () => {
 
     const resultado = await service.encolar({
       id_usuario: 'usr-1',
-      id_plan: 10,
+      id_plan: '10',
       tipo: 'corte_cafeina',
       programada_para: fechaIso,
     });
@@ -203,7 +203,7 @@ describe('NotificacionesService', () => {
     expect(mockPrismaService.notificacion.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         data: { estado: 'cancelada' },
-        where: expect.objectContaining({ id_usuario: 'usr-rf10b', estado: 'pendiente' }),
+        where: expect.objectContaining({ id_plan: 'plan-uuid-002', estado: 'pendiente' }),
       }),
     );
     // Exactamente 2 nuevas notificaciones — sin duplicados

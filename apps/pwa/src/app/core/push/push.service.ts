@@ -1,4 +1,4 @@
-import { Injectable, inject, PLATFORM_ID } from '@angular/core';
+import { Injectable, inject, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { SwPush } from '@angular/service-worker';
 import { HttpClient } from '@angular/common/http';
@@ -12,6 +12,7 @@ export class PushService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly esNavegador = isPlatformBrowser(inject(PLATFORM_ID));
+  readonly suscrito = signal(false);
 
   constructor() {
     if (this.esNavegador) {
@@ -54,8 +55,20 @@ export class PushService {
     }
 
     try {
+      let publicKey = environment.vapidPublicKey;
+      try {
+        const res = await firstValueFrom(
+          this.http.get<{ clavePublica: string }>(`${environment.apiUrl}/push/clave-publica`)
+        );
+        if (res?.clavePublica) {
+          publicKey = res.clavePublica;
+        }
+      } catch {
+        // Fallback to environment vapidPublicKey if backend request fails
+      }
+
       const sub = await this.swPush.requestSubscription({
-        serverPublicKey: environment.vapidPublicKey,
+        serverPublicKey: publicKey,
       });
       const json = sub.toJSON();
       if (!json.endpoint || !json.keys?.['p256dh'] || !json.keys?.['auth']) {
@@ -68,6 +81,7 @@ export class PushService {
           clave_auth: json.keys['auth'],
         })
       );
+      this.suscrito.set(true);
       return true;
     } catch {
       return false;
