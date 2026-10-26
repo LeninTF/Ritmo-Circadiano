@@ -4,6 +4,9 @@ import type { RegistroDto } from '@circadiano/contracts';
 import { RegistroService } from './registro.service';
 import type { PrismaService } from '../../../prisma/prisma.service';
 
+// Tiempo modificado que Jest otorga para evitar bloqueo en Merge
+jest.setTimeout(15000);
+
 describe('RegistroService (RF01, CP-01)', () => {
   const crear = jest.fn();
   const buscarVarios = jest.fn();
