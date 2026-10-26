@@ -19,14 +19,14 @@ describe('Turnos e2e (Transporte Cueva S.A.C.)', () => {
   const token = (rol = 'jefe_operaciones', sub = validUserId) =>
     jwt.signAsync({ sub, rol, codigoParticipante: 'P01' }).then((t) => `Bearer ${t}`);
 
-  const mockPrismaService: any = {
+  const mockPrismaService: Record<string, any> = {
     ruta: {
       findUnique: jest.fn().mockResolvedValue({ id: validRutaId, nombre: 'Lima - Ica', activa: true }),
       findMany: jest.fn().mockResolvedValue([{ id: validRutaId, nombre: 'Lima - Ica', activa: true }]),
     },
     turnoLaboral: {
       findMany: jest.fn().mockResolvedValue([]),
-      create: jest.fn().mockImplementation(({ data }) => ({
+      create: jest.fn().mockImplementation(({ data }: { data: Record<string, unknown> }) => ({
         id: 'turno-e2e-1',
         ...data,
         createdAt: new Date(),
@@ -38,7 +38,7 @@ describe('Turnos e2e (Transporte Cueva S.A.C.)', () => {
     notificacion: {
       create: jest.fn().mockResolvedValue({ id: 'notif-1', fechaProgramada: new Date() }),
     },
-    $transaction: jest.fn(async (cb: any) => cb(mockPrismaService)),
+    $transaction: jest.fn(async (cb: (tx: Record<string, unknown>) => Promise<unknown>) => cb(mockPrismaService)),
   };
 
   beforeAll(async () => {

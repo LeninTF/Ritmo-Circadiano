@@ -4,6 +4,24 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { TurnosService } from './turnos.service';
 import { OfflineStoreService } from '../../core/offline/offline-store.service';
 
+interface Ruta {
+  id: string;
+  origen: string;
+  destino: string;
+}
+
+interface Turno {
+  id: string;
+  idUsuario: string;
+  idRuta: string;
+  fecha: string;
+  inicioProgramado: string;
+  finProgramado: string;
+  horasConduccion: number;
+  esNocturno: boolean;
+  estadoConfirmacion?: string;
+}
+
 @Component({
   selector: 'app-turnos',
   standalone: true,
@@ -114,11 +132,11 @@ export class TurnosComponent implements OnInit {
     window.addEventListener('offline', () => this.isOnline.set(false));
   }
 
-  rutas = signal<any[]>([]);
+  rutas = signal<Ruta[]>([]);
   usr = signal<string>('00000000-0000-0000-0000-000000000001');
   imp = signal(false);
   arch = signal<File | null>(null);
-  resImp = signal<any>(null);
+  resImp = signal<unknown>(null);
   mod = signal(false);
   editando = signal(false);
   tId = signal<string | null>(null);
@@ -126,8 +144,9 @@ export class TurnosComponent implements OnInit {
   err = signal<string | null>(null);
   base = signal(new Date());
   fini = ''; ffin = '';
-  dias = signal<any[]>([]);
-  map = new Map<string, any[]>();
+  dias = signal<Array<{ nombre: string; fecha: string }>>([]);
+  map = new Map<string, Turno[]>();
+
   form: FormGroup = this.fb.group({
     idUsuario: ['', Validators.required],
     idRuta: ['', Validators.required],
@@ -139,11 +158,13 @@ export class TurnosComponent implements OnInit {
     confirmarExceso: [false],
     motivoExceso: [''],
   });
+
   ngOnInit(): void {
-    this.svc.listarRutas().subscribe((r) => this.rutas.set(r));
+    this.svc.listarRutas().subscribe((r: Ruta[]) => this.rutas.set(r));
     this.calc(new Date());
     this.cargar();
   }
+
   calc(d: Date): void {
     const c = new Date(d);
     const day = c.getDay();
@@ -160,6 +181,7 @@ export class TurnosComponent implements OnInit {
     this.fini = arr[0].fecha;
     this.ffin = arr[6].fecha;
   }
+
   sem(dir: number): void {
     const b = new Date(this.base());
     b.setDate(b.getDate() + dir * 7);
@@ -167,13 +189,15 @@ export class TurnosComponent implements OnInit {
     this.calc(b);
     this.cargar();
   }
+
   cargar(): void {
     this.svc.listarTurnosMe(this.fini, this.ffin, this.usr()).subscribe({
-      next: (t) => this.ag(t),
-      error: () => this.svc.listarTurnos(this.usr()).subscribe((t) => this.ag(t)),
+      next: (t: Turno[]) => this.ag(t),
+      error: () => this.svc.listarTurnos(this.usr()).subscribe((t: Turno[]) => this.ag(t)),
     });
   }
-  ag(ts: any[]): void {
+
+  ag(ts: Turno[]): void {
     this.map.clear();
     for (const d of this.dias()) this.map.set(d.fecha, []);
     for (const t of ts) {
@@ -181,11 +205,25 @@ export class TurnosComponent implements OnInit {
       if (this.map.has(f)) this.map.get(f)?.push(t);
     }
   }
-  fileSel(e: any): void { this.arch.set(e.target.files[0] || null); }
+
+  fileSel(e: Event): void {
+    const input = e.target as HTMLInputElement;
+    this.arch.set(input.files?.[0] || null);
+  }
+
   importar(): void {
     const f = this.arch();
-    if (f) this.svc.importarTurnos(f).subscribe({ next: (r) => { this.resImp.set(r); this.cargar(); }, error: (e) => this.resImp.set({ error: e.error?.message }) });
+    if (f) {
+      this.svc.importarTurnos(f).subscribe({
+        next: (r) => { this.resImp.set(r); this.cargar(); },
+        error: (e) => {
+          const errRes = e as { error?: { message?: string } };
+          this.resImp.set({ error: errRes.error?.message });
+        }
+      });
+    }
   }
+
   abrirModalCrear(): void {
     this.editando.set(false);
     this.tId.set(null);
@@ -194,7 +232,8 @@ export class TurnosComponent implements OnInit {
     this.form.reset({ idUsuario: this.usr(), idRuta: '', fecha: new Date().toISOString().split('T')[0], horasConduccion: 4, esNocturno: false, confirmarExceso: false, motivoExceso: '' });
     this.mod.set(true);
   }
-  editar(t: any): void {
+
+  editar(t: Turno): void {
     this.editando.set(true);
     this.tId.set(t.id);
     this.conf.set(false);
@@ -202,6 +241,7 @@ export class TurnosComponent implements OnInit {
     this.form.patchValue({ idUsuario: t.idUsuario, idRuta: t.idRuta, fecha: t.fecha?.split('T')[0], inicioProgramado: t.inicioProgramado?.slice(0, 16), finProgramado: t.finProgramado?.slice(0, 16), horasConduccion: t.horasConduccion, esNocturno: t.esNocturno, confirmarExceso: false, motivoExceso: '' });
     this.mod.set(true);
   }
+
   guardar(): void {
     if (this.form.invalid) return;
     const v = this.form.value;
@@ -210,10 +250,16 @@ export class TurnosComponent implements OnInit {
     obs.subscribe({
       next: () => { this.mod.set(false); this.cargar(); },
       error: (e) => {
-        if (e.status === 409) { this.conf.set(true); this.err.set(e.error?.message || 'Exceso de jornada (RF14)'); }
-        else { this.err.set(e.error?.message || 'Error'); }
+        const errObj = e as { status?: number; error?: { message?: string } };
+        if (errObj.status === 409) { this.conf.set(true); this.err.set(errObj.error?.message || 'Exceso de jornada (RF14)'); }
+        else { this.err.set(errObj.error?.message || 'Error'); }
       }
     });
   }
-  del(id: string): void { if (confirm('¿Eliminar?')) this.svc.eliminarTurno(id).subscribe(() => this.cargar()); }
+
+  del(id: string): void { 
+    if (confirm('¿Eliminar?')) {
+      this.svc.eliminarTurno(id).subscribe(() => this.cargar()); 
+    }
+  }
 }

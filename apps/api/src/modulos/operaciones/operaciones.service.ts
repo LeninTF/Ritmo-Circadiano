@@ -331,14 +331,30 @@ export class OperacionesService {
     }
 
     // ── Actualización ──
+    let horaInicioRealUpdate: Date | undefined | null;
+    let horaFinRealUpdate: Date | undefined | null;
+
+    if (estadoConfirmacion === 'corregido') {
+      if (!horaInicioReal) {
+        throw new BadRequestException('La hora de inicio real es obligatoria cuando se corrige el turno.');
+      }
+      if (!horaFinReal) {
+        throw new BadRequestException('La hora de fin real es obligatoria cuando se corrige el turno.');
+      }
+      horaInicioRealUpdate = new Date(horaInicioReal);
+      horaFinRealUpdate = new Date(horaFinReal);
+    } else if (estadoConfirmacion === 'confirmado') {
+      horaInicioRealUpdate = turno.inicioProgramado;
+      horaFinRealUpdate = turno.finProgramado;
+    } else {
+      horaInicioRealUpdate = undefined;
+      horaFinRealUpdate = undefined;
+    }
+
     const dataUpdate: Prisma.TurnoLaboralUpdateInput = {
       estadoConfirmacion,
-      horaInicioReal: estadoConfirmacion === 'corregido'
-        ? new Date(horaInicioReal!)
-        : (estadoConfirmacion === 'confirmado' ? turno.inicioProgramado : undefined),
-      horaFinReal: estadoConfirmacion === 'corregido'
-        ? new Date(horaFinReal!)
-        : (estadoConfirmacion === 'confirmado' ? turno.finProgramado : undefined),
+      horaInicioReal: horaInicioRealUpdate,
+      horaFinReal: horaFinRealUpdate,
     };
 
     // Bloqueo optimista: si otra solicitud cambio el turno desde la lectura, Prisma lanza P2025.

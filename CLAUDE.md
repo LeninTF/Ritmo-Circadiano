@@ -64,7 +64,7 @@ Cada integrante es full-stack de su slice. **No modifiques archivos de otro slic
 | Slice | Dominio | RF / RNF | Tablas | Rutas API |
 |---|---|---|---|---|
 | I1 | Plataforma, identidad, datos del estudio | RF01, RF02, RF16 · RNF04, RNF05, RNF09 | `area`, `usuario`, `evaluacion`, `resultado_indicador`, vista `base_datos_pretest`, `audit_log`, `parametro_sistema` | `/auth/*`, `/me`, `/admin/*` |
-| I2 | Operaciones y turnos | RF04, RF13, RF14 · RNF07, RNF08 | `ruta`, `turno_laboral`, vistas `v_ind_*` | `/turnos`, `/rutas`, `/indicadores/panel`, `/health` |
+| I2 | Operaciones y turnos | RF04, RF13, RF14 · RNF07, RNF08 | `ruta`, `turno_laboral`, vistas `v_ind_*` | `/operaciones/turnos`, `/operaciones/rutas` (prefijo `/operaciones`), `/indicadores/panel`, `/health` (Nota: `/operaciones/turnos/:id/confirmacion` preservado para consumo de I5 y PWA) |
 | I3 | Motor circadiano | RF03, RF06, RF07 · RNF01 | `ubicacion`, `evento_solar`, `perfil_cronotipo`, `plan_diario` | `/ubicacion`, `/eventos-solares`, `/cronotipo`, `/planes` |
 | I4 | Cafeína, notificaciones, shell PWA | RF08, RF09, RF10 · RNF02, RNF06 | `bebida`, `ingesta_cafeina`, `notificacion`, `suscripcion_push` | `/bebidas`, `/cafeina`, `/push/*`, `/notificaciones/*` |
 | I5 | Experiencia del trabajador y offline | RF05, RF11, RF12, RF15 · RNF03 | `registro_sueno`, `aptitud_presalida`, campos de confirmación en `turno_laboral` | `/sync/lote`, `/diario`, `/aptitud`, `/turnos/:id/confirmacion`, `/historial/me` |
