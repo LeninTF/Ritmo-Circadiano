@@ -16,6 +16,7 @@ import {
   UMBRAL_CAFEINA_MG_DEFECTO,
   SEMIVIDA_H_DEFECTO,
   ZONA_HORARIA_EMPRESA,
+  DOSIS_REFERENCIA_CORTE_MG,
 } from '@circadiano/domain';
 import { ParametrosService } from '../plataforma/parametros/parametros.service';
 
@@ -189,7 +190,7 @@ export class CafeinaService {
     const residualMg = residual(dominioIngestas, hastaHora, semivida);
     const superaUmbral = residualMg > umbral;
 
-    const horaCorte = calcularHoraCorte(100, hastaHora, dominioIngestas, semivida, umbral);
+    const horaCorte = calcularHoraCorte(DOSIS_REFERENCIA_CORTE_MG, hastaHora, dominioIngestas, semivida, umbral);
 
     const sugerencia = superaUmbral
       ? 'Se recomienda evitar cafeína o cambiar a una bebida descafeinada (infusión o agua) para asegurar un descanso óptimo.'

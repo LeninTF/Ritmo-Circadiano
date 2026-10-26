@@ -24,7 +24,6 @@ describe('Cafeina y push usan el usuario del token (RNF04)', () => {
     calcularResidualHastaSueno: jest.fn().mockResolvedValue({}),
     obtenerResumen: jest.fn().mockResolvedValue({}),
     obtenerBebidas: jest.fn().mockResolvedValue([]),
-    sincronizarLote: jest.fn().mockResolvedValue([]),
   };
   const notificaciones = { guardarSuscripcion: jest.fn(), marcarAbierta: jest.fn().mockResolvedValue({}) };
 
@@ -62,14 +61,8 @@ describe('Cafeina y push usan el usuario del token (RNF04)', () => {
     const http = request(app.getHttpServer());
     const cuerpo = { id_bebida: 1, porciones: 2, fecha_hora: '2026-10-24T13:30:00.000Z', client_id: UUID };
     await http.post('/cafeina').set('Authorization', autorizacion).send(cuerpo).expect(201);
-    await http.post('/cafeina/sync/lote').set('Authorization', autorizacion).send([cuerpo]).expect(201);
     // Un id_usuario en el cuerpo ni siquiera se acepta.
     await http.post('/cafeina').set('Authorization', autorizacion).send({ ...cuerpo, id_usuario: 'otro' }).expect(400);
-    await http
-      .post('/cafeina/sync/lote')
-      .set('Authorization', autorizacion)
-      .send([{ ...cuerpo, id_usuario: 'otro' }])
-      .expect(400);
     await http.delete('/cafeina/7').set('Authorization', autorizacion);
     await http
       .post('/push/suscripciones')
@@ -78,7 +71,6 @@ describe('Cafeina y push usan el usuario del token (RNF04)', () => {
     await http.patch('/notificaciones/3/abierta').set('Authorization', autorizacion);
 
     expect(cafeina.registrarIngesta.mock.calls[0][0].id_usuario).toBe('yo');
-    expect(cafeina.sincronizarLote.mock.calls[0][0][0].id_usuario).toBe('yo');
     expect(cafeina.eliminarIngesta).toHaveBeenCalledWith(7, 'yo');
     expect(notificaciones.guardarSuscripcion.mock.calls[0][0].id_usuario).toBe('yo');
     expect(notificaciones.marcarAbierta).toHaveBeenCalledWith(3, 'yo');
@@ -104,7 +96,6 @@ describe('Cafeina y push usan el usuario del token (RNF04)', () => {
       () => http.get('/cafeina?fecha=2026-10-24'),
       () => http.get('/cafeina/residual?hasta=23'),
       () => http.post('/cafeina').send(cuerpo),
-      () => http.post('/cafeina/sync/lote').send([cuerpo]),
       () => http.delete('/cafeina/7'),
       () => http.get('/bebidas'),
     ];

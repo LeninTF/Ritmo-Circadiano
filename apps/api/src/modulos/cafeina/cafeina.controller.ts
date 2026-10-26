@@ -4,7 +4,6 @@ import {
   Delete,
   Get,
   Param,
-  ParseArrayPipe,
   ParseIntPipe,
   Post,
   Query,
@@ -80,16 +79,5 @@ export class CafeinaController {
   ): Promise<ResidualCafeinaRespuestaDto> {
     const hastaNum = parseFloat(hasta);
     return this.cafeinaService.calcularResidualHastaSueno(usuario.sub, hastaNum);
-  }
-
-  @Post('sync/lote')
-  @ApiOperation({ summary: 'Sincronización offline por lote de ingestas de cafeína (contrato con I5)' })
-  @ApiResponse({ status: 201, description: 'Lote sincronizado exitosamente.' })
-  async sincronizarLote(
-    @UsuarioActual() usuario: UsuarioJwtPayload,
-    @Body(new ParseArrayPipe({ items: CrearIngestaCafeinaBodyDto, whitelist: true, forbidNonWhitelisted: true }))
-    lote: CrearIngestaCafeinaBodyDto[],
-  ): Promise<IngestaCafeinaRespuestaDto[]> {
-    return this.cafeinaService.sincronizarLote(lote.map((dto) => ({ ...dto, id_usuario: usuario.sub })));
   }
 }

@@ -51,6 +51,12 @@ const diaSemana = (fecha: string) => new Date(`${fecha}T12:00:00Z`).getUTCDay();
           </p>
           <p class="cifra-heroe">~{{ d.resumen.cafeinaActiva.mg }} <span class="unidad">mg</span></p>
           <p class="mensaje">{{ mensaje() }}</p>
+          @if (!nivelBajo()) {
+            <div class="alternativa-sin-cafeina" style="margin-top: 12px; padding: 12px; background: var(--color-superficie-2); border-radius: 8px; border-left: 4px solid var(--color-primario);">
+              <p class="micro" style="margin: 0 0 4px 0; font-weight: 600; color: var(--color-primario);">Alternativa sin cafeína</p>
+              <p class="texto-2" style="margin: 0;">Prueba una infusión de hierbas o agua para mantenerte hidratado sin afectar tu descanso.</p>
+            </div>
+          }
           <p class="pie">Estimación aproximada, no es un dato médico.</p>
         </section>
 
