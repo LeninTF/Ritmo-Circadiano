@@ -3,11 +3,38 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { assertKAnonymity } from '@circadiano/domain';
 import { RespuestaAgregada } from '@circadiano/contracts';
 
+export interface IndicadoresPanelData {
+  conductoresUnicos: number;
+  totalTurnos: number;
+  promedioHorasConduccion: number;
+  promedioHorasDescanso: number;
+  turnosNocturnos: number;
+  porcentajeAdherencia: number;
+}
+
+export interface UniqueUserRow {
+  id_usuario: string;
+}
+
+export interface DescansoRow {
+  prom_descanso: number | string | null;
+}
+
+export interface CafeinaRow {
+  turnos_nocturnos: number | string | null;
+  prom_horas: number | string | null;
+}
+
+export interface AdherenciaRow {
+  total: number | string | null;
+  completados: number | string | null;
+}
+
 @Injectable()
 export class IndicadoresService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async obtenerPanel(desde?: string, hasta?: string): Promise<RespuestaAgregada<any>> {
+  async obtenerPanel(desde?: string, hasta?: string): Promise<RespuestaAgregada<IndicadoresPanelData>> {
     // Check K-Anonymity using unique drivers in range
     const whereClause = desde && hasta 
       ? `WHERE fecha >= $1::date AND fecha <= $2::date`
@@ -17,7 +44,7 @@ export class IndicadoresService {
       ? `WHERE fecha <= $1::date`
       : '';
 
-    const params: any[] = [];
+    const params: (string | undefined)[] = [];
     if (desde && hasta) {
       params.push(desde, hasta);
     } else if (desde || hasta) {
@@ -25,7 +52,7 @@ export class IndicadoresService {
     }
 
     const uniqueUsersQuery = `SELECT DISTINCT id_usuario FROM turno_laboral ${whereClause}`;
-    const uniqueUsers: any[] = await this.prisma.$queryRawUnsafe(uniqueUsersQuery, ...params);
+    const uniqueUsers = await this.prisma.$queryRawUnsafe<UniqueUserRow[]>(uniqueUsersQuery, ...params);
     const n = uniqueUsers.length;
 
     if (!assertKAnonymity(n, 5)) {
@@ -37,10 +64,10 @@ export class IndicadoresService {
     const cafeinaQuery = `SELECT SUM(CASE WHEN es_nocturno THEN 1 ELSE 0 END) as turnos_nocturnos, AVG(horas_conduccion) as prom_horas FROM v_ind_cafeina ${whereClause}`;
     const adherenciaQuery = `SELECT COUNT(*) as total, SUM(completado) as completados FROM v_ind_adherencia ${whereClause}`;
 
-    const [descansoRes, cafeinaRes, adherenciaRes]: any[] = await Promise.all([
-      this.prisma.$queryRawUnsafe(descansoQuery, ...params),
-      this.prisma.$queryRawUnsafe(cafeinaQuery, ...params),
-      this.prisma.$queryRawUnsafe(adherenciaQuery, ...params),
+    const [descansoRes, cafeinaRes, adherenciaRes] = await Promise.all([
+      this.prisma.$queryRawUnsafe<DescansoRow[]>(descansoQuery, ...params),
+      this.prisma.$queryRawUnsafe<CafeinaRow[]>(cafeinaQuery, ...params),
+      this.prisma.$queryRawUnsafe<AdherenciaRow[]>(adherenciaQuery, ...params),
     ]);
 
     const promDescanso = Number(descansoRes[0]?.prom_descanso || 0);

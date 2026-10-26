@@ -23,9 +23,12 @@ import { Auditable, Roles, UsuarioActual } from '../plataforma/auth';
 /** RF04: asignan y consultan turnos de cualquier trabajador. El trabajador usa /turnos/me. */
 const GESTIONAN_TURNOS: Rol[] = ['jefe_operaciones', 'despachador', 'administrador'];
 
-// RN01: solo se audita cuando el exceso de jornada se confirma explicitamente.
-const esExcesoConfirmado = (solicitud: { body?: { confirmarExceso?: unknown } }) =>
-  solicitud.body?.confirmarExceso === true;
+// RN01: solo se audita cuando el exceso de jornada se confirma explicitamente (body o ?forzar=true).
+// El interceptor lo evalua antes del handler, por eso mira la solicitud original y no el dto.
+const esExcesoConfirmado = (solicitud: {
+  body?: { confirmarExceso?: unknown };
+  query?: { forzar?: unknown };
+}) => solicitud.body?.confirmarExceso === true || solicitud.query?.forzar === 'true';
 
 @ApiTags('Operaciones y Turnos (RF04)')
 @Controller('operaciones')
@@ -79,10 +82,13 @@ export class OperacionesController {
   @Roles(...GESTIONAN_TURNOS)
   @Auditable('turno_forzado', esExcesoConfirmado)
   @ApiOperation({ summary: 'Registrar un nuevo turno laboral (RF04, RF14)' })
+  @ApiQuery({ name: 'forzar', required: false, description: 'Forzar la creación (RN01 / RF14)' })
   @ApiResponse({ status: 201, description: 'Turno creado exitosamente.' })
   @ApiResponse({ status: 400, description: 'Datos inválidos o ruta no existente.' })
   @ApiResponse({ status: 409, description: 'Conflicto por exceso de jornada laboral sin confirmación (RF14)' })
-  async crearTurno(@Body() dto: CrearTurnoDto) {
+  async crearTurno(@Body() dto: CrearTurnoDto, @Query('forzar') forzar?: string) {
+    // RF14: forzar no reemplaza el motivo; sin motivoExceso el servicio responde 400.
+    if (forzar === 'true') dto.confirmarExceso = true;
     return this.operacionesService.crearTurno(dto);
   }
 
@@ -90,10 +96,16 @@ export class OperacionesController {
   @Roles(...GESTIONAN_TURNOS)
   @Auditable('turno_forzado', esExcesoConfirmado)
   @ApiOperation({ summary: 'Actualizar un turno laboral existente (RF04, RF14)' })
+  @ApiQuery({ name: 'forzar', required: false, description: 'Forzar la actualización (RN01 / RF14)' })
   @ApiResponse({ status: 200, description: 'Turno actualizado correctamente.' })
   @ApiResponse({ status: 404, description: 'Turno no encontrado.' })
   @ApiResponse({ status: 409, description: 'Conflicto por exceso de jornada laboral sin confirmación (RF14)' })
-  async actualizarTurno(@Param('id') id: string, @Body() dto: ActualizarTurnoDto) {
+  async actualizarTurno(
+    @Param('id') id: string,
+    @Body() dto: ActualizarTurnoDto,
+    @Query('forzar') forzar?: string,
+  ) {
+    if (forzar === 'true') dto.confirmarExceso = true;
     return this.operacionesService.actualizarTurno(id, dto);
   }
 
