@@ -18,6 +18,8 @@ describe('Roles en operaciones e indicadores (RNF04)', () => {
     listarTurnos: jest.fn().mockResolvedValue([]),
     listarTurnosMe: jest.fn().mockResolvedValue([]),
     confirmarTurno: jest.fn().mockResolvedValue({}),
+    crearTurno: jest.fn().mockResolvedValue({ id: 't-new' }),
+    actualizarTurno: jest.fn().mockResolvedValue({ id: 't-1' }),
   };
   const indicadores = { obtenerPanel: jest.fn().mockResolvedValue({ suficiente: false }) };
   const token = (rol: Rol, sub = 'u1') =>
@@ -77,5 +79,40 @@ describe('Roles en operaciones e indicadores (RNF04)', () => {
     const http = request(app.getHttpServer());
     expect((await http.get('/indicadores/panel').set('Authorization', await token('jefe_operaciones'))).status).toBe(200);
     expect((await http.get('/indicadores/panel').set('Authorization', await token('trabajador'))).status).toBe(403);
+  });
+
+  it('401 Unauthorized al consumir /operaciones/turnos sin token o con token inválido', async () => {
+    const http = request(app.getHttpServer());
+    expect((await http.get('/operaciones/turnos')).status).toBe(401);
+    expect((await http.get('/operaciones/turnos').set('Authorization', 'Bearer token_invalido_123')).status).toBe(401);
+  });
+
+  it('403 Forbidden al consumir /operaciones/turnos con rol no permitido (trabajador)', async () => {
+    const http = request(app.getHttpServer());
+    const res = await http.get('/operaciones/turnos').set('Authorization', await token('trabajador'));
+    expect(res.status).toBe(403);
+  });
+
+  it('permite crear turno aplicando el flag ?forzar=true con rol autorizado', async () => {
+    const http = request(app.getHttpServer());
+    const dto = {
+      idUsuario: '123e4567-e89b-12d3-a456-426614174000',
+      idRuta: '123e4567-e89b-12d3-a456-426614174001',
+      fecha: '2026-10-25',
+      inicioProgramado: '2026-10-25T08:00:00Z',
+      finProgramado: '2026-10-25T16:00:00Z',
+      horasConduccion: 8,
+    };
+    const res = await http
+      .post('/operaciones/turnos?forzar=true')
+      .set('Authorization', await token('jefe_operaciones'))
+      .send(dto);
+    expect(res.status).toBe(201);
+    expect(operaciones.crearTurno).toHaveBeenCalledWith(
+      expect.objectContaining({
+        confirmarExceso: true,
+        motivoExceso: 'Forzado por query param forzar=true',
+      }),
+    );
   });
 });

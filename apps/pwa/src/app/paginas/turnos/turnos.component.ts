@@ -246,7 +246,9 @@ export class TurnosComponent implements OnInit {
     if (this.form.invalid) return;
     const v = this.form.value;
     const dto = { ...v, horasConduccion: Number(v.horasConduccion), inicioProgramado: new Date(v.inicioProgramado).toISOString(), finProgramado: new Date(v.finProgramado).toISOString() };
-    const obs = this.editando() ? this.svc.actualizarTurno(this.tId()!, dto) : this.svc.crearTurno(dto);
+    const id = this.tId();
+    if (this.editando() && !id) return;
+    const obs = this.editando() && id ? this.svc.actualizarTurno(id, dto) : this.svc.crearTurno(dto);
     obs.subscribe({
       next: () => { this.mod.set(false); this.cargar(); },
       error: (e) => {

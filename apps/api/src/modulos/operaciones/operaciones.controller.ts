@@ -79,10 +79,17 @@ export class OperacionesController {
   @Roles(...GESTIONAN_TURNOS)
   @Auditable('turno_forzado', esExcesoConfirmado)
   @ApiOperation({ summary: 'Registrar un nuevo turno laboral (RF04, RF14)' })
+  @ApiQuery({ name: 'forzar', required: false, description: 'Forzar la creación (RN01 / RF14)' })
   @ApiResponse({ status: 201, description: 'Turno creado exitosamente.' })
   @ApiResponse({ status: 400, description: 'Datos inválidos o ruta no existente.' })
   @ApiResponse({ status: 409, description: 'Conflicto por exceso de jornada laboral sin confirmación (RF14)' })
-  async crearTurno(@Body() dto: CrearTurnoDto) {
+  async crearTurno(@Body() dto: CrearTurnoDto, @Query('forzar') forzar?: string) {
+    if (forzar === 'true' && dto.confirmarExceso === undefined) {
+      dto.confirmarExceso = true;
+      if (!dto.motivoExceso) {
+        dto.motivoExceso = 'Forzado por query param forzar=true';
+      }
+    }
     return this.operacionesService.crearTurno(dto);
   }
 
@@ -90,10 +97,21 @@ export class OperacionesController {
   @Roles(...GESTIONAN_TURNOS)
   @Auditable('turno_forzado', esExcesoConfirmado)
   @ApiOperation({ summary: 'Actualizar un turno laboral existente (RF04, RF14)' })
+  @ApiQuery({ name: 'forzar', required: false, description: 'Forzar la actualización (RN01 / RF14)' })
   @ApiResponse({ status: 200, description: 'Turno actualizado correctamente.' })
   @ApiResponse({ status: 404, description: 'Turno no encontrado.' })
   @ApiResponse({ status: 409, description: 'Conflicto por exceso de jornada laboral sin confirmación (RF14)' })
-  async actualizarTurno(@Param('id') id: string, @Body() dto: ActualizarTurnoDto) {
+  async actualizarTurno(
+    @Param('id') id: string,
+    @Body() dto: ActualizarTurnoDto,
+    @Query('forzar') forzar?: string,
+  ) {
+    if (forzar === 'true' && dto.confirmarExceso === undefined) {
+      dto.confirmarExceso = true;
+      if (!dto.motivoExceso) {
+        dto.motivoExceso = 'Forzado por query param forzar=true';
+      }
+    }
     return this.operacionesService.actualizarTurno(id, dto);
   }
 
