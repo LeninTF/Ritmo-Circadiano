@@ -33,6 +33,14 @@ export class CafeinaService {
     private readonly parametros: ParametrosService,
   ) {}
 
+  async consultarIngestasEnRango(idUsuario: string, desde: Date, hasta: Date) {
+    return this.prisma.ingestaCafeina.findMany({
+      where: { id_usuario: idUsuario, fecha_hora: { gte: desde, lte: hasta } },
+      select: { cafeina_mg: true, fecha_hora: true },
+      orderBy: { fecha_hora: 'asc' },
+    });
+  }
+
   async obtenerBebidas(): Promise<BebidaDto[]> {
     const bebidas = await this.prisma.bebida.findMany({
       orderBy: { nombre: 'asc' },

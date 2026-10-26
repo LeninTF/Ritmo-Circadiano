@@ -25,6 +25,17 @@ export class NotificacionesService {
     }
   }
 
+  async consultarAbiertasEnRango(idUsuario: string, desde: Date, hasta: Date) {
+    return this.prisma.notificacion.findMany({
+      where: {
+        id_usuario: idUsuario,
+        abierta: true,
+        programada_para: { gte: desde, lt: hasta },
+      },
+      select: { programada_para: true },
+    });
+  }
+
   async guardarSuscripcion(dto: {
     id_usuario: string;
     endpoint: string;

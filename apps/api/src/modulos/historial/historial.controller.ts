@@ -1,4 +1,5 @@
-import { Controller, Get, Query, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
+import { ConsultarHistorialDto } from './dto/consultar-historial.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { HistorialService } from './historial.service';
 import { 
@@ -22,14 +23,9 @@ export class HistorialController {
   @ApiResponse({ status: 200, description: 'Serie cronológica de métricas diarias obtenida.' })
   @ApiResponse({ status: 400, description: 'Parámetro dias inválido.' })
   async getMe(
-    @Query('dias') diasStr: string,
+    @Query() q: ConsultarHistorialDto,
     @UsuarioActual() usuario: UsuarioJwtPayload,
   ): Promise<HistorialRespuestaDto> {
-    // Validación estricta: solo aceptar las cadenas exactas '7', '14' o '30'
-    if (!['7', '14', '30'].includes(diasStr)) {
-      throw new BadRequestException('El parámetro dias debe ser exactamente 7, 14 o 30.');
-    }
-    const dias = parseInt(diasStr, 10);
-    return this.historialService.getHistorial(usuario.sub, dias);
+    return this.historialService.getHistorial(usuario.sub, q.dias);
   }
 }

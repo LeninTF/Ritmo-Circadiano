@@ -1,6 +1,7 @@
 import { HistorialService } from './historial.service';
 import { DiarioService } from '../trabajador/diario.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { CafeinaService } from '../cafeina/cafeina.service';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import type { DiarioRespuestaDto } from '@circadiano/contracts';
 
  describe('RF15 cafeína histórica', () => {
@@ -9,7 +10,8 @@ import type { DiarioRespuestaDto } from '@circadiano/contracts';
   const count = jest.fn();
   const service = new HistorialService(
     { consultarDiarios } as unknown as DiarioService,
-    { ingestaCafeina: { findMany }, notificacion: { count } } as unknown as PrismaService,
+    { consultarIngestasEnRango: findMany } as unknown as CafeinaService,
+    { consultarAbiertasEnRango: count } as unknown as NotificacionesService,
   );
   const diario = (fecha: string, horaAcostarse: string): DiarioRespuestaDto => ({
     id: fecha, idUsuario: 'yo', fecha, horaAcostarse,
@@ -21,7 +23,7 @@ import type { DiarioRespuestaDto } from '@circadiano/contracts';
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2026-10-20T18:00:00Z'));
     jest.resetAllMocks();
-    count.mockResolvedValue(0);
+    count.mockResolvedValue([]);
     findMany.mockResolvedValue([]);
     consultarDiarios.mockResolvedValue([]);
   });
@@ -68,8 +70,8 @@ import type { DiarioRespuestaDto } from '@circadiano/contracts';
   it('todas las consultas filtran exclusivamente el id recibido del trabajador', async () => {
     await service.getHistorial('yo', 7);
     expect(consultarDiarios).toHaveBeenCalledWith('yo', '2026-10-14', '2026-10-20');
-    expect(findMany).toHaveBeenCalledWith({ where: { id_usuario: 'yo' }, orderBy: { fecha_hora: 'asc' } });
-    expect(count).toHaveBeenCalledTimes(7);
-    for (const [consulta] of count.mock.calls) expect(consulta.where.id_usuario).toBe('yo');
+    expect(findMany).not.toHaveBeenCalled();
+    expect(count).toHaveBeenCalledTimes(1);
+    expect(count).toHaveBeenCalledWith('yo', new Date('2026-10-14T05:00:00Z'), new Date('2026-10-21T05:00:00Z'));
   });
 });

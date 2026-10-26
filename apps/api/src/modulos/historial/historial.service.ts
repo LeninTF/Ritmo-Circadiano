@@ -1,6 +1,7 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { DiarioService } from '../trabajador/diario.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { CafeinaService } from '../cafeina/cafeina.service';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import type { HistorialDiaDto, HistorialRespuestaDto } from '@circadiano/contracts';
 import type { DiarioRespuestaDto } from '@circadiano/contracts';
 import { residual, SEMIVIDA_H_DEFECTO } from '@circadiano/domain';
@@ -10,7 +11,8 @@ import type { IngestaCafeina as DominioIngesta } from '@circadiano/domain';
 export class HistorialService {
   constructor(
     private readonly diarioService: DiarioService,
-    private readonly prisma: PrismaService,
+    private readonly cafeinaService: CafeinaService,
+    private readonly notificacionesService: NotificacionesService,
   ) {}
 
   /**
@@ -21,13 +23,6 @@ export class HistorialService {
     idUsuario: string,
     dias: number,
   ): Promise<HistorialRespuestaDto> {
-    // Validar periodo permitido
-    if (![7, 14, 30].includes(dias)) {
-      throw new BadRequestException(
-        'El parámetro dias debe ser uno de los siguientes: 7, 14 o 30',
-      );
-    }
-
     const hastaStr = new Intl.DateTimeFormat('sv-SE', {
       timeZone: 'America/Lima',
       year: 'numeric',
@@ -49,11 +44,31 @@ export class HistorialService {
       mapaDiarios.set(d.fecha, d);
     }
 
-    // Obtener todas las ingestas del usuario (necesarias para calcular residuales históricos)
-    const todasIngestas = await this.prisma.ingestaCafeina.findMany({
-      where: { id_usuario: idUsuario },
-      orderBy: { fecha_hora: 'asc' },
-    });
+    const evaluaciones = diarios
+      .filter((d) => d.fecha >= desdeStr && d.fecha <= hastaStr)
+      .map((d) => new Date(d.horaAcostarse).getTime())
+      .filter(Number.isFinite);
+    // Ventana previa de 48 h acordada para RF15; no consultar ingestas posteriores al último sueño.
+    const todasIngestas = evaluaciones.length === 0 ? [] :
+      await this.cafeinaService.consultarIngestasEnRango(
+        idUsuario,
+        new Date(Math.min(...evaluaciones) - 48 * 3600000),
+        new Date(Math.max(...evaluaciones)),
+      );
+
+    const inicioRango = new Date(`${desdeStr}T00:00:00-05:00`);
+    const finRango = new Date(`${hastaStr}T00:00:00-05:00`);
+    finRango.setUTCDate(finRango.getUTCDate() + 1);
+    const abiertas = await this.notificacionesService.consultarAbiertasEnRango(
+      idUsuario, inicioRango, finRango,
+    );
+    const formatoLima = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Lima' });
+    const abiertasPorDia = new Map<string, number>();
+    for (const { programada_para: fecha } of abiertas) {
+      if (fecha < inicioRango || fecha >= finRango) continue;
+      const clave = formatoLima.format(fecha);
+      abiertasPorDia.set(clave, (abiertasPorDia.get(clave) ?? 0) + 1);
+    }
 
     // Convertir a formato de dominio
     const ingestasDominio: DominioIngesta[] = todasIngestas.map((i) => ({
@@ -95,6 +110,7 @@ export class HistorialService {
         );
 
         if (ingestasAnteriores.length > 0) {
+          // shortcut RN03: usar el valor por defecto hasta que I1 exponga usuario.semivida_h.
           const residualMg = residual(
             ingestasAnteriores,
             instanteEvaluacion,
@@ -106,23 +122,7 @@ export class HistorialService {
         }
       }
 
-      // Determinar adherencia: contar notificaciones abiertas del día
-      // Lima es UTC-5 sin horario de verano; consultar instantes, no claves del diario.
-      const inicioDia = new Date(`${fechaStr}T00:00:00-05:00`);
-      const finDia = new Date(inicioDia);
-      finDia.setUTCDate(finDia.getUTCDate() + 1);
-
-      const notificacionesAbiertas =
-        await this.prisma.notificacion.count({
-          where: {
-            id_usuario: idUsuario,
-            abierta: true,
-            programada_para: {
-              gte: inicioDia,
-              lt: finDia,
-            },
-          },
-        });
+      const notificacionesAbiertas = abiertasPorDia.get(fechaStr) ?? 0;
 
       resultado.push({
         fecha: fechaStr,

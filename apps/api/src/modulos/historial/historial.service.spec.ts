@@ -2,13 +2,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HistorialService } from './historial.service';
 import { DiarioService } from '../trabajador/diario.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { CafeinaService } from '../cafeina/cafeina.service';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import type { DiarioRespuestaDto } from '@circadiano/contracts';
 
 describe('HistorialService', () => {
   let service: HistorialService;
   let diarioService: DiarioService;
-  let prismaService: PrismaService;
+  let cafeina: CafeinaService;
+  let notificaciones: NotificacionesService;
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -21,22 +23,19 @@ describe('HistorialService', () => {
           },
         },
         {
-          provide: PrismaService,
+          provide: CafeinaService,
           useValue: {
-            ingestaCafeina: {
-              findMany: jest.fn(),
-            },
-            notificacion: {
-              count: jest.fn(),
-            },
+            consultarIngestasEnRango: jest.fn(),
           },
         },
+        { provide: NotificacionesService, useValue: { consultarAbiertasEnRango: jest.fn() } },
       ],
     }).compile();
 
     service = module.get<HistorialService>(HistorialService);
     diarioService = module.get<DiarioService>(DiarioService);
-    prismaService = module.get<PrismaService>(PrismaService);
+    cafeina = module.get(CafeinaService);
+    notificaciones = module.get(NotificacionesService);
   });
 
   afterEach(() => {
@@ -49,17 +48,17 @@ describe('HistorialService', () => {
     // 20 de octubre UTC = 19 de octubre, 22:00 en Lima.
     jest.setSystemTime(new Date('2026-10-20T03:00:00Z'));
     (diarioService.consultarDiarios as jest.Mock).mockResolvedValue([]);
-    (prismaService.ingestaCafeina.findMany as jest.Mock).mockResolvedValue([]);
+    (cafeina.consultarIngestasEnRango as jest.Mock).mockResolvedValue([]);
     const programadas = [
       new Date('2026-10-19T04:59:59.999Z'), // día anterior en Lima
       new Date('2026-10-19T05:00:00Z'), // inicio incluido
       new Date('2026-10-20T03:00:00Z'), // 22:00 del día 19 en Lima
       new Date('2026-10-20T05:00:00Z'), // día siguiente, excluido
     ];
-    (prismaService.notificacion.count as jest.Mock).mockImplementation(
-      async ({ where }) => programadas.filter(
-        (fecha) => fecha >= where.programada_para.gte && fecha < where.programada_para.lt,
-      ).length,
+    (notificaciones.consultarAbiertasEnRango as jest.Mock).mockImplementation(
+      async (_id, desde, hasta) => programadas.filter(
+        (fecha) => fecha >= desde && fecha < hasta,
+      ).map((programada_para) => ({ programada_para })),
     );
 
     const resultado = await service.getHistorial('u1', 7);
@@ -70,20 +69,7 @@ describe('HistorialService', () => {
       '2026-10-17', '2026-10-18', '2026-10-19',
     ]);
     expect(resultado.dias[6].notificacionesAbiertas).toBe(2);
-    expect(prismaService.notificacion.count).toHaveBeenLastCalledWith({
-      where: {
-        id_usuario: 'u1',
-        abierta: true,
-        programada_para: {
-          gte: new Date('2026-10-19T05:00:00Z'),
-          lt: new Date('2026-10-20T05:00:00Z'),
-        },
-      },
-    });
-  });
-
-  it('debe lanzar error cuando dias no es 7, 14 o 30', async () => {
-    await expect(service.getHistorial('u1', 5)).rejects.toThrow();
+    expect(notificaciones.consultarAbiertasEnRango).toHaveBeenCalledTimes(1);
   });
 
   it('debe devolver la cantidad correcta de días', async () => {
@@ -137,18 +123,10 @@ describe('HistorialService', () => {
         client_id: 'c1',
       },
     ];
-    (prismaService.ingestaCafeina.findMany as jest.Mock).mockResolvedValue(ingestas);
+    (cafeina.consultarIngestasEnRango as jest.Mock).mockResolvedValue(ingestas);
 
     // Mock notifications: 1 open for first day, 0 for others
-    const countMock = jest.fn().mockImplementation(async ({ where }) => {
-      const fechaConsultada = where.programada_para.gte
-        .toISOString()
-        .slice(0, 10);
-
-      return fechaConsultada === '2026-10-18' ? 1 : 0;
-    });
-
-    prismaService.notificacion.count = countMock;
+    (notificaciones.consultarAbiertasEnRango as jest.Mock).mockResolvedValue([{ programada_para: new Date('2026-10-18T12:00:00Z') }]);
 
     const result = await service.getHistorial('u1', 7);
     expect(result.dias).toHaveLength(7);

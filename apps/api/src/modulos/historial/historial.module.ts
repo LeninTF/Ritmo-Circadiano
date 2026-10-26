@@ -3,10 +3,11 @@ import { HistorialController } from './historial.controller';
 import { HistorialService } from './historial.service';
 import { TrabajadorModule } from '../trabajador/trabajador.module';
 
-import { PrismaModule } from '../../prisma/prisma.module';
+import { CafeinaModule } from '../cafeina/cafeina.module';
+import { NotificacionesModule } from '../notificaciones/notificaciones.module';
 
 @Module({
-  imports: [TrabajadorModule, PrismaModule],
+  imports: [TrabajadorModule, CafeinaModule, NotificacionesModule],
   providers: [HistorialService],
   controllers: [HistorialController],
 })

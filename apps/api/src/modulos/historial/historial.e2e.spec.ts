@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { type INestApplication } from '@nestjs/common';
+import { ValidationPipe, type INestApplication } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
@@ -8,7 +8,8 @@ import { JwtAuthGuard, RolesGuard } from '../plataforma/auth';
 import { HistorialController } from './historial.controller';
 import { HistorialService } from './historial.service';
 import { DiarioService } from '../trabajador/diario.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { CafeinaService } from '../cafeina/cafeina.service';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 
  describe('RF15 GET /historial/me con guards auténticos', () => {
   let app: INestApplication;
@@ -16,7 +17,7 @@ import { PrismaService } from '../../prisma/prisma.service';
   let despachador: string;
   const consultarDiarios = jest.fn().mockResolvedValue([]);
   const findMany = jest.fn().mockResolvedValue([]);
-  const count = jest.fn().mockResolvedValue(0);
+  const count = jest.fn().mockResolvedValue([]);
 
   beforeAll(async () => {
     const modulo = await Test.createTestingModule({
@@ -25,12 +26,14 @@ import { PrismaService } from '../../prisma/prisma.service';
       providers: [
         HistorialService,
         { provide: DiarioService, useValue: { consultarDiarios } },
-        { provide: PrismaService, useValue: { ingestaCafeina: { findMany }, notificacion: { count } } },
+        { provide: CafeinaService, useValue: { consultarIngestasEnRango: findMany } },
+        { provide: NotificacionesService, useValue: { consultarAbiertasEnRango: count } },
         { provide: APP_GUARD, useClass: JwtAuthGuard },
         { provide: APP_GUARD, useClass: RolesGuard },
       ],
     }).compile();
     app = modulo.createNestApplication();
+    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }));
     await app.init();
     const jwt = app.get(JwtService);
     trabajador = `Bearer ${await jwt.signAsync({ sub: 'yo', rol: 'trabajador', codigoParticipante: 'P01' })}`;
@@ -60,17 +63,29 @@ import { PrismaService } from '../../prisma/prisma.service';
     expect(consultarDiarios).toHaveBeenCalledWith('yo', expect.any(String), expect.any(String));
   });
 
-  it('usa usuario.sub en todas las consultas e ignora identidades arbitrarias del cliente', async () => {
+  it('usa usuario.sub en todas las consultas', async () => {
     await request(app.getHttpServer())
-      .get('/historial/me?dias=7&id_usuario=ajeno&idUsuario=ajeno&sub=ajeno')
+      .get('/historial/me?dias=7')
       .set('Authorization', trabajador).expect(200);
     expect(consultarDiarios).toHaveBeenCalledWith('yo', expect.any(String), expect.any(String));
-    expect(findMany).toHaveBeenCalledWith({ where: { id_usuario: 'yo' }, orderBy: { fecha_hora: 'asc' } });
-    expect(count).toHaveBeenCalledTimes(7);
-    for (const [consulta] of count.mock.calls) expect(consulta.where.id_usuario).toBe('yo');
+    expect(findMany).not.toHaveBeenCalled();
+    expect(count).toHaveBeenCalledTimes(1);
+    expect(count).toHaveBeenCalledWith('yo', expect.any(Date), expect.any(Date));
   });
 
-  it.each(['7abc', '7.5', '07', '', '0', '8', '31'])('dias=%s devuelve 400 sin consultar datos', async (dias) => {
+  it('transforma 07 a 7 mediante el DTO', async () => {
+    const respuesta = await request(app.getHttpServer()).get('/historial/me?dias=07')
+      .set('Authorization', trabajador).expect(200);
+    expect(respuesta.body.dias).toHaveLength(7);
+  });
+
+  it('rechaza identidades arbitrarias mediante el ValidationPipe de producción', async () => {
+    await request(app.getHttpServer()).get('/historial/me?dias=7&id_usuario=ajeno')
+      .set('Authorization', trabajador).expect(400);
+    expect(consultarDiarios).not.toHaveBeenCalled();
+  });
+
+  it.each(['7abc', '7.5', '', '0', '8', '31'])('dias=%s devuelve 400 sin consultar datos', async (dias) => {
     const query = dias === '' ? '' : `?dias=${dias}`;
     await request(app.getHttpServer()).get(`/historial/me${query}`)
       .set('Authorization', trabajador).expect(400);
