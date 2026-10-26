@@ -4,7 +4,26 @@ import { OnEvent } from '@nestjs/event-emitter';
 import * as webPush from 'web-push';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
-import { EncolarNotificacionDto, NotificacionRespuestaDto } from '@circadiano/contracts';
+import {
+  EVENTO_PLAN_GENERADO,
+  EncolarNotificacionDto,
+  NotificacionRespuestaDto,
+  type PlanGeneradoEvento,
+} from '@circadiano/contracts';
+
+/** Calcula [inicio, fin) del día en America/Lima para la fecha YYYY-MM-DD dada.
+ *  UTC-5 fijo (sin horario de verano), lo que permite manejar turnos nocturnos
+ *  que cruzan la medianoche UTC sin asumir T00:00:00.000Z plano.
+ */
+function limitesDelDiaLima(fechaYYYYMMDD: string): { inicioDia: Date; finDia: Date } {
+  // America/Lima = UTC-5 todo el año (sin DST).
+  const OFFSET_LIMA_MS = 5 * 3_600_000;
+  // Medianoche Lima = medianoche local = UTC + 5 h
+  const inicioDia = new Date(`${fechaYYYYMMDD}T00:00:00.000Z`);
+  inicioDia.setTime(inicioDia.getTime() + OFFSET_LIMA_MS);
+  const finDia = new Date(inicioDia.getTime() + 24 * 3_600_000 - 1);
+  return { inicioDia, finDia };
+}
 
 @Injectable()
 export class NotificacionesService {
@@ -92,11 +111,12 @@ export class NotificacionesService {
     };
   }
 
-  @OnEvent('circadiano.plan.generado')
-  async handlePlanGenerado(payload: { id_usuario: string; id_plan: number; fecha: string }): Promise<void> {
-    const inicioDia = new Date(`${payload.fecha}T00:00:00.000Z`);
-    const finDia = new Date(`${payload.fecha}T23:59:59.999Z`);
+  @OnEvent(EVENTO_PLAN_GENERADO)
+  async handlePlanGenerado(payload: PlanGeneradoEvento): Promise<void> {
+    const { inicioDia, finDia } = limitesDelDiaLima(payload.fecha);
 
+    // Cancela notificaciones pendientes previas del mismo trabajador para ese día
+    // (evita duplicados al regenerar el plan).
     await this.prisma.notificacion.updateMany({
       where: {
         id_usuario: payload.id_usuario,
@@ -106,14 +126,14 @@ export class NotificacionesService {
       data: { estado: 'cancelada' },
     });
 
-    const tipos = ['luz', 'corte_cafeina', 'relajacion', 'dormir'];
-    for (let i = 0; i < tipos.length; i++) {
-      const horaProg = new Date(inicioDia.getTime() + (8 + i * 3) * 3600000);
+    // Encola cada recordatorio derivado por derivarRecordatorios(plan) en I3.
+    // Los tipos (luz, corte_cafeina, relajacion, dormir) y las horas son exactos;
+    // si protegerLuz=true el recordatorio 'luz' simplemente no viene en el array.
+    for (const recordatorio of payload.recordatorios) {
       await this.encolar({
         id_usuario: payload.id_usuario,
-        id_plan: payload.id_plan,
-        tipo: tipos[i],
-        programada_para: horaProg.toISOString(),
+        tipo: recordatorio.tipo,
+        programada_para: recordatorio.programadaPara,
       });
     }
   }

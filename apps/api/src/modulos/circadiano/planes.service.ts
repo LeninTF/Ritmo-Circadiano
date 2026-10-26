@@ -1,5 +1,7 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import type { PlanDiarioDto, VentanaTemporalDto } from '@circadiano/contracts';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import type { PlanDiarioDto, PlanGeneradoEvento, VentanaTemporalDto } from '@circadiano/contracts';
+import { EVENTO_PLAN_GENERADO } from '@circadiano/contracts';
 import {
   SEMIVIDA_H_DEFECTO,
   UMBRAL_CAFEINA_MG_DEFECTO,
@@ -49,6 +51,7 @@ export class PlanesService {
     private readonly parametros: ParametrosService,
     private readonly cronotipos: CronotipoService,
     private readonly ubicaciones: UbicacionService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   /** POST /planes/generar: solo para un turno propio. */
@@ -103,7 +106,17 @@ export class PlanesService {
       create: { idUsuario, fecha: turno.fecha, ...datos },
       update: datos,
     });
-    return this.aDto(fila);
+
+    const dto = this.aDto(fila);
+    const eventoPayload: PlanGeneradoEvento = {
+      id_usuario: idUsuario,
+      id_plan: fila.id,
+      fecha,
+      recordatorios: dto.recordatorios,
+    };
+    this.eventEmitter.emit(EVENTO_PLAN_GENERADO, eventoPayload);
+
+    return dto;
   }
 
   /** GET /planes?fecha */

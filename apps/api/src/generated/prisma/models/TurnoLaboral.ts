@@ -282,6 +282,7 @@ export type TurnoLaboralWhereInput = {
   actualizadoEn?: Prisma.DateTimeFilter<"TurnoLaboral"> | Date | string
   ruta?: Prisma.XOR<Prisma.RutaScalarRelationFilter, Prisma.RutaWhereInput>
   excesosAuditoria?: Prisma.ExcesoJornadaAuditoriaListRelationFilter
+  aptitudes?: Prisma.AptitudPresalidaListRelationFilter
 }
 
 export type TurnoLaboralOrderByWithRelationInput = {
@@ -300,6 +301,7 @@ export type TurnoLaboralOrderByWithRelationInput = {
   actualizadoEn?: Prisma.SortOrder
   ruta?: Prisma.RutaOrderByWithRelationInput
   excesosAuditoria?: Prisma.ExcesoJornadaAuditoriaOrderByRelationAggregateInput
+  aptitudes?: Prisma.AptitudPresalidaOrderByRelationAggregateInput
 }
 
 export type TurnoLaboralWhereUniqueInput = Prisma.AtLeast<{
@@ -321,6 +323,7 @@ export type TurnoLaboralWhereUniqueInput = Prisma.AtLeast<{
   actualizadoEn?: Prisma.DateTimeFilter<"TurnoLaboral"> | Date | string
   ruta?: Prisma.XOR<Prisma.RutaScalarRelationFilter, Prisma.RutaWhereInput>
   excesosAuditoria?: Prisma.ExcesoJornadaAuditoriaListRelationFilter
+  aptitudes?: Prisma.AptitudPresalidaListRelationFilter
 }, "id">
 
 export type TurnoLaboralOrderByWithAggregationInput = {
@@ -378,6 +381,7 @@ export type TurnoLaboralCreateInput = {
   actualizadoEn?: Date | string
   ruta: Prisma.RutaCreateNestedOneWithoutTurnosInput
   excesosAuditoria?: Prisma.ExcesoJornadaAuditoriaCreateNestedManyWithoutTurnoInput
+  aptitudes?: Prisma.AptitudPresalidaCreateNestedManyWithoutTurnoInput
 }
 
 export type TurnoLaboralUncheckedCreateInput = {
@@ -395,6 +399,7 @@ export type TurnoLaboralUncheckedCreateInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   excesosAuditoria?: Prisma.ExcesoJornadaAuditoriaUncheckedCreateNestedManyWithoutTurnoInput
+  aptitudes?: Prisma.AptitudPresalidaUncheckedCreateNestedManyWithoutTurnoInput
 }
 
 export type TurnoLaboralUpdateInput = {
@@ -412,6 +417,7 @@ export type TurnoLaboralUpdateInput = {
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ruta?: Prisma.RutaUpdateOneRequiredWithoutTurnosNestedInput
   excesosAuditoria?: Prisma.ExcesoJornadaAuditoriaUpdateManyWithoutTurnoNestedInput
+  aptitudes?: Prisma.AptitudPresalidaUpdateManyWithoutTurnoNestedInput
 }
 
 export type TurnoLaboralUncheckedUpdateInput = {
@@ -429,6 +435,7 @@ export type TurnoLaboralUncheckedUpdateInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   excesosAuditoria?: Prisma.ExcesoJornadaAuditoriaUncheckedUpdateManyWithoutTurnoNestedInput
+  aptitudes?: Prisma.AptitudPresalidaUncheckedUpdateManyWithoutTurnoNestedInput
 }
 
 export type TurnoLaboralCreateManyInput = {
@@ -549,6 +556,11 @@ export type TurnoLaboralNullableScalarRelationFilter = {
   isNot?: Prisma.TurnoLaboralWhereInput | null
 }
 
+export type TurnoLaboralScalarRelationFilter = {
+  is?: Prisma.TurnoLaboralWhereInput
+  isNot?: Prisma.TurnoLaboralWhereInput
+}
+
 export type TurnoLaboralCreateNestedManyWithoutRutaInput = {
   create?: Prisma.XOR<Prisma.TurnoLaboralCreateWithoutRutaInput, Prisma.TurnoLaboralUncheckedCreateWithoutRutaInput> | Prisma.TurnoLaboralCreateWithoutRutaInput[] | Prisma.TurnoLaboralUncheckedCreateWithoutRutaInput[]
   connectOrCreate?: Prisma.TurnoLaboralCreateOrConnectWithoutRutaInput | Prisma.TurnoLaboralCreateOrConnectWithoutRutaInput[]
@@ -591,10 +603,6 @@ export type TurnoLaboralUncheckedUpdateManyWithoutRutaNestedInput = {
   deleteMany?: Prisma.TurnoLaboralScalarWhereInput | Prisma.TurnoLaboralScalarWhereInput[]
 }
 
-export type DateTimeFieldUpdateOperationsInput = {
-  set?: Date | string
-}
-
 export type EnumEstadoConfirmacionFieldUpdateOperationsInput = {
   set?: $Enums.EstadoConfirmacion
 }
@@ -615,6 +623,20 @@ export type TurnoLaboralUpdateOneWithoutExcesosAuditoriaNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.TurnoLaboralUpdateToOneWithWhereWithoutExcesosAuditoriaInput, Prisma.TurnoLaboralUpdateWithoutExcesosAuditoriaInput>, Prisma.TurnoLaboralUncheckedUpdateWithoutExcesosAuditoriaInput>
 }
 
+export type TurnoLaboralCreateNestedOneWithoutAptitudesInput = {
+  create?: Prisma.XOR<Prisma.TurnoLaboralCreateWithoutAptitudesInput, Prisma.TurnoLaboralUncheckedCreateWithoutAptitudesInput>
+  connectOrCreate?: Prisma.TurnoLaboralCreateOrConnectWithoutAptitudesInput
+  connect?: Prisma.TurnoLaboralWhereUniqueInput
+}
+
+export type TurnoLaboralUpdateOneRequiredWithoutAptitudesNestedInput = {
+  create?: Prisma.XOR<Prisma.TurnoLaboralCreateWithoutAptitudesInput, Prisma.TurnoLaboralUncheckedCreateWithoutAptitudesInput>
+  connectOrCreate?: Prisma.TurnoLaboralCreateOrConnectWithoutAptitudesInput
+  upsert?: Prisma.TurnoLaboralUpsertWithoutAptitudesInput
+  connect?: Prisma.TurnoLaboralWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.TurnoLaboralUpdateToOneWithWhereWithoutAptitudesInput, Prisma.TurnoLaboralUpdateWithoutAptitudesInput>, Prisma.TurnoLaboralUncheckedUpdateWithoutAptitudesInput>
+}
+
 export type TurnoLaboralCreateWithoutRutaInput = {
   id?: string
   idUsuario: string
@@ -629,6 +651,7 @@ export type TurnoLaboralCreateWithoutRutaInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   excesosAuditoria?: Prisma.ExcesoJornadaAuditoriaCreateNestedManyWithoutTurnoInput
+  aptitudes?: Prisma.AptitudPresalidaCreateNestedManyWithoutTurnoInput
 }
 
 export type TurnoLaboralUncheckedCreateWithoutRutaInput = {
@@ -645,6 +668,7 @@ export type TurnoLaboralUncheckedCreateWithoutRutaInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   excesosAuditoria?: Prisma.ExcesoJornadaAuditoriaUncheckedCreateNestedManyWithoutTurnoInput
+  aptitudes?: Prisma.AptitudPresalidaUncheckedCreateNestedManyWithoutTurnoInput
 }
 
 export type TurnoLaboralCreateOrConnectWithoutRutaInput = {
@@ -706,6 +730,7 @@ export type TurnoLaboralCreateWithoutExcesosAuditoriaInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   ruta: Prisma.RutaCreateNestedOneWithoutTurnosInput
+  aptitudes?: Prisma.AptitudPresalidaCreateNestedManyWithoutTurnoInput
 }
 
 export type TurnoLaboralUncheckedCreateWithoutExcesosAuditoriaInput = {
@@ -722,6 +747,7 @@ export type TurnoLaboralUncheckedCreateWithoutExcesosAuditoriaInput = {
   horaFinReal?: Date | string | null
   creadoEn?: Date | string
   actualizadoEn?: Date | string
+  aptitudes?: Prisma.AptitudPresalidaUncheckedCreateNestedManyWithoutTurnoInput
 }
 
 export type TurnoLaboralCreateOrConnectWithoutExcesosAuditoriaInput = {
@@ -754,6 +780,7 @@ export type TurnoLaboralUpdateWithoutExcesosAuditoriaInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ruta?: Prisma.RutaUpdateOneRequiredWithoutTurnosNestedInput
+  aptitudes?: Prisma.AptitudPresalidaUpdateManyWithoutTurnoNestedInput
 }
 
 export type TurnoLaboralUncheckedUpdateWithoutExcesosAuditoriaInput = {
@@ -770,6 +797,91 @@ export type TurnoLaboralUncheckedUpdateWithoutExcesosAuditoriaInput = {
   horaFinReal?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  aptitudes?: Prisma.AptitudPresalidaUncheckedUpdateManyWithoutTurnoNestedInput
+}
+
+export type TurnoLaboralCreateWithoutAptitudesInput = {
+  id?: string
+  idUsuario: string
+  fecha: Date | string
+  inicioProgramado: Date | string
+  finProgramado: Date | string
+  horasConduccion: runtime.Decimal | runtime.DecimalJsLike | number | string
+  esNocturno: boolean
+  estadoConfirmacion?: $Enums.EstadoConfirmacion
+  horaInicioReal?: Date | string | null
+  horaFinReal?: Date | string | null
+  creadoEn?: Date | string
+  actualizadoEn?: Date | string
+  ruta: Prisma.RutaCreateNestedOneWithoutTurnosInput
+  excesosAuditoria?: Prisma.ExcesoJornadaAuditoriaCreateNestedManyWithoutTurnoInput
+}
+
+export type TurnoLaboralUncheckedCreateWithoutAptitudesInput = {
+  id?: string
+  idUsuario: string
+  idRuta: string
+  fecha: Date | string
+  inicioProgramado: Date | string
+  finProgramado: Date | string
+  horasConduccion: runtime.Decimal | runtime.DecimalJsLike | number | string
+  esNocturno: boolean
+  estadoConfirmacion?: $Enums.EstadoConfirmacion
+  horaInicioReal?: Date | string | null
+  horaFinReal?: Date | string | null
+  creadoEn?: Date | string
+  actualizadoEn?: Date | string
+  excesosAuditoria?: Prisma.ExcesoJornadaAuditoriaUncheckedCreateNestedManyWithoutTurnoInput
+}
+
+export type TurnoLaboralCreateOrConnectWithoutAptitudesInput = {
+  where: Prisma.TurnoLaboralWhereUniqueInput
+  create: Prisma.XOR<Prisma.TurnoLaboralCreateWithoutAptitudesInput, Prisma.TurnoLaboralUncheckedCreateWithoutAptitudesInput>
+}
+
+export type TurnoLaboralUpsertWithoutAptitudesInput = {
+  update: Prisma.XOR<Prisma.TurnoLaboralUpdateWithoutAptitudesInput, Prisma.TurnoLaboralUncheckedUpdateWithoutAptitudesInput>
+  create: Prisma.XOR<Prisma.TurnoLaboralCreateWithoutAptitudesInput, Prisma.TurnoLaboralUncheckedCreateWithoutAptitudesInput>
+  where?: Prisma.TurnoLaboralWhereInput
+}
+
+export type TurnoLaboralUpdateToOneWithWhereWithoutAptitudesInput = {
+  where?: Prisma.TurnoLaboralWhereInput
+  data: Prisma.XOR<Prisma.TurnoLaboralUpdateWithoutAptitudesInput, Prisma.TurnoLaboralUncheckedUpdateWithoutAptitudesInput>
+}
+
+export type TurnoLaboralUpdateWithoutAptitudesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  idUsuario?: Prisma.StringFieldUpdateOperationsInput | string
+  fecha?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inicioProgramado?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  finProgramado?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  horasConduccion?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  esNocturno?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  estadoConfirmacion?: Prisma.EnumEstadoConfirmacionFieldUpdateOperationsInput | $Enums.EstadoConfirmacion
+  horaInicioReal?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  horaFinReal?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  ruta?: Prisma.RutaUpdateOneRequiredWithoutTurnosNestedInput
+  excesosAuditoria?: Prisma.ExcesoJornadaAuditoriaUpdateManyWithoutTurnoNestedInput
+}
+
+export type TurnoLaboralUncheckedUpdateWithoutAptitudesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  idUsuario?: Prisma.StringFieldUpdateOperationsInput | string
+  idRuta?: Prisma.StringFieldUpdateOperationsInput | string
+  fecha?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inicioProgramado?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  finProgramado?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  horasConduccion?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  esNocturno?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  estadoConfirmacion?: Prisma.EnumEstadoConfirmacionFieldUpdateOperationsInput | $Enums.EstadoConfirmacion
+  horaInicioReal?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  horaFinReal?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  excesosAuditoria?: Prisma.ExcesoJornadaAuditoriaUncheckedUpdateManyWithoutTurnoNestedInput
 }
 
 export type TurnoLaboralCreateManyRutaInput = {
@@ -801,6 +913,7 @@ export type TurnoLaboralUpdateWithoutRutaInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   excesosAuditoria?: Prisma.ExcesoJornadaAuditoriaUpdateManyWithoutTurnoNestedInput
+  aptitudes?: Prisma.AptitudPresalidaUpdateManyWithoutTurnoNestedInput
 }
 
 export type TurnoLaboralUncheckedUpdateWithoutRutaInput = {
@@ -817,6 +930,7 @@ export type TurnoLaboralUncheckedUpdateWithoutRutaInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   excesosAuditoria?: Prisma.ExcesoJornadaAuditoriaUncheckedUpdateManyWithoutTurnoNestedInput
+  aptitudes?: Prisma.AptitudPresalidaUncheckedUpdateManyWithoutTurnoNestedInput
 }
 
 export type TurnoLaboralUncheckedUpdateManyWithoutRutaInput = {
@@ -841,10 +955,12 @@ export type TurnoLaboralUncheckedUpdateManyWithoutRutaInput = {
 
 export type TurnoLaboralCountOutputType = {
   excesosAuditoria: number
+  aptitudes: number
 }
 
 export type TurnoLaboralCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   excesosAuditoria?: boolean | TurnoLaboralCountOutputTypeCountExcesosAuditoriaArgs
+  aptitudes?: boolean | TurnoLaboralCountOutputTypeCountAptitudesArgs
 }
 
 /**
@@ -864,6 +980,13 @@ export type TurnoLaboralCountOutputTypeCountExcesosAuditoriaArgs<ExtArgs extends
   where?: Prisma.ExcesoJornadaAuditoriaWhereInput
 }
 
+/**
+ * TurnoLaboralCountOutputType without action
+ */
+export type TurnoLaboralCountOutputTypeCountAptitudesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AptitudPresalidaWhereInput
+}
+
 
 export type TurnoLaboralSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -881,6 +1004,7 @@ export type TurnoLaboralSelect<ExtArgs extends runtime.Types.Extensions.Internal
   actualizadoEn?: boolean
   ruta?: boolean | Prisma.RutaDefaultArgs<ExtArgs>
   excesosAuditoria?: boolean | Prisma.TurnoLaboral$excesosAuditoriaArgs<ExtArgs>
+  aptitudes?: boolean | Prisma.TurnoLaboral$aptitudesArgs<ExtArgs>
   _count?: boolean | Prisma.TurnoLaboralCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["turnoLaboral"]>
 
@@ -938,6 +1062,7 @@ export type TurnoLaboralOmit<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type TurnoLaboralInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   ruta?: boolean | Prisma.RutaDefaultArgs<ExtArgs>
   excesosAuditoria?: boolean | Prisma.TurnoLaboral$excesosAuditoriaArgs<ExtArgs>
+  aptitudes?: boolean | Prisma.TurnoLaboral$aptitudesArgs<ExtArgs>
   _count?: boolean | Prisma.TurnoLaboralCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type TurnoLaboralIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -952,6 +1077,10 @@ export type $TurnoLaboralPayload<ExtArgs extends runtime.Types.Extensions.Intern
   objects: {
     ruta: Prisma.$RutaPayload<ExtArgs>
     excesosAuditoria: Prisma.$ExcesoJornadaAuditoriaPayload<ExtArgs>[]
+    /**
+     * Inversa de la FK de I5 (RF12).
+     */
+    aptitudes: Prisma.$AptitudPresalidaPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1363,6 +1492,7 @@ export interface Prisma__TurnoLaboralClient<T, Null = never, ExtArgs extends run
   readonly [Symbol.toStringTag]: "PrismaPromise"
   ruta<T extends Prisma.RutaDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RutaDefaultArgs<ExtArgs>>): Prisma.Prisma__RutaClient<runtime.Types.Result.GetResult<Prisma.$RutaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   excesosAuditoria<T extends Prisma.TurnoLaboral$excesosAuditoriaArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TurnoLaboral$excesosAuditoriaArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ExcesoJornadaAuditoriaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  aptitudes<T extends Prisma.TurnoLaboral$aptitudesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TurnoLaboral$aptitudesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AptitudPresalidaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1827,6 +1957,30 @@ export type TurnoLaboral$excesosAuditoriaArgs<ExtArgs extends runtime.Types.Exte
   take?: number
   skip?: number
   distinct?: Prisma.ExcesoJornadaAuditoriaScalarFieldEnum | Prisma.ExcesoJornadaAuditoriaScalarFieldEnum[]
+}
+
+/**
+ * TurnoLaboral.aptitudes
+ */
+export type TurnoLaboral$aptitudesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AptitudPresalida
+   */
+  select?: Prisma.AptitudPresalidaSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AptitudPresalida
+   */
+  omit?: Prisma.AptitudPresalidaOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AptitudPresalidaInclude<ExtArgs> | null
+  where?: Prisma.AptitudPresalidaWhereInput
+  orderBy?: Prisma.AptitudPresalidaOrderByWithRelationInput | Prisma.AptitudPresalidaOrderByWithRelationInput[]
+  cursor?: Prisma.AptitudPresalidaWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AptitudPresalidaScalarFieldEnum | Prisma.AptitudPresalidaScalarFieldEnum[]
 }
 
 /**

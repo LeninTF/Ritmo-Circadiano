@@ -2,6 +2,9 @@ import type { CategoriaCronotipo } from './cronotipo';
 
 // Todas las horas viajan como ISO 8601 (UTC): es lo que llega por JSON y lo que guarda Dexie.
 
+/** Nombre canónico del evento emitido por I3 al generar o regenerar un plan (RF10). */
+export const EVENTO_PLAN_GENERADO = 'circadiano.plan.generado' as const;
+
 /** Bloque de tiempo con inicio y fin. */
 export interface VentanaTemporalDto {
   inicio: string;
@@ -16,6 +19,17 @@ export type TipoRecordatorioPlan = 'luz' | 'corte_cafeina' | 'relajacion' | 'dor
 export interface RecordatorioDelPlan {
   tipo: TipoRecordatorioPlan;
   programadaPara: string;
+}
+
+/** Payload del evento EVENTO_PLAN_GENERADO emitido por I3 hacia I4 (RF10). */
+export interface PlanGeneradoEvento {
+  id_usuario: string;
+  /** UUID del plan en plan_diario (PlanDiario.id). */
+  id_plan: string;
+  /** Fecha del turno en formato YYYY-MM-DD (zona horaria America/Lima). */
+  fecha: string;
+  /** Recordatorios derivados de derivarRecordatorios(plan) — listos para encolar. */
+  recordatorios: RecordatorioDelPlan[];
 }
 
 /** Plan circadiano diario (RF07, RN04-RN08). Lo consumen I4 (RF09, RF10) e I5 (RF11). */
