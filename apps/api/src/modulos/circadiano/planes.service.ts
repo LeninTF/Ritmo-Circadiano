@@ -77,7 +77,7 @@ export class PlanesService {
       this.leerUmbralCafeina(),
       this.leerIngestas(idUsuario, turno.fecha),
     ]);
-    const siguiente = turnos.find((t) => t.id !== turno.id && t.inicioProgramado.getTime() >= finTurno.getTime());
+    const siguiente = turnos.find((t: TurnoParaPlan) => t.id !== turno.id && t.inicioProgramado.getTime() >= finTurno.getTime());
 
     const resultado = generarPlan(
       { inicioTurno, finTurno, esNocturno: turno.esNocturno, inicioSiguienteTurno: siguiente?.inicioProgramado ?? null },
