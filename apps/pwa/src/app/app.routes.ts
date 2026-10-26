@@ -104,6 +104,11 @@ export const appRoutes: Route[] = [
       ),
   },
   {
+    path: 'historial',
+    canActivate: [rolGuard('trabajador')],
+    loadComponent: () => import('./paginas/historial/historial.component').then(m => m.HistorialComponent),
+  },
+  {
     path: 'diario',
     canActivate: [autenticadoGuard],
     loadComponent: () =>

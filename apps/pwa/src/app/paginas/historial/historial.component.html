@@ -1,0 +1,38 @@
+<section aria-labelledby="titulo-historial" [attr.aria-busy]="cargando()">
+  <h1 id="titulo-historial">Mi historial</h1>
+  <p>Fechas de America/Lima. Las mediciones no disponibles se muestran como «Sin medición».</p>
+  <div role="group" aria-label="Período del historial">
+    @for (opcion of periodos; track opcion) {
+      <button type="button" [attr.aria-pressed]="periodo() === opcion" (click)="seleccionar(opcion)">{{ opcion }} días</button>
+    }
+  </div>
+  @if (cargando()) {
+    <p role="status">Cargando historial…</p>
+  } @else if (error()) {
+    <p role="alert">No se pudo cargar el historial. Comprueba tu conexión.</p>
+    <button type="button" (click)="seleccionar(periodo())">Reintentar</button>
+  } @else if (dias().length === 0) {
+    <p role="status">No hay registros en este período.</p>
+  } @else {
+    <p id="ayuda-graficos">Tendencias en orden cronológico. Los puntos sin medición se omiten. Consulta los valores y fechas exactos en la tabla.</p>
+    @for (grafico of graficos; track grafico.campo) {
+      <figure>
+        <figcaption>{{ grafico.titulo }} ({{ grafico.unidad }})</figcaption>
+        <app-historial-grafico [dias]="dias()" [campo]="grafico.campo" [titulo]="grafico.titulo" [unidad]="grafico.unidad" />
+        <p>{{ fechaCivil(dias()[0].fecha) }} — {{ fechaCivil(dias()[dias().length - 1].fecha) }}</p>
+      </figure>
+    }
+    <p id="nota-notificaciones">Notificaciones marcadas como abiertas asociadas a cada fecha; no representa necesariamente aperturas realizadas ese día.</p>
+    <div class="tabla" role="region" aria-label="Datos del historial" tabindex="0">
+      <table aria-describedby="nota-notificaciones">
+        <caption>Historial personal de los últimos {{ periodo() }} días</caption>
+        <thead><tr><th scope="col">Fecha (Lima)</th><th scope="col">Sueño (h)</th><th scope="col">Cafeína residual (mg)</th><th scope="col">Diario registrado</th><th scope="col">Notificaciones abiertas</th></tr></thead>
+        <tbody>
+          @for (dia of dias(); track dia.fecha) {
+            <tr><th scope="row">{{ fechaCivil(dia.fecha) }}</th><td>{{ dia.horasSueno === null ? 'Sin medición' : dia.horasSueno }}</td><td>{{ dia.cafeinaResidual === null ? 'Sin medición' : dia.cafeinaResidual }}</td><td>{{ dia.diarioRegistrado ? 'Sí' : 'No' }}</td><td>{{ dia.notificacionesAbiertas }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

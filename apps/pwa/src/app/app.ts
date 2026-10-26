@@ -40,6 +40,7 @@ export class App implements OnInit, OnDestroy {
     { ruta: '/cafeina', texto: 'Cafeína', icono: 'cafeina' },
     { ruta: '/aptitud', texto: 'Pre-salida', icono: 'presalida' },
     { ruta: '/diario', texto: 'Diario', icono: 'diario' },
+    { ruta: '/historial', texto: 'Historial', icono: 'diario' },
   ];
 
   ngOnInit(): void {
