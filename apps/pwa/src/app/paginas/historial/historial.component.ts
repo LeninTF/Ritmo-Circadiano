@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { HistorialDiaDto } from '@circadiano/contracts';
 import { BehaviorSubject, catchError, map, of, switchMap, tap } from 'rxjs';
@@ -10,7 +11,7 @@ export { fechaCivil } from './historial-fecha';
 
 @Component({
   selector: 'app-historial',
-  imports: [HistorialGraficoComponent],
+  imports: [CommonModule, HistorialGraficoComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './historial.component.html',
   styleUrl: './historial.component.scss',
@@ -28,6 +29,23 @@ export class HistorialComponent {
     { campo: 'horasSueno', titulo: 'Horas de sueño', unidad: 'h' },
     { campo: 'cafeinaResidual', titulo: 'Cafeína residual', unidad: 'mg' },
   ] as const;
+
+  readonly progresoSueno = computed(() => {
+    const lista = this.dias();
+    const conSueno = lista.filter(d => d.horasSueno !== null);
+    const denom = conSueno.length;
+    if (denom === 0) return 'No hay registros de sueño en este período.';
+    const num = conSueno.filter(d => (d.horasSueno as number) >= 7).length;
+    return `Dormiste 7 h o más en ${num} de ${denom} ${denom === 1 ? 'noche registrada' : 'noches registradas'}.`;
+  });
+
+  readonly progresoDiario = computed(() => {
+    const lista = this.dias();
+    const denom = lista.length;
+    if (denom === 0) return 'No hay días en este período.';
+    const num = lista.filter(d => d.diarioRegistrado).length;
+    return `Registraste tu diario ${num} de ${denom} ${denom === 1 ? 'día' : 'días'}.`;
+  });
 
 
   constructor() {

@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { DiarioComponent } from './diario.component';
 import { DiarioService } from './diario.service';
 
@@ -14,7 +15,10 @@ describe('DiarioComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [DiarioComponent],
-      providers: [{ provide: DiarioService, useValue: diarioServiceSpy }],
+      providers: [
+        { provide: DiarioService, useValue: diarioServiceSpy },
+        provideRouter([]),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(DiarioComponent);

@@ -14,6 +14,10 @@
   } @else if (dias().length === 0) {
     <p role="status">No hay registros en este período.</p>
   } @else {
+    <div class="progreso-resumen" aria-label="Resumen de progreso">
+      <p><strong>Progreso de sueño:</strong> {{ progresoSueno() }}</p>
+      <p><strong>Registro del diario:</strong> {{ progresoDiario() }}</p>
+    </div>
     <p id="ayuda-graficos">Tendencias en orden cronológico. Los puntos sin medición se omiten. Consulta los valores y fechas exactos en la tabla.</p>
     @for (grafico of graficos; track grafico.campo) {
       <figure>
@@ -29,7 +33,7 @@
         <thead><tr><th scope="col">Fecha (Lima)</th><th scope="col">Sueño (h)</th><th scope="col">Cafeína residual (mg)</th><th scope="col">Diario registrado</th><th scope="col">Notificaciones abiertas</th></tr></thead>
         <tbody>
           @for (dia of dias(); track dia.fecha) {
-            <tr><th scope="row">{{ fechaCivil(dia.fecha) }}</th><td>{{ dia.horasSueno === null ? 'Sin medición' : dia.horasSueno }}</td><td>{{ dia.cafeinaResidual === null ? 'Sin medición' : dia.cafeinaResidual }}</td><td>{{ dia.diarioRegistrado ? 'Sí' : 'No' }}</td><td>{{ dia.notificacionesAbiertas }}</td></tr>
+            <tr><th scope="row">{{ fechaCivil(dia.fecha) }}</th><td style="font-variant-numeric: tabular-nums;">{{ dia.horasSueno === null ? 'Sin medición' : (dia.horasSueno | number: '1.0-1') }}</td><td style="font-variant-numeric: tabular-nums;">{{ dia.cafeinaResidual === null ? 'Sin medición' : dia.cafeinaResidual }}</td><td>{{ dia.diarioRegistrado ? 'Sí' : 'No' }}</td><td style="font-variant-numeric: tabular-nums;">{{ dia.notificacionesAbiertas }}</td></tr>
           }
         </tbody>
       </table>

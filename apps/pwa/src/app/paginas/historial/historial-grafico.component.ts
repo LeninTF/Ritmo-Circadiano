@@ -18,10 +18,11 @@ export class HistorialGraficoComponent implements AfterViewInit, OnChanges, OnDe
   @Input({ required: true }) unidad = '';
   @ViewChild('canvas', { static: true }) private canvas!: ElementRef<HTMLCanvasElement>;
   private grafico?: Chart<'line', (number | null)[], string>;
+  private mutationObserver?: MutationObserver;
 
   ngAfterViewInit(): void {
     const estilo = getComputedStyle(this.canvas.nativeElement);
-    const color = estilo.getPropertyValue('--color-primario').trim() || '#3538cd';
+    const color = estilo.getPropertyValue('--color-primario').trim();
     const texto = estilo.color;
     this.grafico = new Chart(this.canvas.nativeElement, {
       type: 'line',
@@ -37,13 +38,45 @@ export class HistorialGraficoComponent implements AfterViewInit, OnChanges, OnDe
       },
     });
     this.actualizar();
+    if (typeof MutationObserver !== 'undefined') {
+      this.mutationObserver = new MutationObserver(() => {
+        this.actualizarColores();
+      });
+      this.mutationObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-tema'],
+      });
+    }
   }
 
   ngOnChanges(): void { this.actualizar(); }
 
   ngOnDestroy(): void {
+    this.mutationObserver?.disconnect();
     this.grafico?.destroy();
     this.grafico = undefined;
+  }
+
+  private actualizarColores(): void {
+    if (!this.grafico) return;
+    const estilo = getComputedStyle(this.canvas.nativeElement);
+    const color = estilo.getPropertyValue('--color-primario').trim();
+    const texto = estilo.color;
+    if (this.grafico.data.datasets?.[0]) {
+      this.grafico.data.datasets[0].borderColor = color;
+      this.grafico.data.datasets[0].backgroundColor = color;
+    }
+    if (this.grafico.options?.scales) {
+      if (this.grafico.options.scales['x']) {
+        if (this.grafico.options.scales['x'].title) this.grafico.options.scales['x'].title.color = texto;
+        if (this.grafico.options.scales['x'].ticks) this.grafico.options.scales['x'].ticks.color = texto;
+      }
+      if (this.grafico.options.scales['y']) {
+        if (this.grafico.options.scales['y'].title) this.grafico.options.scales['y'].title.color = texto;
+        if (this.grafico.options.scales['y'].ticks) this.grafico.options.scales['y'].ticks.color = texto;
+      }
+    }
+    this.grafico.update();
   }
 
   private actualizar(): void {

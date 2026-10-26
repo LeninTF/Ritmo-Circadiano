@@ -17,10 +17,10 @@ describe('App', () => {
     await fixture.whenStable();
     const navegacion = fixture.nativeElement.querySelector('nav');
     const enlaces = navegacion.querySelectorAll('a');
-    expect(enlaces.length).toBe(5);
+    expect(enlaces.length).toBe(4);
     expect(navegacion.getAttribute('aria-label')).toBe('Navegación principal');
     expect(Array.from(enlaces, (enlace: Element) => enlace.getAttribute('href'))).toEqual([
-      '/plan', '/cafeina', '/aptitud', '/diario', '/historial',
+      '/plan', '/cafeina', '/aptitud', '/diario',
     ]);
   });
 
@@ -31,7 +31,7 @@ describe('App', () => {
     const textos = Array.from<HTMLElement>(
       fixture.nativeElement.querySelectorAll('nav a'),
     ).map((a) => a.textContent?.trim());
-    expect(textos).toEqual(['Hoy', 'Cafeína', 'Pre-salida', 'Diario', 'Historial']);
+    expect(textos).toEqual(['Hoy', 'Cafeína', 'Pre-salida', 'Diario']);
   });
 
   it('mantiene accesibles por URL turnos e indicadores', () => {
@@ -76,7 +76,7 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const raiz = fixture.nativeElement as HTMLElement;
-    expect(raiz.querySelectorAll('nav a svg[aria-hidden="true"]')).toHaveLength(5);
+    expect(raiz.querySelectorAll('nav a svg[aria-hidden="true"]')).toHaveLength(4);
     expect(raiz.querySelector('.boton-tema svg[aria-hidden="true"]')).not.toBeNull();
     expect(raiz.textContent).not.toMatch(/[☀☾◒]/);
   });
