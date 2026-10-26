@@ -169,6 +169,32 @@ describe('Turnos e2e (Transporte Cueva S.A.C.)', () => {
     });
   });
 
+  it('/operaciones/turnos?forzar=true (POST) - 201, exceso_jornada_auditoria y audit_log (RN01)', async () => {
+    await request(app.getHttpServer())
+      .post('/operaciones/turnos?forzar=true')
+      .set('Authorization', await token('jefe_operaciones'))
+      .send({ ...dtoExceso, motivoExceso: 'Relevo ausente' })
+      .expect(201);
+
+    expect(excesoJornadaAuditoria.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ idTurno: 'turno-e2e-1', motivoExceso: 'Relevo ausente' }),
+    });
+    expect(auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ accion: 'turno_forzado', recurso: 'POST /operaciones/turnos' }),
+    });
+  });
+
+  it('/operaciones/turnos?forzar=true (POST) - sin motivoExceso → 400 y sin auditoría (RF14)', async () => {
+    await request(app.getHttpServer())
+      .post('/operaciones/turnos?forzar=true')
+      .set('Authorization', await token('jefe_operaciones'))
+      .send(dtoExceso)
+      .expect(400);
+
+    expect(excesoJornadaAuditoria.create).not.toHaveBeenCalled();
+    expect(auditLog.create).not.toHaveBeenCalled();
+  });
+
   it('/indicadores/panel (GET) - rol trabajador → 403', async () => {
     await request(app.getHttpServer())
       .get('/indicadores/panel')

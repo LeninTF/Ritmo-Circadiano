@@ -108,11 +108,8 @@ describe('Roles en operaciones e indicadores (RNF04)', () => {
       .set('Authorization', await token('jefe_operaciones'))
       .send(dto);
     expect(res.status).toBe(201);
-    expect(operaciones.crearTurno).toHaveBeenCalledWith(
-      expect.objectContaining({
-        confirmarExceso: true,
-        motivoExceso: 'Forzado por query param forzar=true',
-      }),
-    );
+    expect(operaciones.crearTurno).toHaveBeenCalledWith(expect.objectContaining({ confirmarExceso: true }));
+    // El motivo lo exige el servicio (RF14): el controller no lo inventa.
+    expect(operaciones.crearTurno.mock.calls[0][0]).not.toHaveProperty('motivoExceso');
   });
 });

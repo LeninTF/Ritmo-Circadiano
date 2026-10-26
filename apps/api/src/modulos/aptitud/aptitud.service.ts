@@ -37,7 +37,7 @@ export class AptitudService {
       select: { horaAcostarse: true, horaDespertar: true },
     });
     const horasSueno24h = calcularHorasSuenoEnVentana(
-      registros.map((r: { horaAcostarse: Date; horaDespertar: Date }) => ({ inicio: r.horaAcostarse.toISOString(), fin: r.horaDespertar.toISOString() })),
+      registros.map((r) => ({ inicio: r.horaAcostarse.toISOString(), fin: r.horaDespertar.toISOString() })),
       inicio24h,
       ahora,
     );
@@ -86,12 +86,11 @@ export class AptitudService {
     });
     return {
       evaluaciones: ultimas
-        .flatMap(({ color, compartido, usuario }: { color: any; compartido: boolean; usuario: { codigoParticipante: string } }) => {
+        .flatMap(({ color, compartido, usuario }) => {
           const visible = colorDivulgableAlDespachador(color, compartido);
           return visible ? [{ codigo: usuario.codigoParticipante, color: visible }] : [];
         })
-        .sort((a: { codigo: string; color: string }, b: { codigo: string; color: string }) => a.codigo.localeCompare(b.codigo)),
+        .sort((a, b) => a.codigo.localeCompare(b.codigo)),
     };
   }
 }
-
