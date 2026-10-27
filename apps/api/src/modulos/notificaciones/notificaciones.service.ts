@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { OnEvent } from '@nestjs/event-emitter';
 import * as webPush from 'web-push';
@@ -10,24 +10,6 @@ import {
   NotificacionRespuestaDto,
   type PlanGeneradoEvento,
 } from '@circadiano/contracts';
-
-/** Al cambiar la lógica para cancelar notificaciones utilizando el id_plan en lugar de calcular fechas, 
- *  la función limitesDelDiaLima quedó obsoleta
- * 
- *  Calcula [inicio, fin) del día en America/Lima para la fecha YYYY-MM-DD dada.
- *  UTC-5 fijo (sin horario de verano), lo que permite manejar turnos nocturnos
- *  que cruzan la medianoche UTC sin asumir T00:00:00.000Z plano.
- 
-function limitesDelDiaLima(fechaYYYYMMDD: string): { inicioDia: Date; finDia: Date } {
-  // America/Lima = UTC-5 todo el año (sin DST).
-  const OFFSET_LIMA_MS = 5 * 3_600_000;
-  // Medianoche Lima = medianoche local = UTC + 5 h
-  const inicioDia = new Date(`${fechaYYYYMMDD}T00:00:00.000Z`);
-  inicioDia.setTime(inicioDia.getTime() + OFFSET_LIMA_MS);
-  const finDia = new Date(inicioDia.getTime() + 24 * 3_600_000 - 1);
-  return { inicioDia, finDia };
-}
-*/
 
 @Injectable()
 export class NotificacionesService {
@@ -71,9 +53,12 @@ export class NotificacionesService {
   }
 
   async obtenerClavePublica(): Promise<{ clavePublica: string }> {
-    const clavePublica = this.configService.get<string>('VAPID_PUBLIC_KEY') ?? '';
+    const clavePublica = this.configService.get<string>('VAPID_PUBLIC_KEY');
+    // Sin clave no hay push: mejor 503 que suscribir con una clave que el servidor no firma.
+    if (!clavePublica) throw new ServiceUnavailableException('Push no configurado');
     return { clavePublica };
   }
+
   async marcarAbierta(idNotificacion: number, idUsuario: string): Promise<NotificacionRespuestaDto> {
     // Una notificacion ajena o inexistente responde igual: 404.
     const actualizada = await this.prisma.notificacion
@@ -121,24 +106,27 @@ export class NotificacionesService {
 
   @OnEvent(EVENTO_PLAN_GENERADO)
   async handlePlanGenerado(payload: PlanGeneradoEvento): Promise<void> {
-    // Cancela notificaciones pendientes previas del mismo plan (evita duplicados al regenerar el plan).
-    await this.prisma.notificacion.updateMany({
-      where: {
-        id_plan: payload.id_plan,
-        estado: 'pendiente',
-      },
-      data: { estado: 'cancelada' },
-    });
+    const ahora = new Date();
+    // Al regenerar a mitad del día, los recordatorios ya vencidos no se envían de golpe.
+    const futuros = payload.recordatorios.filter((r) => new Date(r.programadaPara) > ahora);
 
-    // Encola cada recordatorio derivado por derivarRecordatorios(plan) en I3.
-    for (const recordatorio of payload.recordatorios) {
-      await this.encolar({
-        id_usuario: payload.id_usuario,
-        id_plan: payload.id_plan,
-        tipo: recordatorio.tipo,
-        programada_para: recordatorio.programadaPara,
-      });
-    }
+    // Todo o nada: si falla la creación, los pendientes previos del plan siguen vigentes.
+    await this.prisma.$transaction([
+      this.prisma.notificacion.updateMany({
+        where: { id_plan: payload.id_plan, estado: 'pendiente' },
+        data: { estado: 'cancelada' },
+      }),
+      this.prisma.notificacion.createMany({
+        data: futuros.map((r) => ({
+          id_usuario: payload.id_usuario,
+          id_plan: payload.id_plan,
+          tipo: r.tipo,
+          programada_para: new Date(r.programadaPara),
+          estado: 'pendiente',
+          abierta: false,
+        })),
+      }),
+    ]);
   }
 
   @Cron(CronExpression.EVERY_MINUTE)
@@ -161,7 +149,7 @@ export class NotificacionesService {
         const payloadPush = JSON.stringify({
           title: `Aviso Circadiano (${notif.tipo})`,
           body: `Es hora de tu recordatorio preventivo: ${notif.tipo}`,
-          data: { id_notificacion: notif.id_notificacion },
+          data: { id_notificacion: notif.id_notificacion, tipo: notif.tipo },
         });
 
         let enviado = false;

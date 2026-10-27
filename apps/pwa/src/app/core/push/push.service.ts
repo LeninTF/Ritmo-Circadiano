@@ -6,6 +6,12 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+/** Resultado de pedir push: la pantalla decide qué mostrar (p. ej. la guía de iOS). */
+export type ResultadoSuscripcion = 'suscrito' | 'ios-sin-instalar' | 'no-disponible' | 'error';
+
+/** Pantalla que abre cada tipo de recordatorio; el resto va al plan. */
+const RUTA_POR_TIPO: Record<string, string> = { corte_cafeina: '/cafeina' };
+
 @Injectable({ providedIn: 'root' })
 export class PushService {
   private readonly swPush = inject(SwPush);
@@ -23,56 +29,43 @@ export class PushService {
   private initNotificationClicks(): void {
     if (!this.swPush.isEnabled) return;
     this.swPush.notificationClicks.subscribe(async (event) => {
-      const notifId = event.notification?.data?.id_notificacion;
-      if (notifId) {
+      const datos = event.notification?.data as { id_notificacion?: number; tipo?: string } | undefined;
+      if (datos?.id_notificacion) {
         try {
           await firstValueFrom(
-            this.http.patch(`${environment.apiUrl}/notificaciones/${notifId}/abierta`, {})
+            this.http.patch(`${environment.apiUrl}/notificaciones/${datos.id_notificacion}/abierta`, {})
           );
         } catch {
-          // Ignore network errors when marking open offline/retry
+          // Marcar como abierta es solo para el indicador: sin red no se bloquea la navegación.
         }
       }
-      void this.router.navigate(['/plan']);
+      void this.router.navigate([RUTA_POR_TIPO[datos?.tipo ?? ''] ?? '/plan']);
     });
   }
 
   /**
-   * Solicita suscripción Web Push respetando la guía de iOS (RNF06).
-   * En iOS (Safari), si la PWA no está en modo standalone, muestra guía en lugar de pedir permiso directamente.
+   * Solicita suscripción Web Push (RNF06). En iOS sin instalar no pide permiso:
+   * devuelve 'ios-sin-instalar' para que la pantalla muestre la guía de instalación.
    */
-  async solicitarSuscripcion(): Promise<boolean> {
-    if (!this.esNavegador || !this.swPush.isEnabled) return false;
+  async solicitarSuscripcion(): Promise<ResultadoSuscripcion> {
+    if (!this.esNavegador || !this.swPush.isEnabled) return 'no-disponible';
 
     const nav = navigator as Navigator & { standalone?: boolean };
     const isIOS = /iPad|iPhone|iPod/.test(nav.userAgent) || (nav.platform === 'MacIntel' && nav.maxTouchPoints > 1);
     const matchMedia = typeof window.matchMedia === 'function' ? window.matchMedia('(display-mode: standalone)') : { matches: false };
     const isStandalone = matchMedia.matches || nav.standalone === true;
 
-    if (isIOS && !isStandalone) {
-      window.alert('Para recibir recordatorios circadianos en iOS: toca "Compartir" y selecciona "Agregar a pantalla de inicio".');
-      return false;
-    }
+    if (isIOS && !isStandalone) return 'ios-sin-instalar';
 
     try {
-      let publicKey = environment.vapidPublicKey;
-      try {
-        const res = await firstValueFrom(
-          this.http.get<{ clavePublica: string }>(`${environment.apiUrl}/push/clave-publica`)
-        );
-        if (res?.clavePublica) {
-          publicKey = res.clavePublica;
-        }
-      } catch {
-        // Fallback to environment vapidPublicKey if backend request fails
-      }
-
-      const sub = await this.swPush.requestSubscription({
-        serverPublicKey: publicKey,
-      });
+      // La clave sale siempre del servidor: una clave distinta a la que firma el API nunca entrega push.
+      const { clavePublica } = await firstValueFrom(
+        this.http.get<{ clavePublica: string }>(`${environment.apiUrl}/push/clave-publica`)
+      );
+      const sub = await this.swPush.requestSubscription({ serverPublicKey: clavePublica });
       const json = sub.toJSON();
       if (!json.endpoint || !json.keys?.['p256dh'] || !json.keys?.['auth']) {
-        return false;
+        return 'error';
       }
       await firstValueFrom(
         this.http.post(`${environment.apiUrl}/push/suscripciones`, {
@@ -82,9 +75,9 @@ export class PushService {
         })
       );
       this.suscrito.set(true);
-      return true;
+      return 'suscrito';
     } catch {
-      return false;
+      return 'error';
     }
   }
 }

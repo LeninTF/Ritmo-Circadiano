@@ -1,12 +1,8 @@
 import { IsNotEmpty, IsOptional, IsString} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+/** Cuerpo de POST /push/suscripciones. El dueño sale del token (RNF04). */
 export class CrearSuscripcionPushDto {
-  @ApiProperty({ description: 'ID del usuario propietario de la suscripción' })
-  @IsString()
-  @IsNotEmpty()
-  id_usuario!: string;
-
   @ApiProperty({ description: 'Endpoint único de Web Push' })
   @IsString()
   @IsNotEmpty()

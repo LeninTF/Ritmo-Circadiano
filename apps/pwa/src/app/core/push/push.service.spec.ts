@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { SwPush } from '@angular/service-worker';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { PushService } from './push.service';
 import { Subject } from 'rxjs';
 
@@ -68,9 +68,45 @@ describe('PushService', () => {
     req.flush(null);
 
     const resultado = await promesa;
-    expect(resultado).toBe(true);
+    expect(resultado).toBe('suscrito');
     expect(mockSwPush.requestSubscription).toHaveBeenCalledWith({
-      serverPublicKey: expect.any(String),
+      serverPublicKey: 'clave-falsa-servidor',
     });
+  });
+
+  it('si el servidor no entrega la clave VAPID no pide permiso ni suscribe', async () => {
+    const promesa = service.solicitarSuscripcion();
+    httpMock
+      .expectOne('http://localhost:3000/push/clave-publica')
+      .flush(null, { status: 503, statusText: 'Service Unavailable' });
+
+    await expect(promesa).resolves.toBe('error');
+    expect(mockSwPush.requestSubscription).not.toHaveBeenCalled();
+    httpMock.expectNone('http://localhost:3000/push/suscripciones');
+  });
+
+  it('en iOS sin instalar devuelve la guía en vez de pedir permiso', async () => {
+    const userAgent = jest.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0)');
+    try {
+      await expect(service.solicitarSuscripcion()).resolves.toBe('ios-sin-instalar');
+      expect(mockSwPush.requestSubscription).not.toHaveBeenCalled();
+      httpMock.expectNone('http://localhost:3000/push/clave-publica');
+    } finally {
+      userAgent.mockRestore();
+    }
+  });
+
+  it.each([
+    ['corte_cafeina', '/cafeina'],
+    ['dormir', '/plan'],
+    [undefined, '/plan'],
+  ])('al tocar un recordatorio %s marca abierta y abre %s', async (tipo, ruta) => {
+    const navegar = jest.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    clickSubject.next({ action: '', notification: { data: { id_notificacion: 7, tipo } } });
+
+    httpMock.expectOne('http://localhost:3000/notificaciones/7/abierta').flush({});
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(navegar).toHaveBeenCalledWith([ruta]);
   });
 });

@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotificacionesService } from './notificaciones.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
+import { ServiceUnavailableException } from '@nestjs/common';
 import * as webPush from 'web-push';
 
 jest.mock('web-push', () => ({
@@ -22,8 +23,11 @@ describe('NotificacionesService', () => {
       update: jest.fn(),
       create: jest.fn(),
       updateMany: jest.fn(),
+      createMany: jest.fn(),
       findMany: jest.fn(),
     },
+    // Ejecuta las operaciones como lo haría Prisma con un arreglo.
+    $transaction: jest.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
   };
 
   const mockConfigService = {
@@ -139,21 +143,14 @@ describe('NotificacionesService', () => {
     );
   });
 
-  // ─── Pruebas de auditoría RF10 ────────────────────────────────────────────────
+  // ─── RF10: recordatorios desde el plan ────────────────────────────────────────
 
-  it('[RF10] un plan con hora de corte 14:30 genera la notificación corte_cafeina a las 14:30', async () => {
-    const horaCorte = '2026-10-25T14:30:00.000Z';
-    mockPrismaService.notificacion.updateMany.mockResolvedValue({ count: 0 });
-    mockPrismaService.notificacion.create.mockResolvedValue({
-      id_notificacion: 10,
-      id_usuario: 'usr-rf10',
-      id_plan: null,
-      tipo: 'corte_cafeina',
-      programada_para: new Date(horaCorte),
-      estado: 'pendiente',
-      abierta: false,
-    });
+  const enHoras = (h: number) => new Date(Date.now() + h * 3_600_000).toISOString();
+  const creadas = () =>
+    (mockPrismaService.notificacion.createMany.mock.calls[0][0] as { data: Array<{ tipo: string; programada_para: Date; id_plan: string }> }).data;
 
+  it('[RF10] encola cada recordatorio del plan a su hora exacta y con su id_plan', async () => {
+    const horaCorte = enHoras(5);
     await service.handlePlanGenerado({
       id_usuario: 'usr-rf10',
       id_plan: 'plan-uuid-001',
@@ -161,83 +158,76 @@ describe('NotificacionesService', () => {
       recordatorios: [{ tipo: 'corte_cafeina', programadaPara: horaCorte }],
     });
 
-    expect(mockPrismaService.notificacion.create).toHaveBeenCalledTimes(1);
-    expect(mockPrismaService.notificacion.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          tipo: 'corte_cafeina',
-          programada_para: new Date(horaCorte),
-        }),
-      }),
-    );
+    expect(creadas()).toEqual([
+      expect.objectContaining({ tipo: 'corte_cafeina', programada_para: new Date(horaCorte), id_plan: 'plan-uuid-001', estado: 'pendiente' }),
+    ]);
   });
 
-  it('[RF10] al regenerar el plan, cancela notificaciones pendientes previas sin duplicar registros', async () => {
-    mockPrismaService.notificacion.updateMany.mockResolvedValue({ count: 2 });
-    const fechaRelajacion = '2026-10-25T21:30:00.000Z';
-    const fechaDormir = '2026-10-25T22:00:00.000Z';
-    let createCall = 0;
-    mockPrismaService.notificacion.create.mockImplementation(() => {
-      createCall++;
-      return Promise.resolve({
-        id_notificacion: createCall,
-        id_usuario: 'usr-rf10b',
-        id_plan: null,
-        tipo: createCall === 1 ? 'relajacion' : 'dormir',
-        programada_para: createCall === 1 ? new Date(fechaRelajacion) : new Date(fechaDormir),
-        estado: 'pendiente',
-        abierta: false,
-      });
-    });
-
+  it('[RF10] al regenerar cancela los pendientes del mismo plan y recrea en una sola transacción', async () => {
     await service.handlePlanGenerado({
       id_usuario: 'usr-rf10b',
       id_plan: 'plan-uuid-002',
       fecha: '2026-10-25',
       recordatorios: [
-        { tipo: 'relajacion', programadaPara: fechaRelajacion },
-        { tipo: 'dormir', programadaPara: fechaDormir },
+        { tipo: 'relajacion', programadaPara: enHoras(10) },
+        { tipo: 'dormir', programadaPara: enHoras(10.5) },
       ],
     });
 
-    expect(mockPrismaService.notificacion.updateMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: { estado: 'cancelada' },
-        where: expect.objectContaining({ id_plan: 'plan-uuid-002', estado: 'pendiente' }),
+    expect(mockPrismaService.$transaction).toHaveBeenCalledTimes(1);
+    expect(mockPrismaService.notificacion.updateMany).toHaveBeenCalledWith({
+      where: { id_plan: 'plan-uuid-002', estado: 'pendiente' },
+      data: { estado: 'cancelada' },
+    });
+    expect(creadas()).toHaveLength(2);
+  });
+
+  it('[RF10] si falla la creación, la transacción no deja el plan sin recordatorios', async () => {
+    mockPrismaService.$transaction.mockRejectedValueOnce(new Error('bd caída'));
+    await expect(
+      service.handlePlanGenerado({
+        id_usuario: 'usr-rf10c',
+        id_plan: 'plan-uuid-004',
+        fecha: '2026-10-25',
+        recordatorios: [{ tipo: 'dormir', programadaPara: enHoras(3) }],
       }),
-    );
-    // Exactamente 2 nuevas notificaciones — sin duplicados
-    expect(mockPrismaService.notificacion.create).toHaveBeenCalledTimes(2);
+    ).rejects.toThrow('bd caída');
+    // Cancelar y crear viajan juntos en la misma transacción, nunca por separado.
+    expect(mockPrismaService.$transaction.mock.calls[0][0]).toHaveLength(2);
+  });
+
+  it('[RF10] no encola recordatorios cuya hora ya pasó', async () => {
+    await service.handlePlanGenerado({
+      id_usuario: 'usr-rf10d',
+      id_plan: 'plan-uuid-005',
+      fecha: '2026-10-25',
+      recordatorios: [
+        { tipo: 'luz', programadaPara: enHoras(-2) },
+        { tipo: 'dormir', programadaPara: enHoras(4) },
+      ],
+    });
+
+    expect(creadas().map((n) => n.tipo)).toEqual(['dormir']);
   });
 
   it('[RF10] un plan nocturno con protección de luz no genera notificación de tipo "luz"', async () => {
-    mockPrismaService.notificacion.updateMany.mockResolvedValue({ count: 0 });
-    mockPrismaService.notificacion.create.mockResolvedValue({
-      id_notificacion: 20,
-      id_usuario: 'usr-nocturno',
-      id_plan: null,
-      tipo: 'relajacion',
-      programada_para: new Date('2026-10-26T06:30:00.000Z'),
-      estado: 'pendiente',
-      abierta: false,
-    });
-
     // protegerLuz=true → derivarRecordatorios no incluye 'luz'
     await service.handlePlanGenerado({
       id_usuario: 'usr-nocturno',
       id_plan: 'plan-uuid-003',
       fecha: '2026-10-26',
       recordatorios: [
-        { tipo: 'relajacion', programadaPara: '2026-10-26T06:30:00.000Z' },
-        { tipo: 'dormir', programadaPara: '2026-10-26T07:00:00.000Z' },
+        { tipo: 'relajacion', programadaPara: enHoras(6) },
+        { tipo: 'dormir', programadaPara: enHoras(6.5) },
       ],
     });
 
-    const tiposGenerados = (mockPrismaService.notificacion.create.mock.calls as Array<[{ data: { tipo: string } }]>)
-      .map(([args]) => args.data.tipo);
-    expect(tiposGenerados).not.toContain('luz');
-    expect(tiposGenerados).toEqual(expect.arrayContaining(['relajacion', 'dormir']));
-    expect(mockPrismaService.notificacion.create).toHaveBeenCalledTimes(2);
+    expect(creadas().map((n) => n.tipo)).toEqual(['relajacion', 'dormir']);
+  });
+
+  it('la clave pública VAPID sale de la configuración y sin ella responde 503', async () => {
+    await expect(service.obtenerClavePublica()).resolves.toEqual({ clavePublica: 'test-pub' });
+    mockConfigService.get.mockReturnValueOnce(null);
+    await expect(service.obtenerClavePublica()).rejects.toThrow(ServiceUnavailableException);
   });
 });
-

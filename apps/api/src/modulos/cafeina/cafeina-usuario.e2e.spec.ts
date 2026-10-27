@@ -65,10 +65,17 @@ describe('Cafeina y push usan el usuario del token (RNF04)', () => {
     await http.post('/cafeina').set('Authorization', autorizacion).send({ ...cuerpo, id_usuario: 'otro' }).expect(400);
     await http.delete('/cafeina/7').set('Authorization', autorizacion);
     await http
-      .post('/notificaciones/push/suscripciones')
+      .post('/push/suscripciones')
       .set('Authorization', autorizacion)
-      .send({ id_usuario: 'usr_default', endpoint: 'https://e', clave_p256dh: 'k', clave_auth: 'a' });
-    await http.patch('/notificaciones/3/abierta').set('Authorization', autorizacion);
+      .send({ endpoint: 'https://e', clave_p256dh: 'k', clave_auth: 'a' })
+      .expect(201);
+    // Igual que en /cafeina: un id_usuario en el cuerpo no se acepta.
+    await http
+      .post('/push/suscripciones')
+      .set('Authorization', autorizacion)
+      .send({ id_usuario: 'otro', endpoint: 'https://e', clave_p256dh: 'k', clave_auth: 'a' })
+      .expect(400);
+    await http.patch('/notificaciones/3/abierta').set('Authorization', autorizacion).expect(200);
 
     expect(cafeina.registrarIngesta.mock.calls[0][0].id_usuario).toBe('yo');
     expect(cafeina.eliminarIngesta).toHaveBeenCalledWith(7, 'yo');
@@ -107,6 +114,21 @@ describe('Cafeina y push usan el usuario del token (RNF04)', () => {
     expect(Object.values(cafeina).every((fn) => fn.mock.calls.length === 0)).toBe(true);
 
     await http.get('/bebidas').set('Authorization', autorizacion).expect(200);
+  });
+
+  it('las rutas de push viven en /push/* y /notificaciones/* y exigen rol trabajador (RF10, §6)', async () => {
+    const http = request(app.getHttpServer());
+    const rutas = [
+      () => http.get('/push/clave-publica'),
+      () => http.post('/push/suscripciones').send({ endpoint: 'https://e', clave_p256dh: 'k', clave_auth: 'a' }),
+      () => http.patch('/notificaciones/3/abierta'),
+    ];
+    for (const ruta of rutas) {
+      await ruta().expect(401);
+      await ruta().set('Authorization', autorizacionDespachador).expect(403);
+    }
+    const res = await http.get('/push/clave-publica').set('Authorization', autorizacion).expect(200);
+    expect(res.body).toEqual({ clavePublica: 'test' });
   });
 
   it('POST /cafeina valida el cuerpo antes de llegar al servicio (HU-03)', async () => {
