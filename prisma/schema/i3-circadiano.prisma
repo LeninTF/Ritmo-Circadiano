@@ -63,26 +63,26 @@ model PerfilCronotipo {
 
 /// Plan circadiano diario (RF07). Se regenera con upsert por usuario y fecha.
 model PlanDiario {
-  id               String    @id @default(uuid()) @db.Uuid
-  idUsuario        String    @map("id_usuario") @db.Uuid
+  id               String             @id @default(uuid()) @db.Uuid
+  idUsuario        String             @map("id_usuario") @db.Uuid
   /// Brecha ERD: turno que origino el plan (TurnoAsignado lo regenera).
-  idTurno          String?   @map("id_turno") @db.Uuid
-  fecha            DateTime  @db.Date
-  inicioSueno      DateTime  @map("inicio_sueno") @db.Timestamptz()
-  finSueno         DateTime  @map("fin_sueno") @db.Timestamptz()
-  inicioSiesta     DateTime? @map("inicio_siesta") @db.Timestamptz()
-  finSiesta        DateTime? @map("fin_siesta") @db.Timestamptz()
+  idTurno          String?            @map("id_turno") @db.Uuid
+  fecha            DateTime           @db.Date
+  inicioSueno      DateTime           @map("inicio_sueno") @db.Timestamptz()
+  finSueno         DateTime           @map("fin_sueno") @db.Timestamptz()
+  inicioSiesta     DateTime?          @map("inicio_siesta") @db.Timestamptz()
+  finSiesta        DateTime?          @map("fin_siesta") @db.Timestamptz()
   /// [{ inicio, fin }] en ISO.
-  picos            Json      @db.JsonB
+  picos            Json               @db.JsonB
   /// Null cuando la cafeina previa ya llena el umbral (RN04).
-  horaCorteCafeina DateTime? @map("hora_corte_cafeina") @db.Timestamptz()
+  horaCorteCafeina DateTime?          @map("hora_corte_cafeina") @db.Timestamptz()
   /// { inicio, fin } en ISO, o null si no hay luz de dia.
-  ventanaLuz       Json?     @map("ventana_luz") @db.JsonB
+  ventanaLuz       Json?              @map("ventana_luz") @db.JsonB
   /// Brecha ERD: true tras turno nocturno, la ventana es para evitar luz (RN08).
-  protegerLuz      Boolean   @default(false) @map("proteger_luz")
+  protegerLuz      Boolean            @default(false) @map("proteger_luz")
   categoria        CategoriaCronotipo
-  versionAlgoritmo String    @map("version_algoritmo") @db.VarChar(20)
-  actualizadoEn    DateTime  @updatedAt @map("actualizado_en") @db.Timestamptz()
+  versionAlgoritmo String             @map("version_algoritmo") @db.VarChar(20)
+  actualizadoEn    DateTime           @updatedAt @map("actualizado_en") @db.Timestamptz()
 
   @@unique([idUsuario, fecha])
   @@map("plan_diario")

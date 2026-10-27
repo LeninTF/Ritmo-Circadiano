@@ -156,7 +156,7 @@ export class OfflineStoreService {
       .toArray();
     this.assertCurrentUser(ownerId);
     return all.filter(
-      (item) =>
+      (item: Outbox) =>
         !item.status ||
         item.status === 'pending' ||
         item.status === 'syncing' ||

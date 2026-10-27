@@ -6,6 +6,7 @@ import type { ParametrosService } from '../../plataforma/parametros/parametros.s
 import type { CronotipoService } from '../cronotipo.service';
 import { PlanesService, type TurnoParaPlan } from '../planes.service';
 import type { UbicacionService } from '../ubicacion.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 describe('PlanesService (RF07)', () => {
   const prisma = { planDiario: { upsert: jest.fn(), findUnique: jest.fn() } };
@@ -14,6 +15,7 @@ describe('PlanesService (RF07)', () => {
   const parametros = { listar: jest.fn() };
   const cronotipos = { obtenerCategoria: jest.fn() };
   const ubicaciones = { obtenerCoordenadas: jest.fn() };
+  const eventEmitter = { emit: jest.fn(), };
   const servicio = new PlanesService(
     prisma as unknown as PrismaService,
     operaciones as unknown as OperacionesService,
@@ -21,6 +23,7 @@ describe('PlanesService (RF07)', () => {
     parametros as unknown as ParametrosService,
     cronotipos as unknown as CronotipoService,
     ubicaciones as unknown as UbicacionService,
+    eventEmitter as unknown as EventEmitter2,
   );
 
   // 22:00-05:00 en Lima del 17-oct-2026.

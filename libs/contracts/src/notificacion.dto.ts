@@ -1,12 +1,8 @@
-import { IsNotEmpty, IsOptional, IsString, IsInt } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+/** Cuerpo de POST /push/suscripciones. El dueño sale del token (RNF04). */
 export class CrearSuscripcionPushDto {
-  @ApiProperty({ description: 'ID del usuario propietario de la suscripción' })
-  @IsString()
-  @IsNotEmpty()
-  id_usuario!: string;
-
   @ApiProperty({ description: 'Endpoint único de Web Push' })
   @IsString()
   @IsNotEmpty()
@@ -31,8 +27,8 @@ export class EncolarNotificacionDto {
 
   @ApiPropertyOptional({ description: 'ID opcional del plan circadiano asociado' })
   @IsOptional()
-  @IsInt()
-  id_plan?: number;
+  @IsString()
+  id_plan?: string;
 
   @ApiProperty({ description: 'Tipo de notificación (luz, corte_cafeina, relajacion, dormir)' })
   @IsString()
@@ -53,7 +49,7 @@ export class NotificacionRespuestaDto {
   id_usuario!: string;
 
   @ApiPropertyOptional({ description: 'ID del plan' })
-  id_plan?: number | null;
+  id_plan?: string | null;
 
   @ApiProperty({ description: 'Tipo de notificación' })
   tipo!: string;

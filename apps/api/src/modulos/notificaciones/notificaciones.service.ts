@@ -1,10 +1,15 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { OnEvent } from '@nestjs/event-emitter';
 import * as webPush from 'web-push';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
-import { EncolarNotificacionDto, NotificacionRespuestaDto } from '@circadiano/contracts';
+import {
+  EVENTO_PLAN_GENERADO,
+  EncolarNotificacionDto,
+  NotificacionRespuestaDto,
+  type PlanGeneradoEvento,
+} from '@circadiano/contracts';
 
 @Injectable()
 export class NotificacionesService {
@@ -45,6 +50,13 @@ export class NotificacionesService {
         clave_auth: dto.clave_auth,
       },
     });
+  }
+
+  async obtenerClavePublica(): Promise<{ clavePublica: string }> {
+    const clavePublica = this.configService.get<string>('VAPID_PUBLIC_KEY');
+    // Sin clave no hay push: mejor 503 que suscribir con una clave que el servidor no firma.
+    if (!clavePublica) throw new ServiceUnavailableException('Push no configurado');
+    return { clavePublica };
   }
 
   async marcarAbierta(idNotificacion: number, idUsuario: string): Promise<NotificacionRespuestaDto> {
@@ -92,30 +104,29 @@ export class NotificacionesService {
     };
   }
 
-  @OnEvent('circadiano.plan.generado')
-  async handlePlanGenerado(payload: { id_usuario: string; id_plan: number; fecha: string }): Promise<void> {
-    const inicioDia = new Date(`${payload.fecha}T00:00:00.000Z`);
-    const finDia = new Date(`${payload.fecha}T23:59:59.999Z`);
+  @OnEvent(EVENTO_PLAN_GENERADO)
+  async handlePlanGenerado(payload: PlanGeneradoEvento): Promise<void> {
+    const ahora = new Date();
+    // Al regenerar a mitad del día, los recordatorios ya vencidos no se envían de golpe.
+    const futuros = payload.recordatorios.filter((r) => new Date(r.programadaPara) > ahora);
 
-    await this.prisma.notificacion.updateMany({
-      where: {
-        id_usuario: payload.id_usuario,
-        estado: 'pendiente',
-        programada_para: { gte: inicioDia, lte: finDia },
-      },
-      data: { estado: 'cancelada' },
-    });
-
-    const tipos = ['luz', 'corte_cafeina', 'relajacion', 'dormir'];
-    for (let i = 0; i < tipos.length; i++) {
-      const horaProg = new Date(inicioDia.getTime() + (8 + i * 3) * 3600000);
-      await this.encolar({
-        id_usuario: payload.id_usuario,
-        id_plan: payload.id_plan,
-        tipo: tipos[i],
-        programada_para: horaProg.toISOString(),
-      });
-    }
+    // Todo o nada: si falla la creación, los pendientes previos del plan siguen vigentes.
+    await this.prisma.$transaction([
+      this.prisma.notificacion.updateMany({
+        where: { id_plan: payload.id_plan, estado: 'pendiente' },
+        data: { estado: 'cancelada' },
+      }),
+      this.prisma.notificacion.createMany({
+        data: futuros.map((r) => ({
+          id_usuario: payload.id_usuario,
+          id_plan: payload.id_plan,
+          tipo: r.tipo,
+          programada_para: new Date(r.programadaPara),
+          estado: 'pendiente',
+          abierta: false,
+        })),
+      }),
+    ]);
   }
 
   @Cron(CronExpression.EVERY_MINUTE)
@@ -138,7 +149,7 @@ export class NotificacionesService {
         const payloadPush = JSON.stringify({
           title: `Aviso Circadiano (${notif.tipo})`,
           body: `Es hora de tu recordatorio preventivo: ${notif.tipo}`,
-          data: { id_notificacion: notif.id_notificacion },
+          data: { id_notificacion: notif.id_notificacion, tipo: notif.tipo },
         });
 
         let enviado = false;

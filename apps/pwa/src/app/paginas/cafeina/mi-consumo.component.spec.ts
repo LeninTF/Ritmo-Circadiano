@@ -68,6 +68,7 @@ describe('MiConsumoComponent (HU-04, HU-05)', () => {
     expect(texto('.estado')).toContain('Todavía activa');
     expect(texto('.mensaje')).toBe('Tienes ~87 mg de cafeína activa. Bajará a nivel bajo cerca de las 18:58.');
     expect(texto('.pie')).toBe('Estimación aproximada, no es un dato médico.');
+    expect(texto('.alternativa')).toContain('Alternativa sin cafeína');
     expect(texto('.cifra')).toBe('158 mg · 2 registros');
     expect(el.querySelectorAll('.barras li')).toHaveLength(7);
     expect(el.querySelector('.barras li:last-child')?.getAttribute('aria-label')).toBe('Hoy: 158 mg');
@@ -135,6 +136,7 @@ describe('MiConsumoComponent (HU-04, HU-05)', () => {
     expect(texto('.nota')).toBe('Sin señal: calculado con lo registrado en este teléfono.');
     expect(texto('.estado')).toContain('Nivel bajo');
     expect(texto('.mensaje')).toBe('Tu cafeína activa está en nivel bajo.');
+    expect(el.querySelector('.alternativa')).toBeNull();
   });
 
   it('si falla la carga ofrece reintentar', async () => {

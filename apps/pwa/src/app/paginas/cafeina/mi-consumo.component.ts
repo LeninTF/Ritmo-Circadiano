@@ -51,6 +51,12 @@ const diaSemana = (fecha: string) => new Date(`${fecha}T12:00:00Z`).getUTCDay();
           </p>
           <p class="cifra-heroe">~{{ d.resumen.cafeinaActiva.mg }} <span class="unidad">mg</span></p>
           <p class="mensaje">{{ mensaje() }}</p>
+          @if (!nivelBajo()) {
+            <div class="alternativa">
+              <p class="micro">Alternativa sin cafeína</p>
+              <p class="texto-2">Prueba una infusión de hierbas o agua para mantenerte hidratado sin afectar tu descanso.</p>
+            </div>
+          }
           <p class="pie">Estimación aproximada, no es un dato médico.</p>
         </section>
 
@@ -136,6 +142,10 @@ const diaSemana = (fecha: string) => new Date(`${fecha}T12:00:00Z`).getUTCDay();
     .cifra-heroe { margin: 0; font-size: 2.5rem; line-height: 2.875rem; font-weight: 700; font-variant-numeric: tabular-nums; }
     .unidad { font-size: 1.125rem; font-weight: 600; color: var(--color-texto-2); }
     .mensaje { margin: 0; font-size: 1rem; line-height: 1.5rem; }
+    .alternativa {
+      display: grid; gap: 4px; padding: 12px; background: var(--color-superficie-2);
+      border-left: 4px solid var(--color-primario); border-radius: var(--radio-tile);
+    }
     .pie { margin: 0; font-size: 0.8125rem; color: var(--color-texto-3); }
     .cifra { margin: 0; font-size: 1.375rem; font-weight: 700; font-variant-numeric: tabular-nums; }
     .barras { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; height: 160px; }
