@@ -5,6 +5,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { JwtService } from '@nestjs/jwt';
 import request from 'supertest';
 import { PrismaService } from 'api/prisma/prisma.service';
+import { DiarioService } from 'api/modulos/trabajador/diario.service';
 import {
   TURNO_ASIGNADO,
   type Rol,
@@ -60,7 +61,9 @@ describe('Turnos e2e (Transporte Cueva S.A.C.)', () => {
     excesoJornadaAuditoria,
     auditLog,
     notificacion: {
-      create: jest.fn().mockResolvedValue({ id: 'notif-1', fechaProgramada: new Date() }),
+      create: jest.fn().mockImplementation(({ data }) => ({
+        id_notificacion: 1, ...data, enviada_en: null,
+      })),
     },
     $transaction: jest.fn(async (cb: (tx: Record<string, unknown>) => Promise<unknown>) => cb(mockPrismaService)),
   };
@@ -93,6 +96,10 @@ describe('Turnos e2e (Transporte Cueva S.A.C.)', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('AppModule inicializa y resuelve DiarioService sin duplicar proveedores', () => {
+    expect(app.get(DiarioService)).toBeInstanceOf(DiarioService);
   });
 
   it('/operaciones/rutas (GET) - listar rutas activas', async () => {

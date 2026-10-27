@@ -17,7 +17,5 @@ export * from './diario.dto';
 export * from './usuario-eliminado.evento';
 export * from './cafeina.dto';
 export * from './notificacion.dto';
-
 export * from './operaciones.dto';
-
-
+export * from './historial.dto';

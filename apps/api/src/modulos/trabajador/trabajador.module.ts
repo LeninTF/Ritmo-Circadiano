@@ -17,6 +17,6 @@ import { UsuarioEliminadoTrabajadorListener } from './usuario-eliminado.listener
     UsuarioEliminadoTrabajadorListener,
     TurnoAsignadoNotificacionListener,
   ],
-  exports: [DiarioSyncHandler],
+  exports: [DiarioSyncHandler, DiarioService],
 })
 export class TrabajadorModule {}
