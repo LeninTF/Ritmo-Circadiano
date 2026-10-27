@@ -35,6 +35,11 @@ describe('DiarioComponent', () => {
     expect(compiled.querySelector('label[for="horaDespertar"]')?.textContent).toContain('despertar');
   });
 
+  it('enlaza al historial personal (RF15)', () => {
+    const enlace = (fixture.nativeElement as HTMLElement).querySelector('a[href="/historial"]');
+    expect(enlace?.textContent?.trim()).toBe('Ver mi historial');
+  });
+
   it('3. debe tener valores iniciales válidos alineados con DTO API', () => {
     expect(component.form.get('horaAcostarse')?.value).toBe('22:00');
     expect(component.form.get('horaDespertar')?.value).toBe('06:00');

@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { HistorialDiaDto } from '@circadiano/contracts';
@@ -32,10 +39,10 @@ export class HistorialComponent {
 
   readonly progresoSueno = computed(() => {
     const lista = this.dias();
-    const conSueno = lista.filter(d => d.horasSueno !== null);
+    const conSueno = lista.filter((d) => d.horasSueno !== null);
     const denom = conSueno.length;
     if (denom === 0) return 'No hay registros de sueño en este período.';
-    const num = conSueno.filter(d => (d.horasSueno as number) >= 7).length;
+    const num = conSueno.filter((d) => (d.horasSueno as number) >= 7).length;
     return `Dormiste 7 h o más en ${num} de ${denom} ${denom === 1 ? 'noche registrada' : 'noches registradas'}.`;
   });
 
@@ -43,20 +50,37 @@ export class HistorialComponent {
     const lista = this.dias();
     const denom = lista.length;
     if (denom === 0) return 'No hay días en este período.';
-    const num = lista.filter(d => d.diarioRegistrado).length;
+    const num = lista.filter((d) => d.diarioRegistrado).length;
     return `Registraste tu diario ${num} de ${denom} ${denom === 1 ? 'día' : 'días'}.`;
   });
 
-
   constructor() {
-    this.solicitudes.pipe(
-      tap(() => { this.cargando.set(true); this.error.set(false); this.dias.set([]); }),
-      switchMap(periodo => this.servicio.obtener(periodo).pipe(
-        map(respuesta => [...respuesta.dias].sort((a, b) => a.fecha.localeCompare(b.fecha))),
-        catchError(() => { this.error.set(true); return of([]); }),
-      )),
-      takeUntilDestroyed(inject(DestroyRef)),
-    ).subscribe(dias => { this.dias.set(dias); this.cargando.set(false); });
+    this.solicitudes
+      .pipe(
+        tap(() => {
+          this.cargando.set(true);
+          this.error.set(false);
+          this.dias.set([]);
+        }),
+        switchMap((periodo) =>
+          this.servicio.obtener(periodo).pipe(
+            map((respuesta) =>
+              [...respuesta.dias].sort((a, b) =>
+                a.fecha.localeCompare(b.fecha),
+              ),
+            ),
+            catchError(() => {
+              this.error.set(true);
+              return of([]);
+            }),
+          ),
+        ),
+        takeUntilDestroyed(inject(DestroyRef)),
+      )
+      .subscribe((dias) => {
+        this.dias.set(dias);
+        this.cargando.set(false);
+      });
   }
 
   seleccionar(periodo: PeriodoHistorial): void {

@@ -10,8 +10,11 @@ export class HistorialService {
   private readonly http = inject(HttpClient);
 
   obtener(dias: PeriodoHistorial) {
-    return this.http.get<HistorialRespuestaDto>(`${environment.apiUrl}/historial/me`, {
-      params: { dias },
-    });
+    return this.http.get<HistorialRespuestaDto>(
+      `${environment.apiUrl}/historial/me`,
+      {
+        params: { dias },
+      },
+    );
   }
 }
