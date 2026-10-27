@@ -207,3 +207,11 @@
   font-size: 0.75rem;
   color: #ef4444;
 }
+
+.enlace {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--color-primario);
+  font-weight: 600;
+}

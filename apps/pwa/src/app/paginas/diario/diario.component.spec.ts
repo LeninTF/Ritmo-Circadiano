@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { DiarioComponent } from './diario.component';
 import { DiarioService } from './diario.service';
 
@@ -14,7 +15,10 @@ describe('DiarioComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [DiarioComponent],
-      providers: [{ provide: DiarioService, useValue: diarioServiceSpy }],
+      providers: [
+        { provide: DiarioService, useValue: diarioServiceSpy },
+        provideRouter([]),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(DiarioComponent);
@@ -29,6 +33,11 @@ describe('DiarioComponent', () => {
     expect(compiled.querySelector('label[for="fecha"]')?.textContent).toContain('Fecha');
     expect(compiled.querySelector('label[for="horaAcostarse"]')?.textContent).toContain('acostarse');
     expect(compiled.querySelector('label[for="horaDespertar"]')?.textContent).toContain('despertar');
+  });
+
+  it('enlaza al historial personal (RF15)', () => {
+    const enlace = (fixture.nativeElement as HTMLElement).querySelector('a[href="/historial"]');
+    expect(enlace?.textContent?.trim()).toBe('Ver mi historial');
   });
 
   it('3. debe tener valores iniciales válidos alineados con DTO API', () => {
