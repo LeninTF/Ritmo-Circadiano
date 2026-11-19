@@ -1,7 +1,7 @@
 # SPEC.md — Slice 01: Cuenta + Registro de cafeína
 
 > **CircaRuta** · *Tu ritmo, tu ruta, tu seguridad.*
-> Contrato de la API: [`api-contract.yaml`](./api-contract.yaml) · Producto: [`PRODUCT.md`](./PRODUCT.md) · Diseño: [`design-system/gestor-circadiano/MASTER.md`](./design-system/gestor-circadiano/MASTER.md)
+> Contrato de la API: [`api-contract.yaml`](./api-contract.yaml) · Producto: [`PRODUCT.md`](./PRODUCT.md) · Diseño: [`design-system/circaruta/MASTER.md`](./design-system/circaruta/MASTER.md)
 
 ## 0. Cómo usar este documento
 

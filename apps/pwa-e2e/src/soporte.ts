@@ -70,7 +70,7 @@ export async function contarOutbox(page: Page): Promise<number> {
 export async function obtenerAccessToken(page: Page): Promise<string | null> {
   return page.evaluate(() => {
     try {
-      const crudo = localStorage.getItem('gestor-circadiano-sesion');
+      const crudo = localStorage.getItem('circaruta-sesion');
       if (!crudo) return null;
       const datos = JSON.parse(crudo);
       return datos.accessToken ?? null;

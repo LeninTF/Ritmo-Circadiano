@@ -10,11 +10,13 @@ import {
   signal,
 } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { leerClaveMigrada } from './core/migrar-clave-local';
 
 type Tema = 'claro' | 'oscuro';
 type PreferenciaTema = Tema | 'automatico';
 
-const CLAVE_TEMA = 'gestor-circadiano-tema';
+const CLAVE_TEMA = 'circaruta-tema';
+const CLAVE_TEMA_ANTERIOR = 'gestor-circadiano-tema';
 const HORA_INICIO_NOCTURNO = 22;
 const HORA_FIN_NOCTURNO = 6;
 const INTERVALO_ACTUALIZACION_MS = 60_000;
@@ -79,7 +81,8 @@ export class App implements OnInit, OnDestroy {
 
   private leerPreferencia(): PreferenciaTema {
     try {
-      const guardada = this.documento.defaultView?.localStorage.getItem(CLAVE_TEMA);
+      const almacen = this.documento.defaultView?.localStorage;
+      const guardada = almacen && leerClaveMigrada(almacen, CLAVE_TEMA, CLAVE_TEMA_ANTERIOR);
       return guardada === 'claro' || guardada === 'oscuro' ? guardada : 'automatico';
     } catch {
       return 'automatico';
