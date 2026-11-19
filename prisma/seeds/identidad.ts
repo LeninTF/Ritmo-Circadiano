@@ -14,6 +14,7 @@ const AREAS = [
 ];
 
 const CODIGO_ADMIN = 'A01';
+const LARGO_MINIMO_CLAVE_DEMO = 12;
 
 interface CuentaDemo {
   codigo: string;
@@ -95,10 +96,11 @@ async function sembrarCuentasDemo(prisma: PrismaClient): Promise<void> {
     );
     return;
   }
-  // Nunca en produccion: serian cuentas con clave compartida.
-  if (process.env['NODE_ENV'] === 'production') {
+  // La imagen Docker usa NODE_ENV=production tambien en staging, asi que la
+  // unica llave es esta variable: definirla solo en local y staging.
+  if (clave.length < LARGO_MINIMO_CLAVE_DEMO) {
     process.stderr.write(
-      'NODE_ENV=production: se omiten las cuentas de prueba por rol.\n',
+      `SEED_DEMO_CLAVE debe tener al menos ${LARGO_MINIMO_CLAVE_DEMO} caracteres: se omiten las cuentas de prueba.\n`,
     );
     return;
   }

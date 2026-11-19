@@ -13,7 +13,15 @@ cuando `.env` tiene las claves. **Las claves nunca se versionan**: se definen en
 
 - Los códigos no usan el prefijo `P` para no mover la numeración de los participantes reales (P01–P17).
 - Son 5 trabajadores para alcanzar k = 5 (RN10) al probar el panel y la exportación.
-- Todos tienen consentimiento (RN11). Con `NODE_ENV=production` no se crean las cuentas demo.
+- Todos tienen consentimiento (RN11).
+- **Nunca definir `SEED_DEMO_CLAVE` en producción.** La imagen Docker usa `NODE_ENV=production` también en staging, así que la variable es la única llave. Mínimo 12 caracteres.
+
+## Staging (Render)
+
+1. En el servicio de la API, *Environment* > agregar `SEED_DEMO_CLAVE` con una clave generada (ver abajo) y, si no existe aún el administrador, `SEED_ADMIN_CLAVE`.
+2. Guardar y redesplegar: el contenedor ejecuta `prisma db seed` al arrancar y crea las cuentas.
+3. Compartir la clave con el equipo por un canal privado, no en el repo ni en la PR.
+4. Tras la producción, borrar las cuentas `J01`, `D01`, `T01`–`T05` y quitar la variable.
 - El seed es idempotente: no duplica ni cambia la clave de una cuenta existente. Para cambiarla, borra el usuario y vuelve a sembrar.
 
 Generar una clave: `node -e "console.log('Demo-'+require('crypto').randomBytes(9).toString('base64url'))"`

@@ -36,6 +36,7 @@ Generar valores **nuevos**: no reutilizar los de staging.
 | `CORS_ORIGIN` | URL exacta de la PWA de produccion |
 | `SWAGGER_HABILITADO` | **No definir** (cierra `/docs` y `/docs-json`) |
 | `SEED_ADMIN_CORREO` / `SEED_ADMIN_CLAVE` | Solo para el primer arranque; borrar `SEED_ADMIN_CLAVE` despues |
+| `SEED_DEMO_CLAVE` | **No definir.** Crea cuentas de prueba con clave compartida (solo local y staging) |
 | PWA: `API_URL`, `NODE_VERSION=24.15.0` | URL de la API de produccion |
 
 Ademas, en la PWA: agregar la URL de la API de produccion a `connect-src` en `apps/pwa/public/_headers` (PR antes del freeze), y con dominio propio fijar *Minimum TLS Version 1.2* en Cloudflare (`docs/seguridad-rnf04.md`, control 2).
