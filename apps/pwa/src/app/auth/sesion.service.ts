@@ -1,7 +1,9 @@
 import { Injectable, computed, signal } from '@angular/core';
 import type { AuthTokens, Rol, UsuarioJwtPayload } from '@circadiano/contracts';
+import { leerClaveMigrada } from '../core/migrar-clave-local';
 
-const CLAVE_SESION = 'gestor-circadiano-sesion';
+const CLAVE_SESION = 'circaruta-sesion';
+const CLAVE_SESION_ANTERIOR = 'gestor-circadiano-sesion';
 
 interface TokensGuardados {
   accessToken: string;
@@ -69,7 +71,7 @@ export class SesionService {
 
   private leer(): TokensGuardados | null {
     try {
-      const crudo = localStorage.getItem(CLAVE_SESION);
+      const crudo = leerClaveMigrada(localStorage, CLAVE_SESION, CLAVE_SESION_ANTERIOR);
       if (!crudo) return null;
       const datos = JSON.parse(crudo) as Partial<TokensGuardados>;
       return typeof datos.accessToken === 'string' &&

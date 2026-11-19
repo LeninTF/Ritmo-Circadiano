@@ -53,14 +53,14 @@ describe('App', () => {
     fixture.nativeElement.querySelector('.boton-tema').click();
     fixture.detectChanges();
     expect(document.documentElement.getAttribute('data-tema')).toBe('oscuro');
-    expect(localStorage.getItem('gestor-circadiano-tema')).toBe('oscuro');
+    expect(localStorage.getItem('circaruta-tema')).toBe('oscuro');
     fixture.nativeElement.querySelector('.boton-tema').click();
     fixture.detectChanges();
     expect(document.documentElement.getAttribute('data-tema')).toBe('claro');
   });
 
   it('el texto y el icono del botón siguen al tema (OnPush)', async () => {
-    localStorage.setItem('gestor-circadiano-tema', 'claro');
+    localStorage.setItem('circaruta-tema', 'claro');
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const boton = () => fixture.nativeElement.querySelector('.boton-tema') as HTMLButtonElement;

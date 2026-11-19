@@ -43,8 +43,16 @@ describe('SesionService', () => {
     expect(localStorage.length).toBe(0);
   });
 
+  it('recupera la sesion guardada con la clave anterior al cambio de nombre', () => {
+    const { accessToken, refreshToken } = tokens();
+    localStorage.setItem('gestor-circadiano-sesion', JSON.stringify({ accessToken, refreshToken }));
+    expect(TestBed.inject(SesionService).estaAutenticada()).toBe(true);
+    expect(localStorage.getItem('gestor-circadiano-sesion')).toBeNull();
+    expect(localStorage.getItem('circaruta-sesion')).not.toBeNull();
+  });
+
   it('un almacenamiento corrupto se ignora', () => {
-    localStorage.setItem('gestor-circadiano-sesion', '{no es json');
+    localStorage.setItem('circaruta-sesion', '{no es json');
     expect(TestBed.inject(SesionService).estaAutenticada()).toBe(false);
   });
 

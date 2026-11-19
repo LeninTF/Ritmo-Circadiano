@@ -37,7 +37,7 @@ async function arrancar(): Promise<void> {
   // Cerrado por defecto: en produccion /docs y /docs-json revelarian toda la superficie de la API.
   if (process.env['SWAGGER_HABILITADO'] === 'true') {
     const documento = new DocumentBuilder()
-      .setTitle('Gestor Web Circadiano')
+      .setTitle('CircaRuta')
       .setVersion('0.0.0')
       .addBearerAuth()
       .build();

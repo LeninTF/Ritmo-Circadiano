@@ -1,6 +1,6 @@
 # Staging del piloto
 
-Pasos para publicar la PWA y la API del Gestor Circadiano en un entorno de prueba antes del piloto (lun 26 oct). Las cuentas y las claves las crea una persona del equipo: **no se guardan en el repo**.
+Pasos para publicar la PWA y la API de CircaRuta en un entorno de prueba antes del piloto (lun 26 oct). Las cuentas y las claves las crea una persona del equipo: **no se guardan en el repo**.
 
 ## Resumen
 

@@ -158,7 +158,7 @@ export class NotificacionesService {
         });
 
         const payloadPush = JSON.stringify({
-          title: `Aviso Circadiano (${notif.tipo})`,
+          title: `CircaRuta (${notif.tipo})`,
           body: `Es hora de tu recordatorio preventivo: ${notif.tipo}`,
           data: { id_notificacion: notif.id_notificacion, tipo: notif.tipo },
         });

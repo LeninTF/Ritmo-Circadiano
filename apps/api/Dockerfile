@@ -1,4 +1,4 @@
-# API del Gestor Circadiano (staging del piloto). Contexto de build: la raiz del repo.
+# API de CircaRuta (staging del piloto). Contexto de build: la raiz del repo.
 #   docker build -f apps/api/Dockerfile -t circadiano-api .
 # Imagen sencilla a proposito: conserva node_modules completo porque al arrancar
 # necesita la CLI de Prisma (migrate deploy) y tsx (seed). Se puede adelgazar luego.

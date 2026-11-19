@@ -1,4 +1,4 @@
-# MASTER — Gestor Circadiano (Transporte Cueva S.A.C.)
+# MASTER — CircaRuta (Transporte Cueva S.A.C.)
 
 Fuente de verdad visual global de la PWA. Si existe `pages/<pantalla>.md`, sus reglas prevalecen sobre este archivo para esa pantalla.
 Base: `CLAUDE.md` §14 (Figma `0Vxkj2VLxxaXP8fkxT4JdR`). Las filas marcadas **Δ §14** cambiaron valores anteriores de §14; ya están incorporadas en §14 (24 oct 2026). Página de Notion "Sistema de diseño" alineada el mismo día. Pendiente: frames 01–04 de Figma.

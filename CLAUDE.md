@@ -1,4 +1,4 @@
-# CLAUDE.md — Gestor Web Circadiano (Transporte Cueva S.A.C.)
+# CLAUDE.md — CircaRuta (Transporte Cueva S.A.C.)
 
 PWA para gestionar ritmos circadianos y la calidad del sueño de los trabajadores de Transporte Cueva S.A.C. (Ica, Perú). Proyecto académico UTP con estudio pretest/postest real: **privacidad y exactitud de cálculos no son negociables**. Este archivo solo contiene reglas estables; el estado vivo está en Notion (§11) y los límites duros en `CONSTRAINTS.md` (§12).
 
@@ -199,7 +199,7 @@ Rules:
 
 ## 14. Sistema de diseño (fuente: Figma "Gestor Circadiano — Prototipo PWA")
 
-Figma `0Vxkj2VLxxaXP8fkxT4JdR` (pantallas 01 Dashboard, 02 Cafeína, 03 Pre-salida, 04 Dashboard nocturno). El archivo **no define variables Figma**: los valores salen de los frames. Todo color/tamaño va como token CSS (`--color-*`, `--radio-*`) en `apps/pwa/src/styles`, nunca hex sueltos en componentes. Mobile-first, lienzo base **390 px**, margen lateral **20 px**, tema claro por defecto y **modo nocturno de bajo brillo** (`prefers-color-scheme: dark` + `[data-tema="oscuro"]`, útil en turno nocturno y antes de dormir). Detalle, patrones y lista de "evitar" en `design-system/gestor-circadiano/MASTER.md` (previews en Figma, grupo "Sistema de estilo · MASTER v1"); si contradice este §14, prevalece §14.
+Figma `0Vxkj2VLxxaXP8fkxT4JdR` (pantallas 01 Dashboard, 02 Cafeína, 03 Pre-salida, 04 Dashboard nocturno). El archivo **no define variables Figma**: los valores salen de los frames. Todo color/tamaño va como token CSS (`--color-*`, `--radio-*`) en `apps/pwa/src/styles`, nunca hex sueltos en componentes. Mobile-first, lienzo base **390 px**, margen lateral **20 px**, tema claro por defecto y **modo nocturno de bajo brillo** (`prefers-color-scheme: dark` + `[data-tema="oscuro"]`, útil en turno nocturno y antes de dormir). Detalle, patrones y lista de "evitar" en `design-system/circaruta/MASTER.md` (previews en Figma, grupo "Sistema de estilo · MASTER v1"); si contradice este §14, prevalece §14.
 
 **Colores** (contraste medido sobre `superficie`)
 
