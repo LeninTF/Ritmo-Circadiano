@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
+  <!-- Isotipo "Solstice": claro por defecto, nocturno según el tema del sistema -->
+  <style>
+    .fondo { fill: #f2f4f7 } .trazo { stroke: #3538cd } .luna { fill: #3538cd } .sol { fill: #f79009 }
+    @media (prefers-color-scheme: dark) {
+      .fondo { fill: #0e1320 } .trazo { stroke: #8e96ec } .luna { fill: #8e96ec } .sol { fill: #e2a83f }
+    }
+  </style>
+  <rect class="fondo" width="1024" height="1024" rx="224"/>
+  <circle class="trazo" cx="512" cy="512" r="320" stroke-width="24"/>
+  <path class="trazo" d="M512 192a160 160 0 0 1 0 320a160 160 0 0 0 0 320" stroke-width="24" stroke-linecap="round"/>
+  <circle class="sol" cx="440" cy="350" r="64"/>
+  <path class="luna" d="M565.572 604.381C554.652 616.445 548 632.446 548 650C548 687.555 578.445 718 616 718C626.629 718 636.688 715.56 645.649 711.211C633.037 732.062 610.147 746 584 746C544.235 746 512 713.765 512 674C512 640.605 534.736 612.521 565.572 604.381Z"/>
+</svg>
