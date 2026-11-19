@@ -11,6 +11,17 @@ import { ConfirmarTurnoDto } from './dto/confirmar-turno.dto';
 const MS_H = 3_600_000;
 const VENTANA_MS = 24 * MS_H;
 
+/** Filtro por `fecha` (columna DATE): desde y hasta inclusive. */
+function rangoFechas(desde?: string, hasta?: string): Prisma.TurnoLaboralWhereInput {
+  if (!desde && !hasta) return {};
+  return {
+    fecha: {
+      ...(desde ? { gte: new Date(desde) } : {}),
+      ...(hasta ? { lt: new Date(Date.parse(hasta) + VENTANA_MS) } : {}),
+    },
+  };
+}
+
 @Injectable()
 export class OperacionesService {
   constructor(
@@ -24,11 +35,12 @@ export class OperacionesService {
     });
   }
 
-  async listarTurnos(filtros?: { idUsuario?: string; fecha?: string }) {
+  async listarTurnos(filtros?: { idUsuario?: string; fecha?: string; desde?: string; hasta?: string }) {
     return this.prisma.turnoLaboral.findMany({
       where: {
         ...(filtros?.idUsuario ? { idUsuario: filtros.idUsuario } : {}),
         ...(filtros?.fecha ? { fecha: new Date(filtros.fecha) } : {}),
+        ...rangoFechas(filtros?.desde, filtros?.hasta),
       },
       include: { ruta: true },
       orderBy: { inicioProgramado: 'asc' },
@@ -39,24 +51,8 @@ export class OperacionesService {
     if (!idUsuario) {
       throw new BadRequestException('ID de usuario requerido para listar turnos propios.');
     }
-    const where: Prisma.TurnoLaboralWhereInput = {
-      idUsuario,
-    };
-
-    if (desde || hasta) {
-      where.fecha = {};
-      if (desde) {
-        (where.fecha as Prisma.DateTimeFilter).gte = new Date(desde);
-      }
-      if (hasta) {
-        const fechaFin = new Date(hasta);
-        fechaFin.setDate(fechaFin.getDate() + 1);
-        (where.fecha as Prisma.DateTimeFilter).lt = fechaFin;
-      }
-    }
-
     return this.prisma.turnoLaboral.findMany({
-      where,
+      where: { idUsuario, ...rangoFechas(desde, hasta) },
       include: { ruta: true },
       orderBy: { inicioProgramado: 'asc' },
     });

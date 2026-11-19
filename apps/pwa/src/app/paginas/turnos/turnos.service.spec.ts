@@ -30,4 +30,13 @@ describe('TurnosService (RF04)', () => {
     http.expectOne(`${api}/rutas`).flush([]);
     http.expectOne(`${api}/turnos`).flush({});
   });
+
+  it('listarTurnos manda idUsuario, desde y hasta; listarTrabajadores va a /trabajadores', () => {
+    servicio.listarTurnos('u-1', '2026-11-16', '2026-11-22').subscribe();
+    servicio.listarTrabajadores().subscribe();
+    const req = http.expectOne((r) => r.url === `${api}/turnos`);
+    expect(req.request.params.toString()).toBe('idUsuario=u-1&desde=2026-11-16&hasta=2026-11-22');
+    req.flush([]);
+    http.expectOne(`${api}/trabajadores`).flush([]);
+  });
 });

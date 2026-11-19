@@ -1,3 +1,10 @@
+/** GET /operaciones/trabajadores: lo minimo para asignar un turno, sin correo ni nombre (§6). */
+export interface TrabajadorResumenDto {
+  id: string;
+  codigoParticipante: string;
+  cargo: string | null;
+}
+
 export interface RutaDto {
   id: string;
   origen: string;

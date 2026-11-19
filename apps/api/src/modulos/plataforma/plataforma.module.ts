@@ -28,6 +28,6 @@ import { UsuariosService } from './usuarios/usuarios.service';
     ExportacionService,
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
   ],
-  exports: [AuthModule, ParametrosService],
+  exports: [AuthModule, ParametrosService, UsuariosService],
 })
 export class PlataformaModule {}

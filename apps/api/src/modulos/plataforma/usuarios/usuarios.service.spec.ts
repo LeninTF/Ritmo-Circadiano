@@ -9,6 +9,7 @@ describe('UsuariosService', () => {
     deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
     updateMany: jest.fn(),
     findUniqueOrThrow: jest.fn(),
+    findMany: jest.fn().mockResolvedValue([]),
   };
   const prisma = { usuario } as unknown as PrismaService;
   let eventos: EventEmitter2;
@@ -18,6 +19,13 @@ describe('UsuariosService', () => {
     jest.clearAllMocks();
     eventos = new EventEmitter2();
     servicio = new UsuariosService(prisma, eventos);
+  });
+
+  it('listarTrabajadores: solo trabajadores activos y sin correo, clave ni nombre (§6)', async () => {
+    await servicio.listarTrabajadores();
+    const consulta = usuario.findMany.mock.calls[0][0];
+    expect(consulta.where).toEqual({ rol: 'trabajador', estado: 'activo' });
+    expect(Object.keys(consulta.select).sort()).toEqual(['cargo', 'codigoParticipante', 'id']);
   });
 
   it('borra los datos de cada slice antes que al usuario', async () => {

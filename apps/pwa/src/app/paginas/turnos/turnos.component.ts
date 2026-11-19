@@ -1,118 +1,178 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import type { RutaDto, TrabajadorResumenDto, TurnoDto } from '@circadiano/contracts';
+import { detectarTurnoNocturno } from '@circadiano/domain';
+import { SesionService } from '../../auth/sesion.service';
+import { fechaLima, horaLima } from '../cafeina/cafeina.service';
 import { TurnosService } from './turnos.service';
-import { OfflineStoreService } from '../../core/offline/offline-store.service';
+import { rangoTurnoLima, semanaDe, sumarDias } from './turnos-fecha';
 
-interface Ruta {
-  id: string;
-  origen: string;
-  destino: string;
-}
+const NOMBRES_DIA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
-interface Turno {
-  id: string;
-  idUsuario: string;
-  idRuta: string;
-  fecha: string;
-  inicioProgramado: string;
-  finProgramado: string;
-  horasConduccion: number;
-  esNocturno: boolean;
-  estadoConfirmacion?: string;
+/** Cuerpo del 409 de RN01 (operaciones.service.ts). */
+interface ExcesoJornada {
+  horasConduccionTurno?: number;
+  limiteContinuoMax?: number;
+  horasAcumuladas24h?: number;
+  limiteVentanaMax?: number;
+  superaContinuo?: boolean;
+  superaVentana?: boolean;
 }
 
 @Component({
   selector: 'app-turnos',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: `
+    .encabezado { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+    h1 { margin: 0; font-size: 1.5rem; line-height: 2rem; }
+    .acciones, .semana { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .semana { justify-content: space-between; margin-block: 16px; }
+    .semana span { font-variant-numeric: tabular-nums; font-weight: 600; }
+    .boton {
+      min-height: 44px; padding: 0 16px; font: inherit; font-weight: 600; cursor: pointer;
+      color: var(--color-texto); background: var(--color-superficie-2);
+      border: 1px solid var(--color-borde); border-radius: var(--radio-boton);
+    }
+    .boton--primario {
+      min-height: var(--alto-boton-primario); width: 100%;
+      color: var(--color-sobre-primario); background: var(--color-primario); border-color: var(--color-primario);
+    }
+    .boton:disabled { opacity: 0.6; cursor: not-allowed; }
+    label { display: grid; gap: 4px; font-size: 0.875rem; font-weight: 500; color: var(--color-texto-2); }
+    select, input, textarea {
+      min-height: 44px; padding: 8px 12px; font: inherit; font-size: 1rem; color: var(--color-texto);
+      background: var(--color-superficie); border: 1px solid var(--color-borde); border-radius: var(--radio-boton);
+    }
+    .filtro { margin-bottom: 16px; }
+    .dias { display: grid; gap: 12px; }
+    .dia { padding: 16px; background: var(--color-superficie); border: 1px solid var(--color-borde); border-radius: var(--radio-tarjeta); }
+    .dia h2 { margin: 0 0 8px; font-size: 1rem; }
+    .dia small { color: var(--color-texto-3); font-weight: 400; }
+    .vacio { margin: 0; color: var(--color-texto-3); font-size: 0.875rem; }
+    .turno { display: grid; gap: 4px; padding: 12px; margin-top: 8px; background: var(--color-superficie-2); border-radius: var(--radio-tile); }
+    .turno__hora { font-size: 1.125rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .turno__meta { font-size: 0.875rem; color: var(--color-texto-2); }
+    .chip { justify-self: start; padding: 2px 10px; font-size: 0.8125rem; color: var(--color-primario); background: var(--color-primario-fondo); border-radius: var(--radio-chip); }
+    .aviso { padding: 12px 16px; margin-bottom: 16px; color: var(--color-alerta-texto); background: var(--color-alerta-fondo); border: 1px solid var(--color-alerta); border-radius: var(--radio-tile); }
+    .error { color: var(--color-peligro-texto); font-size: 0.875rem; }
+    .fondo { position: fixed; inset: 0; z-index: 20; display: flex; align-items: flex-end; justify-content: center; background: rgb(0 0 0 / 0.5); }
+    .hoja {
+      width: 100%; max-width: 480px; max-height: 92dvh; overflow-y: auto; padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+      background: var(--color-superficie); border-radius: var(--radio-hoja) var(--radio-hoja) 0 0; box-shadow: var(--sombra-hoja);
+    }
+    .hoja h2 { margin: 0 0 16px; font-size: 1.125rem; }
+    form { display: grid; gap: 12px; }
+    .fila { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .check { display: flex; align-items: center; gap: 8px; min-height: 44px; color: var(--color-texto); }
+    .check input { min-height: 0; width: 20px; height: 20px; }
+  `,
   template: `
     <section class="pagina">
-      @if (!isOnline()) {
-        <div style="background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:0.75rem 1rem;border-radius:0.5rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;">
-          <span>⚠️ <strong>Modo Sin Conexión (Offline):</strong> Mostrando turnos y rutas desde el caché local (OfflineStore).</span>
-          <span style="font-size:0.85rem;background:#f59e0b;color:#fff;padding:0.2rem 0.5rem;border-radius:0.25rem;">Offline</span>
+      @if (!enLinea()) {
+        <p class="aviso" role="status">Sin conexión: se muestran los turnos guardados en este dispositivo.</p>
+      }
+
+      <div class="encabezado">
+        <h1>Turnos</h1>
+        <div class="acciones">
+          <button class="boton" type="button" (click)="abrirNuevo()">+ Nuevo</button>
+          <button class="boton" type="button" (click)="importando.set(!importando())">Importar</button>
+        </div>
+      </div>
+
+      @if (importando()) {
+        <div class="dia filtro">
+          <label>Archivo CSV<input type="file" accept=".csv" (change)="elegirArchivo($event)" /></label>
+          <button class="boton" type="button" [disabled]="!archivo()" (click)="importar()">Procesar</button>
+          @if (resultadoImportacion()) { <p role="status">{{ resultadoImportacion() }}</p> }
         </div>
       }
 
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-        <h1>Grilla Semanal de Turnos</h1>
-        <div>
-          <button class="btn" style="margin-right:0.5rem;" (click)="abrirModalCrear()">+ Nuevo</button>
-          <button class="btn" (click)="imp.set(!imp())">📂 Importar</button>
-        </div>
+      <div class="semana">
+        <button class="boton" type="button" (click)="moverSemana(-1)" aria-label="Semana anterior">‹</button>
+        <span>{{ dias()[0].fecha }} al {{ dias()[6].fecha }}</span>
+        <button class="boton" type="button" (click)="moverSemana(1)" aria-label="Semana siguiente">›</button>
       </div>
-      @if (imp()) {
-        <div style="background:var(--color-acento-fondo);padding:1rem;border-radius:0.5rem;margin-bottom:1rem;">
-          <h3>Importador CSV / XLSX</h3>
-          <input type="file" (change)="fileSel($event)" accept=".csv,.xlsx" />
-          <button class="btn" [disabled]="!arch()" (click)="importar()" style="margin-left:0.5rem;">Procesar</button>
-          @if (resImp()) { <pre>{{ resImp() | json }}</pre> }
-        </div>
-      }
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-        <div>
-          <button (click)="sem(-1)">‹ Anterior</button>
-          <span style="margin:0 1rem;font-weight:600;">{{ fini }} al {{ ffin }}</span>
-          <button (click)="sem(1)">Siguiente ›</button>
-        </div>
-        <div>
-          <label for="turnos-uuid">UUID: </label>
-          <input id="turnos-uuid" [value]="usr()" (input)="usr.set($any($event.target).value)" />
-          <button (click)="cargar()" style="margin-left:0.5rem;">Filtrar</button>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:0.5rem;overflow-x:auto;">
-        @for (d of dias(); track d.fecha) {
-          <div style="border:1px solid var(--color-borde);border-radius:0.5rem;padding:0.5rem;min-height:300px;">
-            <div style="font-weight:600;text-align:center;border-bottom:1px solid var(--color-borde);padding-bottom:0.25rem;">
-              <div>{{ d.nombre }}</div><small>{{ d.fecha }}</small>
-            </div>
-            @for (t of map.get(d.fecha) || []; track t.id) {
-              <div style="background:var(--color-acento-fondo);border-radius:0.35rem;padding:0.5rem;margin-top:0.5rem;font-size:0.85rem;">
-                <div><strong>Ruta:</strong> {{ t.idRuta | slice:0:6 }}...</div>
-                <div><strong>Horas:</strong> {{ t.horasConduccion }}h</div>
-                <div><strong>Estado:</strong> {{ t.estadoConfirmacion }}</div>
-                @if (t.esNocturno) { <span style="color:purple;">Nocturno</span> }
-                <div style="margin-top:0.25rem;display:flex;gap:0.5rem;">
-                  <button (click)="editar(t)">✏️</button><button (click)="del(t.id)">🗑️</button>
-                </div>
-              </div>
+
+      @if (esGestor()) {
+        <label class="filtro">
+          Trabajador
+          <select [value]="filtroTrabajador()" (change)="filtrar($any($event.target).value)">
+            <option value="">Todos</option>
+            @for (t of trabajadores(); track t.id) {
+              <option [value]="t.id">{{ etiquetaTrabajador(t) }}</option>
             }
-          </div>
+          </select>
+        </label>
+      }
+
+      <div class="dias">
+        @for (d of dias(); track d.fecha) {
+          <article class="dia">
+            <h2>{{ d.nombre }} <small>{{ d.fecha }}</small></h2>
+            @for (t of turnosDe(d.fecha); track t.id) {
+              <div class="turno">
+                <span class="turno__hora">{{ hora(t.inicioProgramado) }} – {{ hora(t.finProgramado) }}</span>
+                <span class="turno__meta">
+                  @if (esGestor()) { {{ codigoDe(t.idUsuario) }} · }
+                  {{ t.ruta ? t.ruta.origen + ' – ' + t.ruta.destino : 'Ruta' }} · {{ t.horasConduccion }} h · {{ t.estadoConfirmacion }}
+                </span>
+                @if (t.esNocturno) { <span class="chip">Nocturno</span> }
+                @if (esGestor()) {
+                  <div class="acciones">
+                    <button class="boton" type="button" (click)="editar(t)">Editar</button>
+                    <button class="boton" type="button" (click)="eliminar(t.id)">Eliminar</button>
+                  </div>
+                }
+              </div>
+            } @empty {
+              <p class="vacio">Sin turnos</p>
+            }
+          </article>
         }
       </div>
-      @if (mod()) {
-        <div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:100;">
-          <div style="background:var(--color-fondo);padding:1.5rem;border-radius:0.5rem;width:400px;max-height:90vh;overflow-y:auto;">
-            <h2>{{ editando() ? 'Editar' : 'Nuevo' }} Turno</h2>
+
+      @if (hojaAbierta()) {
+        <div class="fondo" (click)="cerrarHoja()" (keydown.escape)="cerrarHoja()" tabindex="-1">
+          <div class="hoja" role="dialog" aria-modal="true" aria-labelledby="titulo-turno" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" tabindex="-1">
+            <h2 id="titulo-turno">{{ idEditando() ? 'Editar turno' : 'Nuevo turno' }}</h2>
             <form [formGroup]="form" (ngSubmit)="guardar()">
-              <div style="margin-bottom:0.5rem;"><label for="turno-id-usuario">ID Usuario:</label><input id="turno-id-usuario" formControlName="idUsuario" style="width:100%;" /></div>
-              <div style="margin-bottom:0.5rem;">
-                <label for="turno-ruta">Ruta:</label>
-                <select id="turno-ruta" formControlName="idRuta" style="width:100%;">
-                  <option value="">Seleccione</option>
-                  @for (r of rutas(); track r.id) { <option [value]="r.id">{{ r.origen }} - {{ r.destino }}</option> }
+              <label>Trabajador
+                <select formControlName="idUsuario">
+                  <option value="">Elige un trabajador</option>
+                  @for (t of trabajadores(); track t.id) { <option [value]="t.id">{{ etiquetaTrabajador(t) }}</option> }
                 </select>
+              </label>
+              <label>Ruta
+                <select formControlName="idRuta">
+                  <option value="">Elige una ruta</option>
+                  @for (r of rutas(); track r.id) { <option [value]="r.id">{{ r.origen }} – {{ r.destino }}</option> }
+                </select>
+              </label>
+              <label>Fecha<input type="date" formControlName="fecha" /></label>
+              <div class="fila">
+                <label>Inicio (hora Lima)<input type="time" formControlName="horaInicio" /></label>
+                <label>Fin (hora Lima)<input type="time" formControlName="horaFin" /></label>
               </div>
-              <div style="margin-bottom:0.5rem;"><label for="turno-fecha">Fecha:</label><input id="turno-fecha" type="date" formControlName="fecha" style="width:100%;" /></div>
-              <div style="margin-bottom:0.5rem;"><label for="turno-inicio">Inicio:</label><input id="turno-inicio" type="datetime-local" formControlName="inicioProgramado" style="width:100%;" /></div>
-              <div style="margin-bottom:0.5rem;"><label for="turno-fin">Fin:</label><input id="turno-fin" type="datetime-local" formControlName="finProgramado" style="width:100%;" /></div>
-              <div style="margin-bottom:0.5rem;"><label for="turno-horas">Horas:</label><input id="turno-horas" type="number" step="0.5" formControlName="horasConduccion" style="width:100%;" /></div>
-              <div style="margin-bottom:0.5rem;"><label><input type="checkbox" formControlName="esNocturno" /> Nocturno</label></div>
-              @if (conf()) {
-                <div style="background:#fef3c7;color:#92400e;padding:0.5rem;margin-bottom:0.5rem;">
-                  <strong>Alerta RF14:</strong> Exceso de jornada.
-                  <div><label><input type="checkbox" formControlName="confirmarExceso" /> Confirmar exceso</label></div>
-                  <textarea formControlName="motivoExceso" placeholder="Motivo..." style="width:100%;"></textarea>
+              <label>Horas de conducción continua<input type="number" step="0.5" min="0.5" formControlName="horasConduccion" /></label>
+
+              @if (exceso(); as e) {
+                <div class="aviso" role="alert">
+                  <strong>El turno excede la jornada (RN01).</strong>
+                  @if (e.superaContinuo) { <p>{{ e.horasConduccionTurno }} h continuas; el máximo es {{ e.limiteContinuoMax }} h.</p> }
+                  @if (e.superaVentana) { <p>Suma {{ e.horasAcumuladas24h }} h de conducción en 24 h; el máximo es {{ e.limiteVentanaMax }} h.</p> }
+                  <label>Motivo (obligatorio)<textarea formControlName="motivoExceso" rows="2"></textarea></label>
+                  <label class="check"><input type="checkbox" formControlName="confirmarExceso" /> Confirmo asignar el turno con exceso</label>
                 </div>
               }
-              @if (err()) { <div style="color:red;font-size:0.85rem;">{{ err() }}</div> }
-              <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:1rem;">
-                <button type="button" (click)="mod.set(false)">Cancelar</button>
-                <button type="submit" [disabled]="form.invalid">Guardar</button>
-              </div>
+              @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+
+              <button class="boton boton--primario" type="submit" [disabled]="form.invalid || !excesoListo()">
+                {{ exceso() ? 'Asignar con exceso' : 'Guardar' }}
+              </button>
+              <button class="boton" type="button" (click)="cerrarHoja()">Cancelar</button>
             </form>
           </div>
         </div>
@@ -122,146 +182,169 @@ interface Turno {
 })
 export class TurnosComponent implements OnInit {
   private readonly svc = inject(TurnosService);
-  readonly offlineStore = inject(OfflineStoreService);
-  private readonly fb = inject(FormBuilder);
-  
-  readonly isOnline = signal<boolean>(navigator.onLine);
+  private readonly sesion = inject(SesionService);
+  private readonly fb = inject(FormBuilder).nonNullable;
 
-  constructor() {
-    window.addEventListener('online', () => this.isOnline.set(true));
-    window.addEventListener('offline', () => this.isOnline.set(false));
-  }
+  protected readonly esGestor = computed(() => this.sesion.rol() !== 'trabajador');
+  protected readonly enLinea = signal(navigator.onLine);
+  protected readonly rutas = signal<RutaDto[]>([]);
+  protected readonly trabajadores = signal<TrabajadorResumenDto[]>([]);
+  protected readonly turnos = signal<TurnoDto[]>([]);
+  protected readonly filtroTrabajador = signal('');
+  private readonly fechaBase = signal(fechaLima(new Date().toISOString()));
+  protected readonly dias = computed(() =>
+    semanaDe(this.fechaBase()).map((fecha, i) => ({ fecha, nombre: NOMBRES_DIA[i] })),
+  );
 
-  rutas = signal<Ruta[]>([]);
-  usr = signal<string>('00000000-0000-0000-0000-000000000001');
-  imp = signal(false);
-  arch = signal<File | null>(null);
-  resImp = signal<unknown>(null);
-  mod = signal(false);
-  editando = signal(false);
-  tId = signal<string | null>(null);
-  conf = signal(false);
-  err = signal<string | null>(null);
-  base = signal(new Date());
-  fini = ''; ffin = '';
-  dias = signal<Array<{ nombre: string; fecha: string }>>([]);
-  map = new Map<string, Turno[]>();
+  protected readonly importando = signal(false);
+  protected readonly archivo = signal<File | null>(null);
+  protected readonly resultadoImportacion = signal('');
+  protected readonly hojaAbierta = signal(false);
+  protected readonly idEditando = signal<string | null>(null);
+  protected readonly exceso = signal<ExcesoJornada | null>(null);
+  protected readonly error = signal('');
 
-  form: FormGroup = this.fb.group({
+  protected readonly form = this.fb.group({
     idUsuario: ['', Validators.required],
     idRuta: ['', Validators.required],
     fecha: ['', Validators.required],
-    inicioProgramado: ['', Validators.required],
-    finProgramado: ['', Validators.required],
+    horaInicio: ['', Validators.required],
+    horaFin: ['', Validators.required],
     horasConduccion: [4, [Validators.required, Validators.min(0.5)]],
-    esNocturno: [false],
-    confirmarExceso: [false],
     motivoExceso: [''],
+    confirmarExceso: [false],
+  });
+  private readonly valoresForm = signal(this.form.getRawValue());
+  /** Con exceso, se exige marcar la confirmación y escribir el motivo (RF14). */
+  protected readonly excesoListo = computed(() => {
+    const v = this.valoresForm();
+    return !this.exceso() || (v.confirmarExceso && v.motivoExceso.trim().length > 0);
   });
 
+  constructor() {
+    window.addEventListener('online', () => this.enLinea.set(true));
+    window.addEventListener('offline', () => this.enLinea.set(false));
+    this.form.valueChanges.subscribe(() => this.valoresForm.set(this.form.getRawValue()));
+  }
+
   ngOnInit(): void {
-    this.svc.listarRutas().subscribe((r: Ruta[]) => this.rutas.set(r));
-    this.calc(new Date());
-    this.cargar();
-  }
-
-  calc(d: Date): void {
-    const c = new Date(d);
-    const day = c.getDay();
-    const diff = c.getDate() - day + (day === 0 ? -6 : 1);
-    const m = new Date(c.setDate(diff));
-    const nombres = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-    const arr = [];
-    for (let i = 0; i < 7; i++) {
-      const dt = new Date(m);
-      dt.setDate(m.getDate() + i);
-      arr.push({ nombre: nombres[i], fecha: dt.toISOString().split('T')[0] });
+    if (this.esGestor()) {
+      this.svc.listarRutas().subscribe((r) => this.rutas.set(r));
+      this.svc.listarTrabajadores().subscribe({ next: (t) => this.trabajadores.set(t), error: () => this.trabajadores.set([]) });
     }
-    this.dias.set(arr);
-    this.fini = arr[0].fecha;
-    this.ffin = arr[6].fecha;
-  }
-
-  sem(dir: number): void {
-    const b = new Date(this.base());
-    b.setDate(b.getDate() + dir * 7);
-    this.base.set(b);
-    this.calc(b);
     this.cargar();
   }
 
-  cargar(): void {
-    this.svc.listarTurnosMe(this.fini, this.ffin, this.usr()).subscribe({
-      next: (t: Turno[]) => this.ag(t),
-      error: () => this.svc.listarTurnos(this.usr()).subscribe((t: Turno[]) => this.ag(t)),
+  protected hora = horaLima;
+
+  protected turnosDe(fecha: string): TurnoDto[] {
+    return this.turnos().filter((t) => t.fecha.slice(0, 10) === fecha);
+  }
+
+  protected etiquetaTrabajador(t: TrabajadorResumenDto): string {
+    return t.cargo ? `${t.codigoParticipante} · ${t.cargo}` : t.codigoParticipante;
+  }
+
+  protected codigoDe(idUsuario: string): string {
+    return this.trabajadores().find((t) => t.id === idUsuario)?.codigoParticipante ?? 'Trabajador';
+  }
+
+  protected moverSemana(direccion: number): void {
+    this.fechaBase.set(sumarDias(this.fechaBase(), direccion * 7));
+    this.cargar();
+  }
+
+  protected filtrar(idUsuario: string): void {
+    this.filtroTrabajador.set(idUsuario);
+    this.cargar();
+  }
+
+  private cargar(): void {
+    const desde = this.dias()[0].fecha;
+    const hasta = this.dias()[6].fecha;
+    const consulta = this.esGestor()
+      ? this.svc.listarTurnos(this.filtroTrabajador() || undefined, desde, hasta)
+      : this.svc.listarTurnosMe(desde, hasta);
+    consulta.subscribe({ next: (t) => this.turnos.set(t), error: () => this.turnos.set([]) });
+  }
+
+  protected elegirArchivo(e: Event): void {
+    this.archivo.set((e.target as HTMLInputElement).files?.[0] ?? null);
+  }
+
+  protected importar(): void {
+    const archivo = this.archivo();
+    if (!archivo) return;
+    this.svc.importarTurnos(archivo).subscribe({
+      next: (r) => {
+        this.resultadoImportacion.set(`${r.importados} turnos importados, ${r.errores.length} con error.`);
+        this.cargar();
+      },
+      error: () => this.resultadoImportacion.set('No se pudo importar el archivo.'),
     });
   }
 
-  ag(ts: Turno[]): void {
-    this.map.clear();
-    for (const d of this.dias()) this.map.set(d.fecha, []);
-    for (const t of ts) {
-      const f = t.fecha ? t.fecha.split('T')[0] : '';
-      if (this.map.has(f)) this.map.get(f)?.push(t);
-    }
+  protected abrirNuevo(): void {
+    this.idEditando.set(null);
+    this.form.reset({ idUsuario: this.filtroTrabajador(), fecha: this.fechaBase(), horaInicio: '08:00', horaFin: '12:00', horasConduccion: 4 });
+    this.abrirHoja();
   }
 
-  fileSel(e: Event): void {
-    const input = e.target as HTMLInputElement;
-    this.arch.set(input.files?.[0] || null);
+  protected editar(t: TurnoDto): void {
+    this.idEditando.set(t.id);
+    this.form.reset({
+      idUsuario: t.idUsuario,
+      idRuta: t.idRuta,
+      fecha: t.fecha.slice(0, 10),
+      horaInicio: horaLima(t.inicioProgramado),
+      horaFin: horaLima(t.finProgramado),
+      horasConduccion: Number(t.horasConduccion),
+    });
+    this.abrirHoja();
   }
 
-  importar(): void {
-    const f = this.arch();
-    if (f) {
-      this.svc.importarTurnos(f).subscribe({
-        next: (r) => { this.resImp.set(r); this.cargar(); },
-        error: (e) => {
-          const errRes = e as { error?: { message?: string } };
-          this.resImp.set({ error: errRes.error?.message });
+  private abrirHoja(): void {
+    this.exceso.set(null);
+    this.error.set('');
+    this.hojaAbierta.set(true);
+  }
+
+  protected cerrarHoja(): void {
+    this.hojaAbierta.set(false);
+  }
+
+  protected guardar(): void {
+    if (this.form.invalid || !this.excesoListo()) return;
+    const v = this.form.getRawValue();
+    const { inicio, fin } = rangoTurnoLima(v.fecha, v.horaInicio, v.horaFin);
+    const dto = {
+      idUsuario: v.idUsuario,
+      idRuta: v.idRuta,
+      fecha: v.fecha,
+      inicioProgramado: inicio,
+      finProgramado: fin,
+      horasConduccion: Number(v.horasConduccion),
+      esNocturno: detectarTurnoNocturno(inicio, fin),
+      ...(this.exceso() ? { confirmarExceso: true, motivoExceso: v.motivoExceso.trim() } : {}),
+    };
+    const id = this.idEditando();
+    (id ? this.svc.actualizarTurno(id, dto) : this.svc.crearTurno(dto)).subscribe({
+      next: () => {
+        this.cerrarHoja();
+        this.cargar();
+      },
+      error: (e: HttpErrorResponse) => {
+        if (e.status === 409 && e.error?.requiereConfirmacion) {
+          this.exceso.set(e.error as ExcesoJornada);
+          this.error.set('');
+        } else {
+          this.error.set(e.status === 400 ? 'Revisa los datos del turno.' : 'No se pudo guardar el turno.');
         }
-      });
-    }
-  }
-
-  abrirModalCrear(): void {
-    this.editando.set(false);
-    this.tId.set(null);
-    this.conf.set(false);
-    this.err.set(null);
-    this.form.reset({ idUsuario: this.usr(), idRuta: '', fecha: new Date().toISOString().split('T')[0], horasConduccion: 4, esNocturno: false, confirmarExceso: false, motivoExceso: '' });
-    this.mod.set(true);
-  }
-
-  editar(t: Turno): void {
-    this.editando.set(true);
-    this.tId.set(t.id);
-    this.conf.set(false);
-    this.err.set(null);
-    this.form.patchValue({ idUsuario: t.idUsuario, idRuta: t.idRuta, fecha: t.fecha?.split('T')[0], inicioProgramado: t.inicioProgramado?.slice(0, 16), finProgramado: t.finProgramado?.slice(0, 16), horasConduccion: t.horasConduccion, esNocturno: t.esNocturno, confirmarExceso: false, motivoExceso: '' });
-    this.mod.set(true);
-  }
-
-  guardar(): void {
-    if (this.form.invalid) return;
-    const v = this.form.value;
-    const dto = { ...v, horasConduccion: Number(v.horasConduccion), inicioProgramado: new Date(v.inicioProgramado).toISOString(), finProgramado: new Date(v.finProgramado).toISOString() };
-    const id = this.tId();
-    if (this.editando() && !id) return;
-    const obs = this.editando() && id ? this.svc.actualizarTurno(id, dto) : this.svc.crearTurno(dto);
-    obs.subscribe({
-      next: () => { this.mod.set(false); this.cargar(); },
-      error: (e) => {
-        const errObj = e as { status?: number; error?: { message?: string } };
-        if (errObj.status === 409) { this.conf.set(true); this.err.set(errObj.error?.message || 'Exceso de jornada (RF14)'); }
-        else { this.err.set(errObj.error?.message || 'Error'); }
-      }
+      },
     });
   }
 
-  del(id: string): void { 
-    if (confirm('¿Eliminar?')) {
-      this.svc.eliminarTurno(id).subscribe(() => this.cargar()); 
-    }
+  protected eliminar(id: string): void {
+    if (confirm('¿Eliminar este turno?')) this.svc.eliminarTurno(id).subscribe(() => this.cargar());
   }
 }

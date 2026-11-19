@@ -58,6 +58,17 @@ describe('OperacionesService', () => {
     });
   });
 
+  describe('listarTurnos', () => {
+    it('filtra por rango de fechas con hasta inclusive', async () => {
+      mockPrismaService.turnoLaboral.findMany.mockResolvedValue([]);
+      await service.listarTurnos({ idUsuario: 'u-1', desde: '2026-11-16', hasta: '2026-11-22' });
+      expect(mockPrismaService.turnoLaboral.findMany.mock.calls[0][0].where).toEqual({
+        idUsuario: 'u-1',
+        fecha: { gte: new Date('2026-11-16'), lt: new Date('2026-11-23') },
+      });
+    });
+  });
+
   describe('listarTurnosMe', () => {
     it('debe lanzar BadRequestException si idUsuario está vacío', async () => {
       await expect(service.listarTurnosMe('')).rejects.toThrow(BadRequestException);
