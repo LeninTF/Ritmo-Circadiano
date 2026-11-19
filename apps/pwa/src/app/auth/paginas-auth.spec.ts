@@ -141,6 +141,22 @@ describe('IngresarComponent', () => {
     expect(ir).toHaveBeenCalledWith('/plan');
   });
 
+  it('sin ?retorno navega al inicio de su rol (INICIO_POR_ROL)', async () => {
+    const { backend, router } = preparar();
+    const ir = jest.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(IngresarComponent);
+    await fixture.whenStable();
+    const raiz: HTMLElement = fixture.nativeElement;
+    escribir(raiz, 'input[formControlName=correo]', 'jefe@ejemplo.pe');
+    escribir(raiz, 'input[formControlName=clave]', 'una-clave-larga');
+    obtener(raiz, 'form').dispatchEvent(new Event('submit'));
+    backend.expectOne(`${api}/auth/login`).flush({
+      ...tokens,
+      accessToken: crearJwtPrueba({ sub: 'j', rol: 'jefe_operaciones', codigoParticipante: 'J01' }),
+    });
+    expect(ir).toHaveBeenCalledWith('/turnos');
+  });
+
   it('credenciales incorrectas muestran un mensaje y no abren sesion', async () => {
     const { backend } = preparar();
     const fixture = TestBed.createComponent(IngresarComponent);

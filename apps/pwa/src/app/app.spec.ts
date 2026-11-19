@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { signal } from '@angular/core';
 import { App } from './app';
+import { SesionService } from './auth/sesion.service';
 import { appRoutes } from './app.routes';
 import { OfflineStoreService } from './core/offline/offline-store.service';
 
@@ -71,6 +73,17 @@ describe('App', () => {
     fixture.detectChanges();
     expect(boton().getAttribute('aria-label')).toBe('Activar modo claro');
     expect(boton().textContent).toContain('Modo claro');
+  });
+
+  it('la tab bar cambia por rol (PESTANAS_POR_ROL)', async () => {
+    TestBed.overrideProvider(SesionService, {
+      useValue: { rol: signal('jefe_operaciones'), estaAutenticada: () => true, codigoParticipante: signal('J01') },
+    });
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    const hrefs = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('nav a')).map((a) => a.getAttribute('href'));
+    expect(hrefs).toEqual(['/turnos', '/indicadores']);
+    expect(fixture.nativeElement.querySelectorAll('nav a svg path').length).toBeGreaterThan(0);
   });
 
   it('los iconos son SVG decorativos, sin caracteres Unicode', async () => {

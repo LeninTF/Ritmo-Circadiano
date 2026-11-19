@@ -76,13 +76,15 @@ interface ExcesoJornada {
 
       <div class="encabezado">
         <h1>Turnos</h1>
-        <div class="acciones">
-          <button class="boton" type="button" (click)="abrirNuevo()">+ Nuevo</button>
-          <button class="boton" type="button" (click)="importando.set(!importando())">Importar</button>
-        </div>
+        @if (esGestor()) {
+          <div class="acciones">
+            <button class="boton" type="button" (click)="abrirNuevo()">+ Nuevo</button>
+            <button class="boton" type="button" (click)="importando.set(!importando())">Importar</button>
+          </div>
+        }
       </div>
 
-      @if (importando()) {
+      @if (esGestor() && importando()) {
         <div class="dia filtro">
           <label>Archivo CSV<input type="file" accept=".csv" (change)="elegirArchivo($event)" /></label>
           <button class="boton" type="button" [disabled]="!archivo()" (click)="importar()">Procesar</button>

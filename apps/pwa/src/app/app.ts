@@ -6,12 +6,15 @@ import {
   OnDestroy,
   OnInit,
   PLATFORM_ID,
+  computed,
   inject,
   signal,
 } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { leerClaveMigrada } from './core/migrar-clave-local';
 import { MenuCuentaComponent } from './compartido/menu-cuenta/menu-cuenta.component';
+import { SesionService } from './auth/sesion.service';
+import { pestanasDe } from './navegacion-rol';
 
 type Tema = 'claro' | 'oscuro';
 type PreferenciaTema = Tema | 'automatico';
@@ -38,12 +41,8 @@ export class App implements OnInit, OnDestroy {
 
   protected readonly temaActual = signal<Tema>('claro');
 
-  protected readonly enlaces = [
-    { ruta: '/plan', texto: 'Hoy', icono: 'hoy' },
-    { ruta: '/cafeina', texto: 'Cafeína', icono: 'cafeina' },
-    { ruta: '/aptitud', texto: 'Pre-salida', icono: 'presalida' },
-    { ruta: '/diario', texto: 'Diario', icono: 'diario' },
-  ];
+  private readonly sesion = inject(SesionService);
+  protected readonly enlaces = computed(() => pestanasDe(this.sesion.rol()));
 
   ngOnInit(): void {
     if (!this.esNavegador) return;

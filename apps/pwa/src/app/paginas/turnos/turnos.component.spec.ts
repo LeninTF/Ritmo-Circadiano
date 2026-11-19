@@ -42,10 +42,13 @@ describe('TurnosComponent (RF04, RF14)', () => {
     http.verify();
   });
 
-  it('el trabajador consulta solo /turnos/me', () => {
-    const { http } = crear('trabajador');
+  it('el trabajador consulta solo /turnos/me y no ve Nuevo ni Importar', () => {
+    const { fixture, http, el } = crear('trabajador');
     http.expectOne((r) => r.url === `${api}/turnos/me`).flush([]);
     http.expectNone(`${api}/trabajadores`);
+    fixture.detectChanges();
+    expect(el.textContent).not.toContain('Nuevo');
+    expect(el.textContent).not.toContain('Importar');
     http.verify();
   });
 

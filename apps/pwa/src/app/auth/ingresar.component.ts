@@ -4,6 +4,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from './auth.service';
 import { ESTILOS_FORMULARIO } from './estilos-formulario';
+import { SesionService } from './sesion.service';
+import { INICIO_POR_ROL } from '../navegacion-rol';
 
 @Component({
   selector: 'app-ingresar',
@@ -35,6 +37,7 @@ export class IngresarComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly ruta = inject(ActivatedRoute);
+  private readonly sesion = inject(SesionService);
   private readonly fb = inject(FormBuilder).nonNullable;
 
   protected readonly error = signal('');
@@ -68,9 +71,11 @@ export class IngresarComponent {
     });
   }
 
-  /** Solo rutas internas: evita redirigir a un sitio externo con ?retorno=. */
+  /** Solo rutas internas: evita redirigir a un sitio externo con ?retorno=. Sin retorno, el inicio de su rol. */
   private destino(): string {
     const retorno = this.ruta.snapshot.queryParamMap.get('retorno');
-    return retorno?.startsWith('/') && !retorno.startsWith('//') ? retorno : '/plan';
+    if (retorno?.startsWith('/') && !retorno.startsWith('//')) return retorno;
+    const rol = this.sesion.rol();
+    return rol ? INICIO_POR_ROL[rol] : '/plataforma';
   }
 }
