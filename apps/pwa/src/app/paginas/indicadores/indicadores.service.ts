@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface PanelIndicadoresResponse {
   suficiente: boolean;
@@ -17,7 +18,7 @@ export interface PanelIndicadoresResponse {
 })
 export class IndicadoresService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/indicadores';
+  private readonly baseUrl = `${environment.apiUrl}/indicadores`;
 
   obtenerPanel(desde?: string, hasta?: string): Observable<PanelIndicadoresResponse> {
     let params = new HttpParams();
