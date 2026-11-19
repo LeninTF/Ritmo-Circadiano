@@ -63,6 +63,12 @@ svg {
   }
 }
 
+.cabecera__acciones {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .boton-tema {
   display: inline-flex;
   align-items: center;

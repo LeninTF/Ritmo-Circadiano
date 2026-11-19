@@ -13,6 +13,7 @@
       </svg>
       <span>CircaRuta</span>
     </a>
+    <div class="cabecera__acciones">
     <button
       class="boton-tema"
       type="button"
@@ -30,6 +31,8 @@
       }
       <span class="boton-tema__texto">{{ temaActual() === 'oscuro' ? 'Modo claro' : 'Modo oscuro' }}</span>
     </button>
+    <app-menu-cuenta />
+    </div>
   </header>
 
   <main id="contenido-principal" tabindex="-1">

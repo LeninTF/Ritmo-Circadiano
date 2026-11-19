@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { leerClaveMigrada } from './core/migrar-clave-local';
+import { MenuCuentaComponent } from './compartido/menu-cuenta/menu-cuenta.component';
 
 type Tema = 'claro' | 'oscuro';
 type PreferenciaTema = Tema | 'automatico';
@@ -23,7 +24,7 @@ const INTERVALO_ACTUALIZACION_MS = 60_000;
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [MenuCuentaComponent, RouterLink, RouterLinkActive, RouterOutlet],
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.scss',

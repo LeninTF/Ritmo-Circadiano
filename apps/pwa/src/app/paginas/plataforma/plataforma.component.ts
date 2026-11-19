@@ -78,8 +78,8 @@ export class PlataformaComponent {
       });
   }
 
-  protected salir(): void {
-    this.auth.cerrarSesion();
+  protected async salir(): Promise<void> {
+    await this.auth.cerrarSesion();
     void this.router.navigate(['/ingresar']);
   }
 }
