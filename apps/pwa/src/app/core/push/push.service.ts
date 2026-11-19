@@ -43,6 +43,17 @@ export class PushService {
     });
   }
 
+  /** Al cerrar sesión: este dispositivo deja de recibir recordatorios del usuario que sale. */
+  async cancelarSuscripcion(): Promise<void> {
+    this.suscrito.set(false);
+    if (!this.esNavegador || !this.swPush.isEnabled) return;
+    try {
+      await this.swPush.unsubscribe();
+    } catch {
+      // Sin suscripción previa no hay nada que cancelar.
+    }
+  }
+
   /**
    * Solicita suscripción Web Push (RNF06). En iOS sin instalar no pide permiso:
    * devuelve 'ios-sin-instalar' para que la pantalla muestre la guía de instalación.

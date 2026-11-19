@@ -58,6 +58,17 @@ describe('OperacionesService', () => {
     });
   });
 
+  describe('listarTurnos', () => {
+    it('filtra por rango de fechas con hasta inclusive', async () => {
+      mockPrismaService.turnoLaboral.findMany.mockResolvedValue([]);
+      await service.listarTurnos({ idUsuario: 'u-1', desde: '2026-11-16', hasta: '2026-11-22' });
+      expect(mockPrismaService.turnoLaboral.findMany.mock.calls[0][0].where).toEqual({
+        idUsuario: 'u-1',
+        fecha: { gte: new Date('2026-11-16'), lt: new Date('2026-11-23') },
+      });
+    });
+  });
+
   describe('listarTurnosMe', () => {
     it('debe lanzar BadRequestException si idUsuario está vacío', async () => {
       await expect(service.listarTurnosMe('')).rejects.toThrow(BadRequestException);
@@ -104,6 +115,35 @@ describe('OperacionesService', () => {
       );
     });
 
+    it('RN01: 3 h previas + 4 h nuevas se acepta y el turno nuevo no se cuenta dos veces', async () => {
+      mockPrismaService.ruta.findUnique.mockResolvedValue({ id: 'r-1', activa: true });
+      mockPrismaService.turnoLaboral.findMany.mockResolvedValue([
+        { inicioProgramado: new Date('2026-10-20T07:00:00-05:00'), horasConduccion: 3 },
+      ]);
+      mockPrismaService.turnoLaboral.create.mockResolvedValue({ id: 't-7h', idUsuario: 'u-1', fecha: new Date('2026-10-20') });
+
+      await service.crearTurno({ ...dtoBase, inicioProgramado: '2026-10-20T14:00:00-05:00', horasConduccion: 4 });
+      // La consulta de RN01 corre antes de crear: el turno nuevo no puede aparecer en ella.
+      expect(mockPrismaService.turnoLaboral.findMany.mock.invocationCallOrder[0]).toBeLessThan(
+        mockPrismaService.turnoLaboral.create.mock.invocationCallOrder[0],
+      );
+      expect(mockPrismaService.excesoJornadaAuditoria.create).not.toHaveBeenCalled();
+    });
+
+    it('RN01: ventana movil entre dos dias (5 h + 3 h + 3 h en 24 h) responde 409 aunque cada dia tenga menos de 10 h', async () => {
+      mockPrismaService.ruta.findUnique.mockResolvedValue({ id: 'r-1', activa: true });
+      mockPrismaService.turnoLaboral.findMany.mockResolvedValue([
+        { inicioProgramado: new Date('2026-10-20T16:00:00-05:00'), horasConduccion: 5 },
+        { inicioProgramado: new Date('2026-10-21T06:00:00-05:00'), horasConduccion: 3 },
+      ]);
+      const error = await service
+        .crearTurno({ ...dtoBase, fecha: '2026-10-21', inicioProgramado: '2026-10-21T10:00:00-05:00', horasConduccion: 3 })
+        .catch((e: ConflictException) => e);
+      expect(error).toBeInstanceOf(ConflictException);
+      expect((error as ConflictException).getResponse()).toMatchObject({ superaVentana: true, horasAcumuladas24h: 11 });
+      expect(mockPrismaService.turnoLaboral.create).not.toHaveBeenCalled();
+    });
+
     it('debe permitir crear turno con exceso si se confirma y se provee motivoExceso (RF14)', async () => {
       mockPrismaService.ruta.findUnique.mockResolvedValue({ id: 'r-1', activa: true });
       mockPrismaService.turnoLaboral.findMany.mockResolvedValue([]);
@@ -118,7 +158,9 @@ describe('OperacionesService', () => {
         motivoExceso: 'Retraso imprevisto',
       });
       expect(res).toEqual(creado);
-      expect(mockPrismaService.excesoJornadaAuditoria.create).toHaveBeenCalled();
+      expect(mockPrismaService.excesoJornadaAuditoria.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ idTurno: 't-ex', motivoExceso: 'Retraso imprevisto' }),
+      });
     });
   });
 

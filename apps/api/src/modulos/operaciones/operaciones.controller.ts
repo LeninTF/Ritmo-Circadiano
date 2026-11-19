@@ -17,7 +17,9 @@ import { OperacionesService } from './operaciones.service';
 import { CrearTurnoDto } from './dto/crear-turno.dto';
 import { ActualizarTurnoDto } from './dto/actualizar-turno.dto';
 import { ConfirmarTurnoDto } from './dto/confirmar-turno.dto';
-import type { Rol, UsuarioJwtPayload } from '@circadiano/contracts';
+import { ConsultarTurnosDto } from './dto/consultar-turnos.dto';
+import { UsuariosService } from '../plataforma/usuarios/usuarios.service';
+import type { Rol, TrabajadorResumenDto, UsuarioJwtPayload } from '@circadiano/contracts';
 import { Auditable, Roles, UsuarioActual } from '../plataforma/auth';
 
 /** RF04: asignan y consultan turnos de cualquier trabajador. El trabajador usa /turnos/me. */
@@ -33,7 +35,19 @@ const esExcesoConfirmado = (solicitud: {
 @ApiTags('Operaciones y Turnos (RF04)')
 @Controller('operaciones')
 export class OperacionesController {
-  constructor(private readonly operacionesService: OperacionesService) {}
+  constructor(
+    private readonly operacionesService: OperacionesService,
+    private readonly usuariosService: UsuariosService,
+  ) {}
+
+  @Get('trabajadores')
+  @Roles(...GESTIONAN_TURNOS)
+  @ApiOperation({ summary: 'Listar trabajadores activos para asignar turnos (id, código de participante, cargo)' })
+  @ApiResponse({ status: 200, description: 'Trabajadores activos, sin correo ni nombre.' })
+  @ApiResponse({ status: 403, description: 'Rol trabajador.' })
+  listarTrabajadores(): Promise<TrabajadorResumenDto[]> {
+    return this.usuariosService.listarTrabajadores();
+  }
 
   @Get('rutas')
   @ApiOperation({ summary: 'Listar rutas de viaje activas (Transporte Cueva S.A.C.)' })
@@ -44,15 +58,11 @@ export class OperacionesController {
 
   @Get('turnos')
   @Roles(...GESTIONAN_TURNOS)
-  @ApiOperation({ summary: 'Listar turnos laborales con filtros opcionales (idUsuario, fecha)' })
-  @ApiQuery({ name: 'idUsuario', required: false, description: 'Filtrar por UUID de trabajador' })
-  @ApiQuery({ name: 'fecha', required: false, description: 'Filtrar por fecha (YYYY-MM-DD)' })
+  @ApiOperation({ summary: 'Listar turnos laborales con filtros opcionales (idUsuario, fecha, desde, hasta)' })
   @ApiResponse({ status: 200, description: 'Lista de turnos laborales.' })
-  async listarTurnos(
-    @Query('idUsuario') idUsuario?: string,
-    @Query('fecha') fecha?: string,
-  ) {
-    return this.operacionesService.listarTurnos({ idUsuario, fecha });
+  @ApiResponse({ status: 400, description: 'Filtro con formato inválido.' })
+  async listarTurnos(@Query() filtros: ConsultarTurnosDto) {
+    return this.operacionesService.listarTurnos(filtros);
   }
 
   @Get('turnos/me')

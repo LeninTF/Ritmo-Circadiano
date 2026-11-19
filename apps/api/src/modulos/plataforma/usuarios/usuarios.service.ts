@@ -4,6 +4,7 @@ import {
   USUARIO_ELIMINADO,
   type ActualizarUsuarioAdminDto,
   type Paginado,
+  type TrabajadorResumenDto,
   type UsuarioAdminDto,
   type UsuarioEliminadoEvento,
 } from '@circadiano/contracts';
@@ -45,6 +46,15 @@ export class UsuariosService {
       this.prisma.usuario.count(),
     ]);
     return { datos, total, pagina, tamanoPagina };
+  }
+
+  /** Para que I2 asigne turnos: solo trabajadores activos y sin datos personales (§6). */
+  listarTrabajadores(): Promise<TrabajadorResumenDto[]> {
+    return this.prisma.usuario.findMany({
+      where: { rol: 'trabajador', estado: 'activo' },
+      select: { id: true, codigoParticipante: true, cargo: true },
+      orderBy: { codigoParticipante: 'asc' },
+    });
   }
 
   async actualizar(id: string, cambios: ActualizarUsuarioAdminDto): Promise<UsuarioAdminDto> {

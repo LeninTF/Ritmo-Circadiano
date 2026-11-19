@@ -10,6 +10,7 @@ import { IndicadoresController } from '../indicadores/indicadores.controller';
 import { IndicadoresService } from '../indicadores/indicadores.service';
 import { OperacionesController } from './operaciones.controller';
 import { OperacionesService } from './operaciones.service';
+import { UsuariosService } from '../plataforma/usuarios/usuarios.service';
 
 describe('Roles en operaciones e indicadores (RNF04)', () => {
   let app: INestApplication;
@@ -21,6 +22,7 @@ describe('Roles en operaciones e indicadores (RNF04)', () => {
     crearTurno: jest.fn().mockResolvedValue({ id: 't-new' }),
     actualizarTurno: jest.fn().mockResolvedValue({ id: 't-1' }),
   };
+  const usuarios = { listarTrabajadores: jest.fn().mockResolvedValue([]) };
   const indicadores = { obtenerPanel: jest.fn().mockResolvedValue({ suficiente: false }) };
   const token = (rol: Rol, sub = 'u1') =>
     jwt.signAsync({ sub, rol, codigoParticipante: 'P01' }).then((t) => `Bearer ${t}`);
@@ -32,6 +34,7 @@ describe('Roles en operaciones e indicadores (RNF04)', () => {
       providers: [
         { provide: OperacionesService, useValue: operaciones },
         { provide: IndicadoresService, useValue: indicadores },
+        { provide: UsuariosService, useValue: usuarios },
         { provide: APP_GUARD, useClass: JwtAuthGuard },
         { provide: APP_GUARD, useClass: RolesGuard },
       ],
@@ -47,6 +50,24 @@ describe('Roles en operaciones e indicadores (RNF04)', () => {
     const http = request(app.getHttpServer());
     expect((await http.get('/operaciones/turnos?idUsuario=otro').set('Authorization', await token('trabajador'))).status).toBe(403);
     expect((await http.get('/operaciones/turnos').set('Authorization', await token('jefe_operaciones'))).status).toBe(200);
+  });
+
+  it('GET /operaciones/trabajadores: 401 sin token, 403 al trabajador, 200 a jefe, despachador y admin', async () => {
+    const http = request(app.getHttpServer());
+    expect((await http.get('/operaciones/trabajadores')).status).toBe(401);
+    expect((await http.get('/operaciones/trabajadores').set('Authorization', await token('trabajador'))).status).toBe(403);
+    for (const rol of ['jefe_operaciones', 'despachador', 'administrador'] as Rol[]) {
+      expect((await http.get('/operaciones/trabajadores').set('Authorization', await token(rol))).status).toBe(200);
+    }
+    expect(usuarios.listarTrabajadores).toHaveBeenCalledTimes(3);
+  });
+
+  it('GET /operaciones/turnos pasa desde y hasta al servicio', async () => {
+    await request(app.getHttpServer())
+      .get('/operaciones/turnos?desde=2026-11-16&hasta=2026-11-22')
+      .set('Authorization', await token('jefe_operaciones'))
+      .expect(200);
+    expect(operaciones.listarTurnos).toHaveBeenLastCalledWith(expect.objectContaining({ desde: '2026-11-16', hasta: '2026-11-22' }));
   });
 
   it('/turnos/me usa el usuario del token e ignora idUsuario y x-usuario-id', async () => {

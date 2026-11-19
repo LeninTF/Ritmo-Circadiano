@@ -2,6 +2,7 @@ import {
   CONDUCCION_MAX_DIURNA_H,
   CONDUCCION_MAX_NOCTURNA_H,
   CONDUCCION_MAX_ACUMULADA_H,
+  CONDUCCION_VENTANA_H,
   HORA_INICIO_NOCTURNO,
   HORA_FIN_NOCTURNO,
   DESFASE_LIMA_H,
@@ -12,36 +13,63 @@ export function horaLima(fecha: Date): number {
   return (fecha.getUTCHours() + DESFASE_LIMA_H + 24) % 24;
 }
 
+/** Bloque continuo de conduccion: empieza en `inicio` (ISO) y dura `horas` (RN01). */
+export interface BloqueConduccion {
+  inicio: string;
+  horas: number;
+}
+
 export interface ValidacionJornadaInput {
-  horasConduccion: number;
-  horasAcumuladasDia: number;
+  nuevo: BloqueConduccion;
+  /** Otros turnos del trabajador (sin el nuevo): solo cuentan los que caen cerca. */
+  previos: BloqueConduccion[];
   esNocturno?: boolean;
 }
 
 export interface ValidacionJornadaResultado {
   superaContinuo: boolean;
-  superaDiario: boolean;
+  superaVentana: boolean;
   limiteContinuo: number;
-  limiteDiario: number;
-  horasTotalesDia: number;
+  limiteVentana: number;
+  /** Maximo de horas conducidas en cualquier ventana de 24 h que toque el turno nuevo. */
+  horasVentana24h: number;
+}
+
+const MS_H = 3_600_000;
+
+function horasEnVentana(bloques: { ini: number; fin: number }[], desde: number): number {
+  const hasta = desde + CONDUCCION_VENTANA_H * MS_H;
+  return bloques.reduce((acc, b) => acc + Math.max(0, Math.min(b.fin, hasta) - Math.max(b.ini, desde)), 0) / MS_H;
 }
 
 /**
- * Valida las reglas de jornada máxima y límites circadianos (RN01).
+ * RN01: max. 4 h continuas si el tramo es nocturno, 5 h si es diurno, y max. 10 h
+ * en cualquier ventana movil de 24 h (no por dia calendario).
  */
 export function validarJornadaRN01(input: ValidacionJornadaInput): ValidacionJornadaResultado {
   const limiteContinuo = input.esNocturno ? CONDUCCION_MAX_NOCTURNA_H : CONDUCCION_MAX_DIURNA_H;
-  const limiteDiario = CONDUCCION_MAX_ACUMULADA_H;
-
-  const superaContinuo = input.horasConduccion > limiteContinuo;
-  const superaDiario = input.horasAcumuladasDia > limiteDiario;
+  const aBloque = (b: BloqueConduccion) => {
+    const ini = Date.parse(b.inicio);
+    return { ini, fin: ini + b.horas * MS_H };
+  };
+  const nuevo = aBloque(input.nuevo);
+  const bloques = [nuevo, ...input.previos.map(aBloque)];
+  const ventanaMs = CONDUCCION_VENTANA_H * MS_H;
+  // La suma es lineal por tramos: su maximo cae cuando la ventana empieza en un inicio
+  // de bloque o termina en un fin de bloque. Solo importan las ventanas que tocan el nuevo.
+  const candidatos = bloques
+    .flatMap((b) => [b.ini, b.fin - ventanaMs])
+    .filter((s) => s < nuevo.fin && s + ventanaMs > nuevo.ini);
+  const maximo = Math.max(0, ...candidatos.map((s) => horasEnVentana(bloques, s)));
+  // Redondeo a centesimas: 3.1 + 6.9 no debe salir 10.000000001 y disparar un 409.
+  const horasVentana24h = Math.round(maximo * 100) / 100;
 
   return {
-    superaContinuo,
-    superaDiario,
+    superaContinuo: input.nuevo.horas > limiteContinuo,
+    superaVentana: horasVentana24h > CONDUCCION_MAX_ACUMULADA_H,
     limiteContinuo,
-    limiteDiario,
-    horasTotalesDia: input.horasAcumuladasDia,
+    limiteVentana: CONDUCCION_MAX_ACUMULADA_H,
+    horasVentana24h,
   };
 }
 

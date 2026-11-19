@@ -57,6 +57,14 @@ describe('Cafeina y push usan el usuario del token (RNF04)', () => {
     expect(cafeina.calcularResidualHastaSueno).toHaveBeenCalledWith('yo', 23);
   });
 
+  it('residual: hasta no numérico o ausente → 400 sin llegar al servicio (B4)', async () => {
+    const http = request(app.getHttpServer());
+    jest.clearAllMocks();
+    await http.get('/cafeina/residual?hasta=abc').set('Authorization', autorizacion).expect(400);
+    await http.get('/cafeina/residual').set('Authorization', autorizacion).expect(400);
+    expect(cafeina.calcularResidualHastaSueno).not.toHaveBeenCalled();
+  });
+
   it('escrituras reemplazan el id_usuario del cuerpo y el borrado exige ser dueno', async () => {
     const http = request(app.getHttpServer());
     const cuerpo = { id_bebida: 1, porciones: 2, fecha_hora: '2026-10-24T13:30:00.000Z', client_id: UUID };

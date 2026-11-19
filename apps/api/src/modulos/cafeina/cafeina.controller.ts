@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseFloatPipe,
   ParseIntPipe,
   Post,
   Query,
@@ -73,11 +74,11 @@ export class CafeinaController {
   @ApiOperation({ summary: 'Calcular el residual de cafeína hasta la hora de dormir y hora de corte' })
   @ApiQuery({ name: 'hasta', required: true, type: Number, description: 'Hora en formato decimal o timestamp en horas' })
   @ApiResponse({ status: 200, description: 'Cálculo de residual y corte realizado.' })
+  @ApiResponse({ status: 400, description: '`hasta` falta o no es un número.' })
   async calcularResidual(
     @UsuarioActual() usuario: UsuarioJwtPayload,
-    @Query('hasta') hasta: string,
+    @Query('hasta', ParseFloatPipe) hasta: number,
   ): Promise<ResidualCafeinaRespuestaDto> {
-    const hastaNum = parseFloat(hasta);
-    return this.cafeinaService.calcularResidualHastaSueno(usuario.sub, hastaNum);
+    return this.cafeinaService.calcularResidualHastaSueno(usuario.sub, hasta);
   }
 }
