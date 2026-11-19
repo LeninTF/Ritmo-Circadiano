@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, from, catchError, of, switchMap, tap } from 'rxjs';
 import { OfflineStoreService } from '../../core/offline/offline-store.service';
+import { environment } from '../../../environments/environment';
 import type {
   RutaDto,
   TurnoDto,
@@ -17,7 +18,7 @@ import type {
 export class TurnosService {
   private readonly http = inject(HttpClient);
   private readonly offlineStore = inject(OfflineStoreService);
-  private readonly baseUrl = '/operaciones';
+  private readonly baseUrl = `${environment.apiUrl}/operaciones`;
 
   listarRutas(): Observable<RutaDto[]> {
     return this.http.get<RutaDto[]>(`${this.baseUrl}/rutas`).pipe(
