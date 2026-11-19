@@ -29,7 +29,7 @@ describe('Turnos e2e (Transporte Cueva S.A.C.)', () => {
     fecha: '2026-10-20',
     inicioProgramado: '2026-10-20T06:00:00Z',
     finProgramado: '2026-10-20T17:00:00Z',
-    horasConduccion: 11.0, // Excede límite diario de 10h (RN01)
+    horasConduccion: 11.0, // Excede 10 h en 24 h (RN01)
     esNocturno: false,
   };
 
@@ -151,9 +151,28 @@ describe('Turnos e2e (Transporte Cueva S.A.C.)', () => {
       .expect(409);
 
     expect(response.body).toMatchObject({
-      superaDiario: true,
+      superaVentana: true,
       requiereConfirmacion: true,
     });
+  });
+
+  it('/operaciones/turnos (POST) - 409 por ventana movil de 24 h entre dos dias (RN01)', async () => {
+    (mockPrismaService['turnoLaboral'] as MockDelegado)['findMany'].mockResolvedValueOnce([
+      { inicioProgramado: new Date('2026-10-20T16:00:00-05:00'), horasConduccion: 5 },
+      { inicioProgramado: new Date('2026-10-21T06:00:00-05:00'), horasConduccion: 3 },
+    ]);
+    const response = await request(app.getHttpServer())
+      .post('/operaciones/turnos')
+      .set('Authorization', await token('jefe_operaciones'))
+      .send({
+        ...dtoExceso,
+        fecha: '2026-10-21',
+        inicioProgramado: '2026-10-21T10:00:00-05:00',
+        finProgramado: '2026-10-21T13:00:00-05:00',
+        horasConduccion: 3,
+      })
+      .expect(409);
+    expect(response.body).toMatchObject({ superaVentana: true, horasAcumuladas24h: 11 });
   });
 
   it('/operaciones/turnos (POST) - exceso confirmado → 201, exceso_jornada_auditoria y audit_log (RF14/RN01)', async () => {

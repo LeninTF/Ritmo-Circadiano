@@ -8,6 +8,9 @@ import { CrearTurnoDto } from './dto/crear-turno.dto';
 import { ActualizarTurnoDto } from './dto/actualizar-turno.dto';
 import { ConfirmarTurnoDto } from './dto/confirmar-turno.dto';
 
+const MS_H = 3_600_000;
+const VENTANA_MS = 24 * MS_H;
+
 @Injectable()
 export class OperacionesService {
   constructor(
@@ -70,73 +73,63 @@ export class OperacionesService {
     return turno;
   }
 
-  private async validarYRegistrarExcesoJornadaTx(
+  /**
+   * RN01 / RF14: lanza 409 si el turno excede la jornada sin confirmar y 400 si falta el motivo.
+   * Devuelve true cuando el exceso fue confirmado y hay que auditarlo.
+   */
+  private async evaluarJornadaTx(
     tx: Prisma.TransactionClient,
     idUsuario: string,
-    fechaStr: string,
+    inicioProgramado: string,
     horasConduccion: number,
     esNocturno: boolean,
     confirmarExceso?: boolean,
     motivoExceso?: string,
     idTurnoExcluir?: string,
-    idTurnoCreado?: string,
-  ) {
-    const fechaDate = new Date(fechaStr);
-
-    const turnosExistentes = await tx.turnoLaboral.findMany({
+  ): Promise<boolean> {
+    const inicioMs = new Date(inicioProgramado).getTime();
+    // Un bloque que toca la ventana de 24 h del nuevo empieza a lo mas 48 h antes (bloques <= 24 h).
+    const previos = await tx.turnoLaboral.findMany({
       where: {
         idUsuario,
-        fecha: fechaDate,
+        inicioProgramado: {
+          gte: new Date(inicioMs - 2 * VENTANA_MS),
+          lt: new Date(inicioMs + horasConduccion * MS_H + VENTANA_MS),
+        },
         ...(idTurnoExcluir ? { id: { not: idTurnoExcluir } } : {}),
       },
-      select: { horasConduccion: true },
+      select: { inicioProgramado: true, horasConduccion: true },
     });
 
-    const horasAcumuladasPrevias = turnosExistentes.reduce(
-      (acc: number, t: { horasConduccion: Prisma.Decimal | number }) => acc + Number(t.horasConduccion),
-      0,
-    );
-    const horasTotalesDia = horasAcumuladasPrevias + horasConduccion;
-
-    const resultadoRN01 = validarJornadaRN01({
-      horasConduccion,
-      horasAcumuladasDia: horasTotalesDia,
+    const r = validarJornadaRN01({
+      nuevo: { inicio: inicioProgramado, horas: horasConduccion },
+      previos: previos.map((t) => ({ inicio: t.inicioProgramado.toISOString(), horas: Number(t.horasConduccion) })),
       esNocturno,
     });
+    if (!r.superaContinuo && !r.superaVentana) return false;
 
-    const superaContinuo = resultadoRN01.superaContinuo;
-    const superaDiario = resultadoRN01.superaDiario;
-    const LIMITE_CONTINUO = resultadoRN01.limiteContinuo;
-    const LIMITE_DIARIO = resultadoRN01.limiteDiario;
-
-    if (superaContinuo || superaDiario) {
-      if (!confirmarExceso) {
-        throw new ConflictException({
-          mensaje: 'Exceso de jornada laboral detectado (RF14 / RN01). Se requiere confirmación explícita (confirmarExceso: true) y motivo.',
-          horasConduccionTurno: horasConduccion,
-          limiteContinuoMax: LIMITE_CONTINUO,
-          horasAcumuladasDia: horasTotalesDia,
-          limiteDiarioMax: LIMITE_DIARIO,
-          superaContinuo,
-          superaDiario,
-          requiereConfirmacion: true,
-        });
-      }
-
-      if (!motivoExceso || motivoExceso.trim().length === 0) {
-        throw new BadRequestException('Se requiere ingresar un motivo de justificación (motivoExceso) para aprobar el exceso de jornada laboral (RF14).');
-      }
-
-      await tx.excesoJornadaAuditoria.create({
-        data: {
-          idTurno: idTurnoCreado ?? null,
-          idUsuario,
-          fecha: fechaDate,
-          horasConduccion,
-          motivoExceso,
-        },
+    if (!confirmarExceso) {
+      throw new ConflictException({
+        mensaje: 'El turno excede la jornada de conducción (RN01). Confirma el exceso e indica el motivo.',
+        horasConduccionTurno: horasConduccion,
+        limiteContinuoMax: r.limiteContinuo,
+        horasAcumuladas24h: r.horasVentana24h,
+        limiteVentanaMax: r.limiteVentana,
+        superaContinuo: r.superaContinuo,
+        superaVentana: r.superaVentana,
+        requiereConfirmacion: true,
       });
     }
+    if (!motivoExceso || motivoExceso.trim().length === 0) {
+      throw new BadRequestException('Se requiere ingresar un motivo de justificación (motivoExceso) para aprobar el exceso de jornada laboral (RF14).');
+    }
+    return true;
+  }
+
+  private registrarExcesoTx(tx: Prisma.TransactionClient, idTurno: string, idUsuario: string, fecha: Date, horasConduccion: number, motivoExceso?: string) {
+    return tx.excesoJornadaAuditoria.create({
+      data: { idTurno, idUsuario, fecha, horasConduccion, motivoExceso: motivoExceso ?? '' },
+    });
   }
 
   async crearTurno(dto: CrearTurnoDto) {
@@ -148,6 +141,17 @@ export class OperacionesService {
     const esNocturnoCalculado = dto.esNocturno ?? detectarTurnoNocturno(dto.inicioProgramado, dto.finProgramado);
 
     const turno = await this.prisma.$transaction(async (tx) => {
+      // Se valida antes de crear: si no, la consulta ya incluye el turno nuevo y lo cuenta dos veces.
+      const auditar = await this.evaluarJornadaTx(
+        tx,
+        dto.idUsuario,
+        dto.inicioProgramado,
+        dto.horasConduccion,
+        esNocturnoCalculado,
+        dto.confirmarExceso,
+        dto.motivoExceso,
+      );
+
       const nuevoTurno = await tx.turnoLaboral.create({
         data: {
           idUsuario: dto.idUsuario,
@@ -164,18 +168,9 @@ export class OperacionesService {
         include: { ruta: true },
       });
 
-      await this.validarYRegistrarExcesoJornadaTx(
-        tx,
-        dto.idUsuario,
-        dto.fecha,
-        dto.horasConduccion,
-        esNocturnoCalculado,
-        dto.confirmarExceso,
-        dto.motivoExceso,
-        undefined,
-        nuevoTurno.id,
-      );
-
+      if (auditar) {
+        await this.registrarExcesoTx(tx, nuevoTurno.id, dto.idUsuario, nuevoTurno.fecha, dto.horasConduccion, dto.motivoExceso);
+      }
       return nuevoTurno;
     });
 
@@ -211,17 +206,19 @@ export class OperacionesService {
       const finProgFinal = dto.finProgramado ?? turnoActual.finProgramado.toISOString();
       const esNocturnoFinal = dto.esNocturno ?? turnoActual.esNocturno ?? detectarTurnoNocturno(inicioProgFinal, finProgFinal);
 
-      await this.validarYRegistrarExcesoJornadaTx(
+      const auditar = await this.evaluarJornadaTx(
         tx,
         idUsuarioFinal,
-        fechaFinalStr,
+        inicioProgFinal,
         horasConduccionFinal,
         esNocturnoFinal,
         dto.confirmarExceso,
         dto.motivoExceso,
         id,
-        id,
       );
+      if (auditar) {
+        await this.registrarExcesoTx(tx, id, idUsuarioFinal, new Date(fechaFinalStr), horasConduccionFinal, dto.motivoExceso);
+      }
 
       return tx.turnoLaboral.update({
         where: { id },

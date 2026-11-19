@@ -2,32 +2,61 @@ import {
   detectarTurnoNocturno,
   validarDescansoMinimo,
   validarJornadaRN01,
-} from './rn01';
+} from './jornada';
 
-describe('validarJornadaRN01 (RN01)', () => {
-  it('turno diurno: limite continuo de 5 h y limite diario de 10 h', () => {
-    const r = validarJornadaRN01({ horasConduccion: 5, horasAcumuladasDia: 10 });
-    expect(r.limiteContinuo).toBe(5);
-    expect(r.limiteDiario).toBe(10);
+describe('validarJornadaRN01 (RN01, ventana movil de 24 h)', () => {
+  // Horas de Lima explicitas (-05:00): el resultado no depende del TZ de la maquina.
+  const bloque = (inicio: string, horas: number) => ({ inicio, horas });
+
+  it('3 h + 4 h el mismo dia se acepta: 7 h en 24 h, cada bloque dentro de 5 h', () => {
+    const r = validarJornadaRN01({
+      nuevo: bloque('2026-10-20T14:00:00-05:00', 4),
+      previos: [bloque('2026-10-20T07:00:00-05:00', 3)],
+    });
+    expect(r.horasVentana24h).toBe(7);
     expect(r.superaContinuo).toBe(false);
-    expect(r.superaDiario).toBe(false);
+    expect(r.superaVentana).toBe(false);
   });
 
-  it('turno nocturno: limite continuo de 4 h', () => {
-    expect(validarJornadaRN01({ horasConduccion: 4, horasAcumuladasDia: 4, esNocturno: true }).superaContinuo).toBe(false);
-    const r = validarJornadaRN01({ horasConduccion: 4.5, horasAcumuladasDia: 4.5, esNocturno: true });
-    expect(r.limiteContinuo).toBe(4);
-    expect(r.superaContinuo).toBe(true);
+  it('el turno nuevo se cuenta una sola vez', () => {
+    expect(validarJornadaRN01({ nuevo: bloque('2026-10-20T08:00:00-05:00', 4), previos: [] }).horasVentana24h).toBe(4);
   });
 
-  it('marca exceso continuo diurno por encima de 5 h', () => {
-    expect(validarJornadaRN01({ horasConduccion: 5.5, horasAcumuladasDia: 5.5 }).superaContinuo).toBe(true);
+  it('ventana movil entre dos dias: 5 h + 3 h + 3 h en 24 h supera 10 h aunque cada dia calendario no', () => {
+    const r = validarJornadaRN01({
+      nuevo: bloque('2026-10-21T10:00:00-05:00', 3),
+      previos: [bloque('2026-10-20T16:00:00-05:00', 5), bloque('2026-10-21T06:00:00-05:00', 3)],
+    });
+    expect(r.horasVentana24h).toBe(11);
+    expect(r.superaVentana).toBe(true);
   });
 
-  it('marca exceso diario por encima de 10 h y devuelve las horas totales', () => {
-    const r = validarJornadaRN01({ horasConduccion: 4, horasAcumuladasDia: 11 });
-    expect(r.superaDiario).toBe(true);
-    expect(r.horasTotalesDia).toBe(11);
+  it('turnos a mas de 24 h no se suman', () => {
+    const r = validarJornadaRN01({
+      nuevo: bloque('2026-10-21T17:00:00-05:00', 5),
+      previos: [bloque('2026-10-20T07:00:00-05:00', 5), bloque('2026-10-20T12:00:00-05:00', 5)],
+    });
+    expect(r.horasVentana24h).toBe(5);
+    expect(r.superaVentana).toBe(false);
+  });
+
+  it('exactamente 10 h en 24 h no supera; el redondeo evita falsos 409', () => {
+    const r = validarJornadaRN01({
+      nuevo: bloque('2026-10-20T13:00:00-05:00', 4.9),
+      previos: [bloque('2026-10-20T06:00:00-05:00', 5.1)],
+    });
+    expect(r.horasVentana24h).toBe(10);
+    expect(r.superaVentana).toBe(false);
+  });
+
+  it('limite continuo: 5 h diurno y 4 h nocturno', () => {
+    const diurno = validarJornadaRN01({ nuevo: bloque('2026-10-20T08:00:00-05:00', 5.5), previos: [] });
+    expect(diurno.limiteContinuo).toBe(5);
+    expect(diurno.superaContinuo).toBe(true);
+    const nocturno = validarJornadaRN01({ nuevo: bloque('2026-10-20T22:00:00-05:00', 4), previos: [], esNocturno: true });
+    expect(nocturno.limiteContinuo).toBe(4);
+    expect(nocturno.superaContinuo).toBe(false);
+    expect(validarJornadaRN01({ nuevo: bloque('2026-10-20T22:00:00-05:00', 4.5), previos: [], esNocturno: true }).superaContinuo).toBe(true);
   });
 });
 

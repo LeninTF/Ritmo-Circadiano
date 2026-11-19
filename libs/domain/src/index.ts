@@ -10,6 +10,6 @@ export * from './sync-queue';
 
 export * from './cafeina';
 export * from './k-anonymity';
-export * from './rn01';
+export * from './jornada';
 export * from './privacidad';
 export * from './aptitud';
